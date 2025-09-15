@@ -1,10 +1,38 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      alert('Please enter both email and password');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      // TODO: Replace with actual API call
+      // For now, simulate login success
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Redirect to dashboard
+      router.push('/user');
+    } catch (error) {
+      console.error('Login failed:', error);
+      alert('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -22,6 +50,8 @@ const LoginForm: React.FC = () => {
           <input
             type="email"
             id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="Email or phone number"
             className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
@@ -35,6 +65,8 @@ const LoginForm: React.FC = () => {
             <input
               type={showPassword ? "text" : "password"}
               id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter password"
               className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
             />
@@ -79,8 +111,12 @@ const LoginForm: React.FC = () => {
           </a>
         </div>
 
-        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors">
-          Sign In
+        <button 
+          onClick={handleSignIn}
+          disabled={isLoading}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+        >
+          {isLoading ? 'Signing In...' : 'Sign In'}
         </button>
 
         <div className="space-y-3">

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface FormData {
   username: string;
@@ -32,6 +33,7 @@ const RegistrationForm: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -98,7 +100,9 @@ const RegistrationForm: React.FC = () => {
     try {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert("Registration successful! Please log in.");
+      alert("Registration successful! Redirecting to dashboard...");
+      // Redirect to dashboard after successful registration
+      router.push('/user');
     } catch (error) {
       alert("Registration failed. Please try again.");
     } finally {

@@ -17,18 +17,44 @@ class Website {
     return rows[0];
   }
 
-  async findAll() {
-    const [rows] = await this.db.execute('SELECT * FROM websites');
+  async findByUserId(user_id) {
+    const [rows] = await this.db.execute('SELECT * FROM websites WHERE user_id = ? ORDER BY created_at DESC', [user_id]);
     return rows;
   }
 
+  async findBySlug(slug) {
+    const [rows] = await this.db.execute('SELECT * FROM websites WHERE slug = ?', [slug]);
+    return rows[0];
+  }
+
   async update(id, data) {
-    // TODO: Implement update logic
+    const fields = [];
+    const values = [];
+    
+    Object.keys(data).forEach(key => {
+      if (data[key] !== undefined) {
+        fields.push(`${key} = ?`);
+        values.push(data[key]);
+      }
+    });
+    
+    if (fields.length === 0) {
+      throw new Error('No fields to update');
+    }
+    
+    values.push(id);
+    const query = `UPDATE websites SET ${fields.join(', ')} WHERE id = ?`;
+    await this.db.execute(query, values);
   }
 
   async delete(id) {
     await this.db.execute('DELETE FROM websites WHERE id = ?', [id]);
   }
+
+  async getPublishedWebsites() {
+    const [rows] = await this.db.execute('SELECT * FROM websites WHERE is_published = 1 AND is_active = 1');
+    return rows;
+  }
 }
 
-module.exports = Website; 
+module.exports = Website;

@@ -17,13 +17,28 @@ class AiPrompt {
     return rows[0];
   }
 
+  async findByUserId(userId) {
+    const [rows] = await this.db.execute(
+      'SELECT * FROM ai_prompts WHERE user_id = ? ORDER BY created_at DESC',
+      [userId]
+    );
+    return rows;
+  }
+
   async findAll() {
     const [rows] = await this.db.execute('SELECT * FROM ai_prompts');
     return rows;
   }
 
   async update(id, data) {
-    // TODO: Implement update logic
+    const fields = Object.keys(data).map(key => `${key} = ?`).join(', ');
+    const values = Object.values(data);
+    values.push(id);
+    
+    await this.db.execute(
+      `UPDATE ai_prompts SET ${fields} WHERE id = ?`,
+      values
+    );
   }
 
   async delete(id) {

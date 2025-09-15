@@ -18,12 +18,38 @@ class Template {
   }
 
   async findAll() {
-    const [rows] = await this.db.execute('SELECT * FROM templates');
+    const [rows] = await this.db.execute('SELECT * FROM templates WHERE is_active = 1');
+    return rows;
+  }
+
+  async findByCategory(category) {
+    const [rows] = await this.db.execute('SELECT * FROM templates WHERE category = ? AND is_active = 1', [category]);
+    return rows;
+  }
+
+  async findFeatured() {
+    const [rows] = await this.db.execute('SELECT * FROM templates WHERE is_featured = 1 AND is_active = 1');
     return rows;
   }
 
   async update(id, data) {
-    // TODO: Implement update logic
+    const fields = [];
+    const values = [];
+    
+    Object.keys(data).forEach(key => {
+      if (data[key] !== undefined) {
+        fields.push(`${key} = ?`);
+        values.push(data[key]);
+      }
+    });
+    
+    if (fields.length === 0) {
+      throw new Error('No fields to update');
+    }
+    
+    values.push(id);
+    const query = `UPDATE templates SET ${fields.join(', ')} WHERE id = ?`;
+    await this.db.execute(query, values);
   }
 
   async delete(id) {
