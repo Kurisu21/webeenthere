@@ -1,7 +1,7 @@
 'use client';
 
-import Background from '../_components/Background';
-import RegistrationForm from '../_components/RegistrationForm';
+import Background from '../_components/layout/Background';
+import RegistrationForm from '../_components/forms/RegistrationForm';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 

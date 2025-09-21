@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, memo, useRef, useEffect } from 'react';
 import TemplateSelector from './TemplateSelector';
-import { Template } from '../_data/templates';
+import { Template } from '../../_data/templates';
 
 interface WebsiteBuilderProps {
   currentWebsite: any;

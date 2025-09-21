@@ -1,27 +1,24 @@
 'use client';
 
 import React, { useState, useCallback, memo } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface MainContentProps {
   currentWebsite?: any;
-  onCreateWebsite?: () => void;
 }
 
-const MainContent = memo(({ currentWebsite, onCreateWebsite }: MainContentProps) => {
+const MainContent = memo(({ currentWebsite }: MainContentProps) => {
   const [isEditing, setIsEditing] = useState(false);
+  const router = useRouter();
 
   const handleContinueEditing = useCallback(() => {
     setIsEditing(true);
   }, []);
 
   const handleCreateNew = useCallback(() => {
-    if (onCreateWebsite) {
-      console.log('Creating new website...');
-      onCreateWebsite();
-    } else {
-      console.log('Create new website - no handler provided');
-    }
-  }, [onCreateWebsite]);
+    console.log('Creating new website...');
+    router.push('/user/create');
+  }, [router]);
 
   // If user has a current website, show it with continue editing option
   if (currentWebsite) {

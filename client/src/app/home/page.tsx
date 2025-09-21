@@ -1,6 +1,6 @@
 'use client';
 
-import Background from '@/app/_components/Background';
+import Background from '@/app/_components/layout/Background';
 import Link from 'next/link';
 
 export default function Home() {

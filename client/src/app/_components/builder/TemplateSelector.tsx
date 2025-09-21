@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useMemo, memo } from 'react';
-import { templates, categories, getTemplatesByCategory, getFeaturedTemplates, Template } from '../_data/templates-simple';
+import { templates, categories, getTemplatesByCategory, getFeaturedTemplates, Template } from '../../_data/templates';
 import TemplatePreview from './TemplatePreview';
 
 interface TemplateSelectorProps {
@@ -165,22 +165,7 @@ const TemplateCard = memo(({ template, onSelect, isFeatured }: TemplateCardProps
     >
       {/* Template Preview */}
       <div className="relative h-48 overflow-hidden">
-        <TemplatePreview template={template} className="w-full h-full" />
-        
-        {isFeatured && (
-          <div className="absolute top-2 right-2 bg-yellow-500 text-black px-2 py-1 rounded-full text-xs font-bold z-10">
-            ⭐ Featured
-          </div>
-        )}
-        
-        {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
-              Use Template
-            </button>
-          </div>
-        </div>
+        <TemplatePreview template={template} onClick={onSelect} />
       </div>
 
       {/* Template Info */}

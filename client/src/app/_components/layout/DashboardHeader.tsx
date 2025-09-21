@@ -6,8 +6,9 @@ const DashboardHeader = memo(() => {
   return (
     <header className="bg-gray-900 px-8 py-4 relative z-10">
       <div className="flex justify-between items-center">
-        {/* Left side - Empty for now */}
-        <div></div>
+        {/* Left side - Empty for balance */}
+        <div className="flex items-center gap-2">
+        </div>
 
         {/* Center - Brand name with gradient */}
         <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent animate-pulse">

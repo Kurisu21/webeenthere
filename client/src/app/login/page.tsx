@@ -1,7 +1,7 @@
 'use client';
 
-import Background from '@/app/_components/Background';
-import LoginForm from '@/app/_components/LoginForm';
+import Background from '@/app/_components/layout/Background';
+import LoginForm from '@/app/_components/forms/LoginForm';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
