@@ -1,16 +1,18 @@
 // controllers/AiController.js
-const AiService = require('../services/AiService');
+const ContextAwareAiService = require('../services/ContextAwareAiService');
+const AIOrchestrationService = require('../services/AIOrchestrationService');
 const AiPrompt = require('../models/AiPrompt');
 
 class AiController {
   constructor(db) {
-    this.aiService = new AiService();
+    this.aiService = new ContextAwareAiService();
+    this.orchestrationService = new AIOrchestrationService();
     this.aiPromptModel = new AiPrompt(db);
   }
 
   async generateSection(req, res) {
     try {
-      const { prompt, websiteContext, userId } = req.body;
+      const { prompt, websiteContext, userId, elements = [], useOrchestration = false } = req.body;
 
       if (!prompt) {
         return res.status(400).json({
@@ -19,8 +21,29 @@ class AiController {
         });
       }
 
-      // Generate AI response
-      const aiResponse = await this.aiService.generateWebsiteSection(prompt, websiteContext);
+      let aiResponse;
+      
+      // Use orchestration for complex requests or when explicitly requested
+      if (useOrchestration || this.shouldUseOrchestration(prompt)) {
+        aiResponse = await this.orchestrationService.orchestrateComplexRequest(
+          userId || 'anonymous', 
+          prompt, 
+          elements
+        );
+      } else {
+        // Use enhanced prompt with context
+        const enhancedPrompt = this.orchestrationService.enhancePromptWithContext(
+          prompt, 
+          elements, 
+          userId || 'anonymous'
+        );
+        
+        aiResponse = await this.aiService.generateWebsiteSection(
+          enhancedPrompt, 
+          elements, 
+          'generate'
+        );
+      }
 
       if (!aiResponse.success) {
         return res.status(500).json({
@@ -34,7 +57,7 @@ class AiController {
         try {
           await this.aiPromptModel.create({
             user_id: userId,
-            prompt_type: 'section',
+            prompt_type: useOrchestration ? 'orchestrated' : 'section',
             prompt_text: prompt,
             response_html: JSON.stringify(aiResponse.elements),
             used_on_site: false
@@ -53,7 +76,11 @@ class AiController {
         success: true,
         elements: aiResponse.elements,
         suggestions: aiResponse.suggestions,
-        rawResponse: aiResponse.rawResponse
+        reasoning: aiResponse.reasoning,
+        context: aiResponse.context,
+        rawResponse: aiResponse.rawResponse,
+        orchestrated: useOrchestration || this.shouldUseOrchestration(prompt),
+        stepsCompleted: aiResponse.stepsCompleted || 1
       });
 
     } catch (error) {
@@ -63,6 +90,19 @@ class AiController {
         error: 'Internal server error'
       });
     }
+  }
+
+  shouldUseOrchestration(prompt) {
+    const orchestrationKeywords = [
+      'complete website', 'full site', 'entire page', 'multiple sections',
+      'navigation', 'footer', 'header', 'multiple pages', 'e-commerce',
+      'portfolio with', 'business website with', 'landing page with',
+      'create everything', 'build complete', 'make a full'
+    ];
+    
+    return orchestrationKeywords.some(keyword => 
+      prompt.toLowerCase().includes(keyword)
+    );
   }
 
   async improveContent(req, res) {
@@ -111,6 +151,7 @@ class AiController {
         improvedElements: aiResponse.improvedElements,
         improvements: aiResponse.improvements,
         reasoning: aiResponse.reasoning,
+        context: aiResponse.context,
         rawResponse: aiResponse.rawResponse
       });
 

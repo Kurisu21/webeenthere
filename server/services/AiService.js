@@ -89,16 +89,56 @@ RESPONSE FORMAT:
           rawResponse: aiResponse
         };
       } catch (parseError) {
+        console.log('Initial JSON parse failed:', parseError.message);
+        console.log('AI Response:', aiResponse.substring(0, 200) + '...');
+        
         // If JSON parsing fails, try to extract JSON from the response
-        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        // Look for JSON objects that start with { and end with }
+        const jsonMatch = aiResponse.match(/\{[\s\S]*?\}(?=\s*$|\s*[^}\s])/);
         if (jsonMatch) {
-          const parsedResponse = JSON.parse(jsonMatch[0]);
-          return {
-            success: true,
-            elements: parsedResponse.elements || [],
-            suggestions: parsedResponse.suggestions || [],
-            rawResponse: aiResponse
-          };
+          try {
+            const parsedResponse = JSON.parse(jsonMatch[0]);
+            return {
+              success: true,
+              elements: parsedResponse.elements || [],
+              suggestions: parsedResponse.suggestions || [],
+              rawResponse: aiResponse
+            };
+          } catch (secondParseError) {
+            console.log('Second JSON parse failed:', secondParseError.message);
+            console.log('Extracted JSON:', jsonMatch[0].substring(0, 200) + '...');
+          }
+        }
+        
+        // Try alternative approach - find the first complete JSON object
+        const jsonStart = aiResponse.indexOf('{');
+        if (jsonStart !== -1) {
+          let braceCount = 0;
+          let jsonEnd = -1;
+          
+          for (let i = jsonStart; i < aiResponse.length; i++) {
+            if (aiResponse[i] === '{') braceCount++;
+            if (aiResponse[i] === '}') braceCount--;
+            if (braceCount === 0) {
+              jsonEnd = i;
+              break;
+            }
+          }
+          
+          if (jsonEnd !== -1) {
+            try {
+              const jsonString = aiResponse.substring(jsonStart, jsonEnd + 1);
+              const parsedResponse = JSON.parse(jsonString);
+              return {
+                success: true,
+                elements: parsedResponse.elements || [],
+                suggestions: parsedResponse.suggestions || [],
+                rawResponse: aiResponse
+              };
+            } catch (thirdParseError) {
+              console.log('Third JSON parse failed:', thirdParseError.message);
+            }
+          }
         }
         
         // Fallback: return a default structure
@@ -141,19 +181,20 @@ RESPONSE FORMAT:
   async improveWebsiteContent(existingElements, improvementPrompt) {
     try {
       const elementsContext = existingElements.map(el => 
-        `${el.type}: ${el.content} (${el.styles.color}, ${el.styles.fontSize})`
+        `${el.type}: ${el.content}`
       ).join(', ');
 
-      const systemPrompt = `You are a professional website content optimizer. Analyze the existing website elements and suggest improvements.
+      const systemPrompt = `You are an expert website optimizer AI. Your task is to improve existing website elements based on user feedback.
 
-EXISTING ELEMENTS: ${elementsContext}
+CURRENT ELEMENTS: ${elementsContext}
 
 INSTRUCTIONS:
-1. Analyze the current content and styling
-2. Suggest improvements based on the user's request
-3. Return a JSON response with improved elements
-4. Maintain the same structure as input elements
-5. Focus on content quality, readability, and visual appeal
+1. Analyze the existing elements and the improvement request
+2. Generate improved versions of the elements
+3. Maintain the same element structure but enhance content, styling, or positioning
+4. Return a JSON response with improved elements
+5. Each element should have: id, type, content, styles, position, size
+6. Make improvements that enhance user experience and visual appeal
 
 RESPONSE FORMAT:
 {
@@ -221,6 +262,41 @@ RESPONSE FORMAT:
           rawResponse: aiResponse
         };
       } catch (parseError) {
+        console.log('Improvement JSON parse failed:', parseError.message);
+        console.log('AI Response:', aiResponse.substring(0, 200) + '...');
+        
+        // Try to extract JSON from the response
+        const jsonStart = aiResponse.indexOf('{');
+        if (jsonStart !== -1) {
+          let braceCount = 0;
+          let jsonEnd = -1;
+          
+          for (let i = jsonStart; i < aiResponse.length; i++) {
+            if (aiResponse[i] === '{') braceCount++;
+            if (aiResponse[i] === '}') braceCount--;
+            if (braceCount === 0) {
+              jsonEnd = i;
+              break;
+            }
+          }
+          
+          if (jsonEnd !== -1) {
+            try {
+              const jsonString = aiResponse.substring(jsonStart, jsonEnd + 1);
+              const parsedResponse = JSON.parse(jsonString);
+              return {
+                success: true,
+                improvedElements: parsedResponse.improvedElements || existingElements,
+                improvements: parsedResponse.improvements || [],
+                reasoning: parsedResponse.reasoning || '',
+                rawResponse: aiResponse
+              };
+            } catch (secondParseError) {
+              console.log('Second improvement JSON parse failed:', secondParseError.message);
+            }
+          }
+        }
+        
         return {
           success: true,
           improvedElements: existingElements,
@@ -243,40 +319,33 @@ RESPONSE FORMAT:
   async generateSuggestions(websiteType, currentElements) {
     const suggestions = {
       'portfolio': [
-        'Add a professional headshot section',
-        'Create a skills showcase with icons',
-        'Add a testimonials section',
-        'Include a contact form with social links'
+        'Add a project gallery',
+        'Include skills section',
+        'Add client testimonials',
+        'Create contact form'
       ],
       'business': [
-        'Add a services section with pricing',
-        'Create a team member showcase',
-        'Include customer testimonials',
-        'Add a call-to-action button'
+        'Add service descriptions',
+        'Include team members',
+        'Add testimonials',
+        'Create contact information'
       ],
-      'blog': [
-        'Add a featured posts section',
-        'Create a newsletter signup',
-        'Include social media links',
-        'Add a search functionality'
-      ],
-      'ecommerce': [
-        'Add a product showcase',
-        'Create a featured products section',
-        'Include customer reviews',
-        'Add a shopping cart button'
+      'personal': [
+        'Add about section',
+        'Include social links',
+        'Add blog posts',
+        'Create contact form'
       ]
     };
 
     return suggestions[websiteType] || [
-      'Add a hero section with compelling headline',
-      'Include an about section',
-      'Add contact information',
-      'Create a call-to-action section'
+      'Add more content sections',
+      'Include call-to-action buttons',
+      'Add footer with links',
+      'Create navigation menu'
     ];
   }
 }
 
 module.exports = AiService;
-
 
