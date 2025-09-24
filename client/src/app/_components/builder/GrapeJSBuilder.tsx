@@ -2,7 +2,7 @@
 
 import React, { memo } from 'react';
 import dynamic from 'next/dynamic';
-import { Template } from '../_data/templates-simple';
+import { Template } from '../../_data/templates-simple';
 
 // Dynamically import GrapeJS only on client side
 const GrapesJS = dynamic(() => import('./GrapesJSComponent'), {

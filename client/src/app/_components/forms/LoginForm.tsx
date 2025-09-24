@@ -37,8 +37,8 @@ const LoginForm: React.FC = () => {
   return (
     <div className="w-full max-w-md mx-auto">
       {/* Brand title */}
-      <h2 className="text-2xl font-bold text-purple-400 mb-8 text-center">
-        WEBeenThere
+      <h2 className="text-2xl font-bold mb-8 text-center">
+        <span className="bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">WEBeenThere</span>
       </h2>
 
       {/* Login Form */}

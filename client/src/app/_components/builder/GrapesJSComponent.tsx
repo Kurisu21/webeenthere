@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Template } from '../_data/templates-simple';
+import { Template } from '../../_data/templates-simple';
 
 interface GrapesJSComponentProps {
   template?: Template;
@@ -26,8 +26,7 @@ const GrapesJSComponent = ({ template, onSave, onCancel }: GrapesJSComponentProp
         const grapesjs = (await import('grapesjs')).default;
         console.log('✅ GrapeJS loaded');
         
-        // Import CSS
-        await import('grapesjs/dist/css/grapes.min.css');
+        // CSS will be loaded by Next.js
         console.log('✅ CSS loaded');
 
         // Wait a bit for DOM to be ready
@@ -91,10 +90,10 @@ const GrapesJSComponent = ({ template, onSave, onCancel }: GrapesJSComponentProp
                 resizable: {
                   maxDim: 350,
                   minDim: 200,
-                  tc: 0,
-                  cl: 1,
-                  cr: 0,
-                  bc: 0,
+                  tc: false,
+                  cl: true,
+                  cr: false,
+                  bc: false,
                   keyWidth: 'flex-basis',
                 },
               },
@@ -327,7 +326,7 @@ const GrapesJSComponent = ({ template, onSave, onCancel }: GrapesJSComponentProp
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-900">
+    <div className="h-full flex flex-col bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
       {/* Top Toolbar */}
       <div className="bg-gray-800 border-b border-gray-700 p-4 flex items-center justify-between">
         <div className="flex items-center space-x-4">

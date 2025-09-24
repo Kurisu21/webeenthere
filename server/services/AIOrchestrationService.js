@@ -1,9 +1,9 @@
 // services/AIOrchestrationService.js
-const ContextAwareAiService = require('./ContextAwareAiService');
+const AiService = require('./AiService');
 
 class AIOrchestrationService {
   constructor() {
-    this.contextService = new ContextAwareAiService();
+    this.contextService = new AiService();
     this.conversationHistory = new Map(); // Store conversation context per user
   }
 
@@ -261,4 +261,5 @@ class AIOrchestrationService {
 }
 
 module.exports = AIOrchestrationService;
+
 

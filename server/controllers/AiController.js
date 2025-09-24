@@ -1,11 +1,11 @@
 // controllers/AiController.js
-const ContextAwareAiService = require('../services/ContextAwareAiService');
+const AiService = require('../services/AiService');
 const AIOrchestrationService = require('../services/AIOrchestrationService');
 const AiPrompt = require('../models/AiPrompt');
 
 class AiController {
   constructor(db) {
-    this.aiService = new ContextAwareAiService();
+    this.aiService = new AiService();
     this.orchestrationService = new AIOrchestrationService();
     this.aiPromptModel = new AiPrompt(db);
   }

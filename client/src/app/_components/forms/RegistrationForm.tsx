@@ -115,8 +115,7 @@ const RegistrationForm: React.FC = () => {
       {/* Brand and Header */}
       <div className="flex flex-col items-center w-full mb-2 mt-8">
         <div className="text-3xl font-bold text-center">
-          <span className="bg-gradient-to-r from-purple-400 to-gray-300 bg-clip-text text-transparent">WE</span>
-          <span className="text-gray-300">BeenThere</span>
+          <span className="bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">WEBeenThere</span>
         </div>
         <h2 className="text-3xl font-bold text-center mt-4 mb-2 text-purple-300">Sign Up</h2>
         <div className="text-center text-gray-200 mb-6">
