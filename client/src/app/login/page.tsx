@@ -76,18 +76,9 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Back to home button */}
-      <div className="absolute top-6 left-6 z-10">
-        <Link href="/" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Home
-        </Link>
-      </div>
-
-      <main className="flex min-h-screen relative z-10">
-        <div className="flex-1 flex items-center justify-center px-8">
+      <main className="flex flex-col lg:flex-row min-h-screen relative z-10">
+        {/* Left Section - Branding (Hidden on mobile) */}
+        <div className="hidden lg:flex flex-1 items-center justify-center px-8 min-h-screen">
           <div className="text-center max-w-lg">
             <h1 className="text-6xl font-bold mb-6">
               <span className="bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">WEBeenThere</span>
@@ -98,8 +89,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className={`w-1/3 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center px-8 transition-transform duration-700 ease-out ${
-          showLoginForm ? 'translate-x-0' : 'translate-x-full'
+        {/* Right Section - Login Form */}
+        <div className={`w-full lg:w-1/3 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center px-4 md:px-8 py-8 lg:py-0 h-screen lg:min-h-screen transition-transform duration-700 ease-out ${
+          showLoginForm ? 'translate-x-0' : 'translate-x-full lg:translate-x-full'
         }`}>
           <LoginForm />
         </div>

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -36,6 +37,16 @@ const LoginForm: React.FC = () => {
 
   return (
     <div className="w-full max-w-md mx-auto">
+      {/* Back to home button - Mobile only */}
+      <div className="lg:hidden mb-6">
+        <Link href="/" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          <span className="text-sm">Back to Home</span>
+        </Link>
+      </div>
+
       {/* Brand title */}
       <h2 className="text-2xl font-bold mb-8 text-center">
         <span className="bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">WEBeenThere</span>

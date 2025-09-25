@@ -112,6 +112,16 @@ const RegistrationForm: React.FC = () => {
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col items-center">
+      {/* Back to home button - Mobile only */}
+      <div className="lg:hidden mb-6 w-full">
+        <Link href="/" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          <span className="text-sm">Back to Home</span>
+        </Link>
+      </div>
+
       {/* Brand and Header */}
       <div className="flex flex-col items-center w-full mb-2 mt-8">
         <div className="text-3xl font-bold text-center">
