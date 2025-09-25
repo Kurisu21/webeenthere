@@ -1,0 +1,71 @@
+# Alternative render.yaml with more environment variables
+services:
+  # Backend Service
+  - type: web
+    name: webeenthere-backend
+    env: node
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # Database connection (automatically linked to database below)
+      - key: DB_HOST
+        fromDatabase:
+          name: webeenthere-db
+          property: host
+      - key: DB_USER
+        fromDatabase:
+          name: webeenthere-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: webeenthere-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: webeenthere-db
+          property: database
+      # Security
+      - key: JWT_SECRET
+        generateValue: true
+      # API Keys - Choose one option:
+      # Option 1: Set directly in YAML (replace with your actual keys)
+      - key: OPENAI_API_KEY
+        value: "sk-your-openai-api-key-here"
+      # Option 2: Set manually in Render dashboard (comment out above and uncomment below)
+      # - key: OPENAI_API_KEY
+      #   sync: false
+      
+      # Optional: Additional environment variables
+      - key: CORS_ORIGIN
+        value: "https://webeenthere-frontend.onrender.com"
+      - key: LOG_LEVEL
+        value: "info"
+
+  # Frontend Service
+  - type: web
+    name: webeenthere-frontend
+    env: node
+    plan: free
+    buildCommand: cd client && npm install && npm run build
+    startCommand: cd client && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: https://webeenthere-backend.onrender.com
+      # Optional: Additional frontend environment variables
+      - key: NEXT_PUBLIC_APP_NAME
+        value: "Webeenthere"
+      - key: NEXT_PUBLIC_VERSION
+        value: "1.0.0"
+
+databases:
+  - name: webeenthere-db
+    plan: free
+    databaseName: webeenthere
+    user: webeenthere_user

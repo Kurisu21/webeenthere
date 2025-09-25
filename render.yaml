@@ -1,0 +1,54 @@
+services:
+  # Backend Service
+  - type: web
+    name: webeenthere-backend
+    env: node
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_HOST
+        fromDatabase:
+          name: webeenthere-db
+          property: host
+      - key: DB_USER
+        fromDatabase:
+          name: webeenthere-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: webeenthere-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: webeenthere-db
+          property: database
+      - key: JWT_SECRET
+        generateValue: true
+      # Option 1: Set API key directly in YAML (replace with your actual key)
+      - key: OPENAI_API_KEY
+        value: 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
+      # Option 2: Set manually in Render dashboard (comment out above and uncomment below)
+      # - key: OPENAI_API_KEY
+      #   sync: false
+
+  # Frontend Service
+  - type: web
+    name: webeenthere-frontend
+    env: node
+    plan: free
+    buildCommand: cd client && npm install && npm run build
+    startCommand: cd client && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: https://webeenthere-backend.onrender.com
+
+databases:
+  - name: webeenthere-db
+    plan: free
