@@ -88,34 +88,8 @@ const DashboardSidebar = memo(() => {
     `}>
       {/* Header with User Info and Toggle Button */}
       <div className="mb-4 md:mb-8">
-        {!isCollapsed && (
-          <div className="mb-4">
-            {/* User Info */}
-            <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">
-                  {currentUser.name.split(' ').map(n => n[0]).join('')}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-white truncate">
-                  {currentUser.name}
-                </div>
-                <div className="text-xs text-gray-400 truncate">
-                  {currentUser.email}
-                </div>
-              </div>
-            </div>
-            
-            {/* Dashboard Title */}
-            <div className="text-xl md:text-2xl font-bold text-purple-400 text-center hover:animate-bounce transition-all duration-300">
-              Dashboard
-            </div>
-          </div>
-        )}
-        
-        {/* Toggle Button */}
-        <div className="flex justify-center">
+        {/* Close Button - Top Right */}
+        <div className="flex justify-end mb-4">
           <button
             onClick={toggleSidebar}
             className="p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200 flex-shrink-0"
@@ -127,10 +101,19 @@ const DashboardSidebar = memo(() => {
               stroke="currentColor" 
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
+
+        {!isCollapsed && (
+          <div className="mb-4">
+            {/* Dashboard Title */}
+            <div className="text-xl md:text-2xl font-bold text-purple-400 text-center hover:animate-bounce transition-all duration-300">
+              Dashboard
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
@@ -169,17 +152,28 @@ const DashboardSidebar = memo(() => {
         })}
       </nav>
       
-      {/* Bottom decoration */}
+      {/* Bottom User Profile */}
       {!isCollapsed && (
         <div className="mt-auto pt-4 border-t border-gray-700 hidden md:block">
-          <div className="text-center text-gray-400 text-sm flex items-center justify-center gap-1">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-            </svg>
-            WEBeenThere
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-            </svg>
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-3 shadow-lg">
+            <div className="flex items-center space-x-3">
+              {/* Avatar */}
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-sm">
+                  {currentUser.name.split(' ').map(n => n[0]).join('')}
+                </span>
+              </div>
+              
+              {/* User Info */}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-white font-semibold text-sm truncate">
+                  {currentUser.name}
+                </h3>
+                <p className="text-gray-400 text-xs truncate">
+                  {currentUser.email}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}

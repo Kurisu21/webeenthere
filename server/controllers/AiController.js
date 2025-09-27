@@ -1,214 +1,111 @@
 // controllers/AiController.js
 const AiService = require('../services/AiService');
-const AIOrchestrationService = require('../services/AIOrchestrationService');
 const AiPrompt = require('../models/AiPrompt');
 
 class AiController {
   constructor(db) {
     this.aiService = new AiService();
-    this.orchestrationService = new AIOrchestrationService();
     this.aiPromptModel = new AiPrompt(db);
   }
 
-  async generateSection(req, res) {
+  async generateTemplate(req, res) {
     try {
-      const { prompt, websiteContext, userId, elements = [], useOrchestration = false } = req.body;
-
-      if (!prompt) {
-        return res.status(400).json({
-          success: false,
-          error: 'Prompt is required'
-        });
-      }
-
-      let aiResponse;
+      console.log('=== AI TEMPLATE GENERATION REQUEST ===');
+      console.log('Request body received:', req.body);
+      console.log('Request headers:', req.headers);
+      console.log('Request method:', req.method);
+      console.log('Request URL:', req.url);
       
-      // Use orchestration for complex requests or when explicitly requested
-      if (useOrchestration || this.shouldUseOrchestration(prompt)) {
-        aiResponse = await this.orchestrationService.orchestrateComplexRequest(
-          userId || 'anonymous', 
-          prompt, 
-          elements
-        );
-      } else {
-        // Use enhanced prompt with context
-        const enhancedPrompt = this.orchestrationService.enhancePromptWithContext(
-          prompt, 
-          elements, 
-          userId || 'anonymous'
-        );
-        
-        aiResponse = await this.aiService.generateWebsiteSection(
-          enhancedPrompt, 
-          elements, 
-          'generate'
-        );
-      }
+      const { 
+        description, 
+        userId, 
+        websiteType = 'general',
+        style = 'modern',
+        colorScheme = 'blue',
+        includeSections = []
+      } = req.body;
 
-      if (!aiResponse.success) {
-        return res.status(500).json({
-          success: false,
-          error: aiResponse.error || 'Failed to generate AI response'
-        });
-      }
+      console.log('Extracted parameters:', { description, userId, websiteType, style, colorScheme });
 
-      // Save the prompt to database if userId is provided and database is available
-      if (userId && process.env.NODE_ENV !== 'test') {
-        try {
-          await this.aiPromptModel.create({
-            user_id: userId,
-            prompt_type: useOrchestration ? 'orchestrated' : 'section',
-            prompt_text: prompt,
-            response_html: JSON.stringify(aiResponse.elements),
-            used_on_site: false
-          });
-        } catch (dbError) {
-          // Silently skip database save during testing/development
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Skipping database save during development/testing');
-          } else {
-            console.error('Failed to save AI prompt:', dbError);
-          }
-        }
-      }
-
-      res.json({
-        success: true,
-        elements: aiResponse.elements,
-        suggestions: aiResponse.suggestions,
-        reasoning: aiResponse.reasoning,
-        context: aiResponse.context,
-        rawResponse: aiResponse.rawResponse,
-        orchestrated: useOrchestration || this.shouldUseOrchestration(prompt),
-        stepsCompleted: aiResponse.stepsCompleted || 1
-      });
-
-    } catch (error) {
-      console.error('AI Controller Error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
-    }
-  }
-
-  shouldUseOrchestration(prompt) {
-    const orchestrationKeywords = [
-      'complete website', 'full site', 'entire page', 'multiple sections',
-      'navigation', 'footer', 'header', 'multiple pages', 'e-commerce',
-      'portfolio with', 'business website with', 'landing page with',
-      'create everything', 'build complete', 'make a full'
-    ];
-    
-    return orchestrationKeywords.some(keyword => 
-      prompt.toLowerCase().includes(keyword)
-    );
-  }
-
-  async improveContent(req, res) {
-    try {
-      const { existingElements, improvementPrompt, userId } = req.body;
-
-      if (!improvementPrompt || !existingElements) {
+      if (!description) {
+        console.log('ERROR: No description provided');
         return res.status(400).json({
           success: false,
-          error: 'Improvement prompt and existing elements are required'
+          error: 'Website description is required'
         });
       }
 
-      // Generate AI improvements
-      const aiResponse = await this.aiService.improveWebsiteContent(existingElements, improvementPrompt);
+      console.log('Generating template for:', { description, userId, websiteType, style, colorScheme });
 
-      if (!aiResponse.success) {
+      // Generate template using AI service
+      const templateResult = await this.aiService.generateCompleteTemplate({
+        description,
+        websiteType,
+        style,
+        colorScheme,
+        includeSections,
+        userId: userId || 'anonymous'
+      });
+
+      if (!templateResult.success) {
         return res.status(500).json({
           success: false,
-          error: aiResponse.error || 'Failed to generate AI improvements'
+          error: templateResult.error || 'Failed to generate template'
         });
       }
 
-      // Save the prompt to database if userId is provided and database is available
-      if (userId && process.env.NODE_ENV !== 'test') {
-        try {
-          await this.aiPromptModel.create({
-            user_id: userId,
-            prompt_type: 'improvement',
-            prompt_text: improvementPrompt,
-            response_html: JSON.stringify(aiResponse.improvedElements),
-            used_on_site: false
-          });
-        } catch (dbError) {
-          // Silently skip database save during testing/development
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Skipping database save during development/testing');
-          } else {
-            console.error('Failed to save AI prompt:', dbError);
-          }
-        }
-      }
-
-      res.json({
-        success: true,
-        improvedElements: aiResponse.improvedElements,
-        improvements: aiResponse.improvements,
-        reasoning: aiResponse.reasoning,
-        context: aiResponse.context,
-        rawResponse: aiResponse.rawResponse
+      // Save the generated template to database
+      const savedTemplate = await this.saveGeneratedTemplate({
+        ...templateResult.template,
+        userId: userId || 'anonymous',
+        originalDescription: description
       });
 
+      const response = {
+        success: true,
+        template: savedTemplate,
+        reasoning: templateResult.reasoning,
+        suggestions: templateResult.suggestions || []
+      };
+      
+      console.log('Sending response:', response);
+      res.json(response);
+
     } catch (error) {
-      console.error('AI Controller Error:', error);
+      console.error('Generate Template Error:', error);
       res.status(500).json({
         success: false,
-        error: 'Internal server error'
+        error: 'Failed to generate template'
       });
     }
   }
 
-  async getSuggestions(req, res) {
+  async saveGeneratedTemplate(templateData) {
     try {
-      const { websiteType, currentElements } = req.query;
+      // Create a unique ID for the generated template
+      const templateId = `generated_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const template = {
+        id: templateId,
+        name: templateData.name || 'AI Generated Template',
+        description: templateData.description || 'Generated by AI',
+        category: templateData.category || 'ai-generated',
+        image: templateData.image || '/api/placeholder/400/300',
+        elements: templateData.elements || [],
+        css_base: templateData.css_base || '',
+        is_featured: false,
+        tags: ['ai-generated', ...(templateData.tags || [])],
+        created_at: new Date(),
+        user_id: templateData.userId,
+        original_description: templateData.originalDescription
+      };
 
-      const suggestions = await this.aiService.generateSuggestions(websiteType, currentElements);
-
-      res.json({
-        success: true,
-        suggestions
-      });
-
+      // For now, return the template object
+      // In a real implementation, you'd save this to the database
+      return template;
     } catch (error) {
-      console.error('AI Controller Error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
-    }
-  }
-
-  async getUserPrompts(req, res) {
-    try {
-      const { userId } = req.params;
-
-      if (!userId) {
-        return res.status(400).json({
-          success: false,
-          error: 'User ID is required'
-        });
-      }
-
-      // This would need to be implemented in the AiPrompt model
-      const prompts = await this.aiPromptModel.findByUserId(userId);
-
-      res.json({
-        success: true,
-        prompts
-      });
-
-    } catch (error) {
-      console.error('AI Controller Error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      console.error('Save Template Error:', error);
+      throw error;
     }
   }
 }

@@ -1,13 +1,15 @@
 'use client';
 
 import React, { memo } from 'react';
+import { useSidebar } from './SidebarContext';
 
 const DashboardHeader = memo(() => {
+  const { isCollapsed } = useSidebar();
   return (
-    <header className="bg-gray-900 px-4 md:px-8 py-3 md:py-4 relative z-10">
-      <div className="flex justify-between items-center">
+    <header className={`bg-gray-900 px-4 md:px-8 py-3 md:py-4 relative z-10 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
+      <div className="flex justify-center items-center relative">
         {/* Left side - Mobile menu button */}
-        <div className="flex items-center gap-2">
+        <div className="absolute left-0 flex items-center gap-2">
           <button className="md:hidden text-white hover:text-gray-300 transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -21,7 +23,7 @@ const DashboardHeader = memo(() => {
         </div>
 
         {/* Right side - Social icons */}
-        <div className="flex items-center space-x-2 md:space-x-4">
+        <div className="absolute right-0 flex items-center space-x-2 md:space-x-4">
           {/* Social Icons - Hidden on mobile, shown on desktop */}
           <div className="hidden md:flex space-x-3">
             <a href="#" className="text-gray-300 hover:text-white transition-all duration-300 transform hover:scale-110 hover:rotate-12">

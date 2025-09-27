@@ -43,7 +43,7 @@ export const enhancedTemplates: EnhancedTemplate[] = [
     name: 'Test Template',
     description: 'Simple test template for debugging',
     category: 'portfolio',
-    image: '🧪',
+    image: '',
     previewImage: '/test.jpg',
     is_featured: true,
     tags: ['test', 'simple', 'debug'],
@@ -88,7 +88,7 @@ export const enhancedTemplates: EnhancedTemplate[] = [
     name: 'Modern Portfolio',
     description: 'Clean and minimal design perfect for showcasing creative work',
     category: 'portfolio',
-    image: '🎨',
+    image: '',
     previewImage: '/templates/portfolio-modern-preview.jpg',
     is_featured: true,
     tags: ['modern', 'minimal', 'creative', 'responsive'],
@@ -360,7 +360,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; line
     name: 'Corporate Business',
     description: 'Professional design for corporate websites',
     category: 'business',
-    image: '🏢',
+    image: '',
     previewImage: '/templates/business-corporate-preview.jpg',
     is_featured: true,
     tags: ['corporate', 'professional', 'business', 'clean'],
@@ -595,7 +595,7 @@ body { font-family: 'Roboto', sans-serif; line-height: 1.6; color: #333; }
     name: 'SaaS Landing',
     description: 'Modern landing page for SaaS products',
     category: 'landing',
-    image: '💻',
+    image: '',
     previewImage: '/templates/saas-landing-preview.jpg',
     is_featured: true,
     tags: ['saas', 'modern', 'conversion', 'tech'],
@@ -832,11 +832,11 @@ body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #333; }
 ];
 
 export const categories = [
-  { id: 'portfolio', name: 'Portfolio', icon: '🎨' },
-  { id: 'business', name: 'Business', icon: '💼' },
-  { id: 'personal', name: 'Personal', icon: '👤' },
-  { id: 'creative', name: 'Creative', icon: '✨' },
-  { id: 'landing', name: 'Landing Page', icon: '🚀' }
+  { id: 'portfolio', name: 'Portfolio', icon: '' },
+  { id: 'business', name: 'Business', icon: '' },
+  { id: 'personal', name: 'Personal', icon: '' },
+  { id: 'creative', name: 'Creative', icon: '' },
+  { id: 'landing', name: 'Landing Page', icon: '' }
 ];
 
 export const getTemplatesByCategory = (category: string) => {

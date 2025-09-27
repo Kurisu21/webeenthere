@@ -8,7 +8,6 @@ interface TemplatePreviewProps {
     description: string;
     category: string;
     image: string;
-    html_base: string;
     css_base: string;
     is_featured: boolean;
   };
@@ -39,7 +38,7 @@ const TemplatePreview: React.FC<TemplatePreviewProps> = ({ template, onClick }) 
   return (
     <div style={previewStyle} onClick={onClick}>
       <div style={{ fontSize: '24px', marginBottom: '8px' }}>
-        {getTemplateIcon(template.category)}
+        Template
       </div>
       <div style={{ fontSize: '16px', marginBottom: '4px' }}>
         {template.name}
@@ -59,7 +58,7 @@ const TemplatePreview: React.FC<TemplatePreviewProps> = ({ template, onClick }) 
           fontSize: '10px',
           fontWeight: 'bold'
         }}>
-          ⭐ Featured
+          Featured
         </div>
       )}
     </div>
@@ -76,17 +75,6 @@ const getTemplateBackground = (category: string): string => {
     landing: 'linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%)'
   };
   return backgrounds[category] || 'linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)';
-};
-
-const getTemplateIcon = (category: string): string => {
-  const icons: { [key: string]: string } = {
-    portfolio: '🎨',
-    business: '💼',
-    personal: '👤',
-    creative: '✨',
-    landing: '🚀'
-  };
-  return icons[category] || '📄';
 };
 
 export default TemplatePreview;
