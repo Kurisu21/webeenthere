@@ -5,9 +5,29 @@ const app = express();
 
 // Middleware
 app.use(express.json());
+
+// CORS configuration for both local development and production
+const allowedOrigins = [
+  'http://localhost:3000',           // Local development frontend
+  'https://webeenthere-1.onrender.com', // Production frontend
+  'https://webeenthere.onrender.com'     // Production backend (for testing)
+];
+
 app.use(cors({
-  origin: 'http://localhost:3000', // Frontend URL
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Import routes

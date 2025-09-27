@@ -8,6 +8,7 @@ import { convertTemplateElementsToElements } from './utils/templateConverter';
 import { useElementManagement } from './hooks/useElementManagement';
 import { useAIServices } from './hooks/useAIServices';
 import { handlePreview, handleSaveWebsite } from './utils/websiteUtils';
+import { API_ENDPOINTS, apiPost, logApiConfig } from '../../../lib/apiConfig';
 import { BuilderToolbar } from './components/BuilderToolbar';
 import { ElementsPanel } from './components/ElementsPanel';
 import { EnhancedPropertiesPanel } from './components/EnhancedPropertiesPanel';
@@ -235,31 +236,14 @@ const WebsiteBuilder: React.FC<WebsiteBuilderProps> = ({ currentWebsite, website
       console.log('Request body:', requestBody);
       console.log('Request body JSON:', JSON.stringify(requestBody));
 
-      console.log('=== SENDING FETCH REQUEST ===');
-      console.log('URL: http://localhost:5000/api/ai/generate-template');
+      console.log('=== SENDING API REQUEST ===');
+      logApiConfig();
       console.log('Method: POST');
       console.log('Headers: Content-Type: application/json');
       
-      const response = await fetch('http://localhost:5000/api/ai/generate-template', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      });
+      const data = await apiPost(API_ENDPOINTS.GENERATE_TEMPLATE, requestBody);
 
-      console.log('=== FETCH RESPONSE RECEIVED ===');
-      console.log('API response status:', response.status);
-      console.log('API response statusText:', response.statusText);
-      console.log('API response headers:', response.headers);
-      console.log('API response ok:', response.ok);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      console.log('=== PARSING RESPONSE JSON ===');
-      const data = await response.json();
+      console.log('=== API RESPONSE RECEIVED ===');
       console.log('API response data:', data);
       console.log('API response data type:', typeof data);
       console.log('API response data success:', data.success);

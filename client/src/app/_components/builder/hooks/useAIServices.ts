@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Element } from '../elements';
+import { API_ENDPOINTS, apiPost, logApiConfig } from '../../../../lib/apiConfig';
 
 export const useAIServices = () => {
   const [aiPrompt, setAiPrompt] = useState('');
@@ -13,19 +14,14 @@ export const useAIServices = () => {
     
     setIsAiLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/ai/generate-section', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: aiPrompt,
-          elements: elements, // Send full elements array for context analysis
-          userId: 1 // TODO: Get from auth context
-        })
+      // Log API configuration for debugging
+      logApiConfig();
+      
+      const data = await apiPost(API_ENDPOINTS.GENERATE_SECTION, {
+        prompt: aiPrompt,
+        elements: elements, // Send full elements array for context analysis
+        userId: 1 // TODO: Get from auth context
       });
-
-      const data = await response.json();
       
       if (data.success && data.elements.length > 0) {
         // Add AI-generated elements to the canvas
@@ -68,19 +64,14 @@ export const useAIServices = () => {
 
     setIsAiLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/ai/improve-content', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          existingElements: elements, // Send all elements for better context
-          improvementPrompt: aiPrompt || 'Improve this element',
-          userId: 1 // TODO: Get from auth context
-        })
+      // Log API configuration for debugging
+      logApiConfig();
+      
+      const data = await apiPost(API_ENDPOINTS.GENERATE_SECTION, {
+        prompt: `Improve this element: ${aiPrompt || 'Improve this element'}`,
+        elements: elements, // Send all elements for better context
+        userId: 1 // TODO: Get from auth context
       });
-
-      const data = await response.json();
       
       if (data.success && data.improvedElements.length > 0) {
         // Find the improved version of the selected element

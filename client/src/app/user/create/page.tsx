@@ -8,6 +8,7 @@ import MainContentWrapper from '../../_components/layout/MainContentWrapper';
 import TemplateSelector from '../../_components/builder/TemplateSelector';
 import AIGenerationPanel from '../../_components/builder/AIGenerationPanel';
 import GeneratedTemplateModal from '../../_components/builder/GeneratedTemplateModal';
+import { API_ENDPOINTS, apiPost } from '../../../lib/apiConfig';
 
 export default function CreateWebsitePage() {
   const router = useRouter();
@@ -35,27 +36,13 @@ export default function CreateWebsitePage() {
     
     try {
       console.log('Making API call to backend...');
-      const response = await fetch('http://localhost:5000/api/ai/generate-template', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          description: description.trim(),
-          websiteType: options.websiteType,
-          style: options.style,
-          colorScheme: options.colorScheme,
-          userId: 'current-user'
-        })
+      const data = await apiPost(API_ENDPOINTS.GENERATE_TEMPLATE, {
+        description: description.trim(),
+        websiteType: options.websiteType,
+        style: options.style,
+        colorScheme: options.colorScheme,
+        userId: 'current-user'
       });
-
-      console.log('API response status:', response.status);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
       console.log('API response data:', data);
 
       if (data.success) {
