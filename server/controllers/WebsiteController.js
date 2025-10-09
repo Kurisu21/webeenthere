@@ -99,13 +99,23 @@ class WebsiteController {
         }
       }
 
+      // Validate template_id - only allow numeric IDs that exist in templates table
+      let validTemplateId = null;
+      if (template_id && !isNaN(template_id)) {
+        // Check if template exists
+        const [templates] = await this.db.execute('SELECT id FROM templates WHERE id = ? AND is_active = 1', [template_id]);
+        if (templates.length > 0) {
+          validTemplateId = template_id;
+        }
+      }
+
       const websiteData = {
         user_id: userId,
         title,
         slug: websiteSlug,
         html_content: htmlContent,
         css_content: cssContent,
-        template_id: template_id || null,
+        template_id: validTemplateId,
         is_published: false,
         is_active: true
       };

@@ -1,0 +1,332 @@
+/* GrapesJS Custom Styles */
+
+/* Override GrapesJS default styles */
+.gjs-editor {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Panel styles */
+.panel__right {
+  background: #1f2937 !important;
+  border-left: 1px solid #374151 !important;
+}
+
+.panel__switcher {
+  background: #1f2937 !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+.panel__switcher .gjs-pn-btn {
+  background: transparent !important;
+  color: #9ca3af !important;
+  border: none !important;
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+}
+
+.panel__switcher .gjs-pn-btn.gjs-pn-active {
+  background: #3b82f6 !important;
+  color: white !important;
+}
+
+/* Block manager styles */
+.blocks-container {
+  background: #1f2937 !important;
+  border-right: 1px solid #374151 !important;
+}
+
+.gjs-blocks-cs {
+  background: #1f2937 !important;
+}
+
+.gjs-block {
+  background: #374151 !important;
+  border: 1px solid #4b5563 !important;
+  color: #e5e7eb !important;
+  margin: 4px !important;
+  padding: 8px !important;
+  border-radius: 6px !important;
+  transition: all 0.2s !important;
+}
+
+.gjs-block:hover {
+  background: #4b5563 !important;
+  border-color: #6b7280 !important;
+}
+
+.gjs-block.gjs-block-hover {
+  background: #3b82f6 !important;
+  border-color: #2563eb !important;
+}
+
+/* Canvas styles */
+.gjs-cv-canvas {
+  background: #f9fafb !important;
+}
+
+.gjs-frame {
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Layer manager styles */
+.layers-container {
+  background: #1f2937 !important;
+}
+
+.gjs-layers {
+  background: #1f2937 !important;
+}
+
+.gjs-layer {
+  background: #374151 !important;
+  border: 1px solid #4b5563 !important;
+  color: #e5e7eb !important;
+  margin: 2px 0 !important;
+  padding: 6px 8px !important;
+  border-radius: 4px !important;
+}
+
+.gjs-layer:hover {
+  background: #4b5563 !important;
+}
+
+.gjs-layer.gjs-layer-selected {
+  background: #3b82f6 !important;
+  border-color: #2563eb !important;
+}
+
+/* Trait manager styles */
+.traits-container {
+  background: #1f2937 !important;
+}
+
+.gjs-trt-trait {
+  background: #374151 !important;
+  border: 1px solid #4b5563 !important;
+  color: #e5e7eb !important;
+  margin: 2px 0 !important;
+  padding: 8px !important;
+  border-radius: 4px !important;
+}
+
+.gjs-trt-trait input,
+.gjs-trt-trait select,
+.gjs-trt-trait textarea {
+  background: #1f2937 !important;
+  border: 1px solid #4b5563 !important;
+  color: #e5e7eb !important;
+  padding: 6px 8px !important;
+  border-radius: 4px !important;
+}
+
+.gjs-trt-trait input:focus,
+.gjs-trt-trait select:focus,
+.gjs-trt-trait textarea:focus {
+  border-color: #3b82f6 !important;
+  outline: none !important;
+}
+
+/* Style manager styles */
+.styles-container {
+  background: #1f2937 !important;
+}
+
+.gjs-sm-sector {
+  background: #374151 !important;
+  border: 1px solid #4b5563 !important;
+  margin: 2px 0 !important;
+  border-radius: 4px !important;
+}
+
+.gjs-sm-title {
+  background: #4b5563 !important;
+  color: #e5e7eb !important;
+  padding: 8px !important;
+  font-weight: 600 !important;
+}
+
+.gjs-sm-properties {
+  padding: 8px !important;
+}
+
+.gjs-sm-property {
+  margin: 4px 0 !important;
+}
+
+.gjs-sm-property input,
+.gjs-sm-property select {
+  background: #1f2937 !important;
+  border: 1px solid #4b5563 !important;
+  color: #e5e7eb !important;
+  padding: 4px 6px !important;
+  border-radius: 3px !important;
+  font-size: 12px !important;
+}
+
+.gjs-sm-property input:focus,
+.gjs-sm-property select:focus {
+  border-color: #3b82f6 !important;
+  outline: none !important;
+}
+
+/* Asset manager styles */
+.gjs-am-assets {
+  background: #1f2937 !important;
+}
+
+.gjs-am-asset {
+  background: #374151 !important;
+  border: 1px solid #4b5563 !important;
+  margin: 4px !important;
+  border-radius: 4px !important;
+}
+
+.gjs-am-asset:hover {
+  background: #4b5563 !important;
+}
+
+/* Component styles */
+.gjs-comp-selected {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px !important;
+}
+
+.gjs-comp-hover {
+  outline: 1px solid #6b7280 !important;
+  outline-offset: 1px !important;
+}
+
+/* Toolbar styles */
+.gjs-toolbar {
+  background: #1f2937 !important;
+  border: 1px solid #374151 !important;
+  border-radius: 6px !important;
+  padding: 4px !important;
+}
+
+.gjs-toolbar-item {
+  background: #374151 !important;
+  border: 1px solid #4b5563 !important;
+  color: #e5e7eb !important;
+  margin: 2px !important;
+  padding: 6px 8px !important;
+  border-radius: 4px !important;
+  transition: all 0.2s !important;
+}
+
+.gjs-toolbar-item:hover {
+  background: #4b5563 !important;
+  border-color: #6b7280 !important;
+}
+
+.gjs-toolbar-item.gjs-toolbar-item-active {
+  background: #3b82f6 !important;
+  border-color: #2563eb !important;
+}
+
+/* Modal styles */
+.gjs-mdl-dialog {
+  background: #1f2937 !important;
+  border: 1px solid #374151 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+.gjs-mdl-dialog .gjs-mdl-header {
+  background: #374151 !important;
+  border-bottom: 1px solid #4b5563 !important;
+  color: #e5e7eb !important;
+  padding: 16px !important;
+}
+
+.gjs-mdl-dialog .gjs-mdl-content {
+  background: #1f2937 !important;
+  color: #e5e7eb !important;
+  padding: 16px !important;
+}
+
+.gjs-mdl-dialog input,
+.gjs-mdl-dialog select,
+.gjs-mdl-dialog textarea {
+  background: #374151 !important;
+  border: 1px solid #4b5563 !important;
+  color: #e5e7eb !important;
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+}
+
+.gjs-mdl-dialog input:focus,
+.gjs-mdl-dialog select:focus,
+.gjs-mdl-dialog textarea:focus {
+  border-color: #3b82f6 !important;
+  outline: none !important;
+}
+
+.gjs-mdl-dialog .gjs-mdl-footer {
+  background: #374151 !important;
+  border-top: 1px solid #4b5563 !important;
+  padding: 16px !important;
+}
+
+.gjs-mdl-dialog .gjs-btn {
+  background: #3b82f6 !important;
+  border: 1px solid #2563eb !important;
+  color: white !important;
+  padding: 8px 16px !important;
+  border-radius: 4px !important;
+  margin: 0 4px !important;
+  transition: all 0.2s !important;
+}
+
+.gjs-mdl-dialog .gjs-btn:hover {
+  background: #2563eb !important;
+}
+
+.gjs-mdl-dialog .gjs-btn.gjs-btn-secondary {
+  background: #6b7280 !important;
+  border-color: #4b5563 !important;
+}
+
+.gjs-mdl-dialog .gjs-btn.gjs-btn-secondary:hover {
+  background: #4b5563 !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .gjs-editor {
+    font-size: 12px !important;
+  }
+  
+  .gjs-block {
+    padding: 6px !important;
+    font-size: 11px !important;
+  }
+  
+  .gjs-layer {
+    padding: 4px 6px !important;
+    font-size: 11px !important;
+  }
+}
+
+/* Custom scrollbar */
+.gjs-editor ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.gjs-editor ::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+.gjs-editor ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+.gjs-editor ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+

@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import DashboardHeader from '../../_components/layout/DashboardHeader';
 import DashboardSidebar from '../../_components/layout/DashboardSidebar';
 import MainContentWrapper from '../../_components/layout/MainContentWrapper';
-import TemplateSelector from '../../_components/builder/TemplateSelector';
-import AIGenerationPanel from '../../_components/builder/AIGenerationPanel';
-import GeneratedTemplateModal from '../../_components/builder/GeneratedTemplateModal';
+import TemplateSelector from '../../_components/builder-legacy/TemplateSelector';
+import AIGenerationPanel from '../../_components/builder-legacy/AIGenerationPanel';
+import GeneratedTemplateModal from '../../_components/builder-legacy/GeneratedTemplateModal';
 import { API_ENDPOINTS, apiPost } from '../../../lib/apiConfig';
 
 export default function CreateWebsitePage() {

@@ -1,12 +1,11 @@
 'use client';
 
 import React from 'react';
-import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 // Dynamically import the GrapesJS builder to avoid SSR issues
-const GrapesJSBuilder = dynamic(
-  () => import('../../../_components/builder/GrapesJSBuilder'),
+const GrapesJSBuilderClient = dynamic(
+  () => import('./GrapesJSBuilderClient'),
   {
     ssr: false,
     loading: () => (
@@ -20,20 +19,21 @@ const GrapesJSBuilder = dynamic(
   }
 );
 
-export default function BuildWebsitePage() {
-  const params = useParams();
-  const websiteId = params.id as string;
-
-  return (
-    <div className="fixed inset-0 bg-gray-900 z-50">
-      <GrapesJSBuilder websiteId={websiteId} />
-    </div>
-  );
+interface GrapesJSBuilderProps {
+  websiteId?: string;
+  initialTemplate?: string;
 }
 
+const GrapesJSBuilder: React.FC<GrapesJSBuilderProps> = ({ 
+  websiteId, 
+  initialTemplate 
+}) => {
+  return (
+    <GrapesJSBuilderClient 
+      websiteId={websiteId} 
+      initialTemplate={initialTemplate} 
+    />
+  );
+};
 
-
-
-
-
-
+export default GrapesJSBuilder;

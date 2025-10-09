@@ -39,7 +39,7 @@ export interface EnhancedTemplate {
 export const enhancedTemplates: EnhancedTemplate[] = [
   // Test Template (for debugging)
   {
-    id: 'test-template',
+    id: '1',
     name: 'Test Template',
     description: 'Simple test template for debugging',
     category: 'portfolio',
@@ -84,7 +84,7 @@ export const enhancedTemplates: EnhancedTemplate[] = [
 
   // Portfolio Templates
   {
-    id: 'portfolio-modern',
+    id: '2',
     name: 'Modern Portfolio',
     description: 'Clean and minimal design perfect for showcasing creative work',
     category: 'portfolio',
@@ -356,7 +356,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; line
 
   // Business Template
   {
-    id: 'business-corporate',
+    id: '3',
     name: 'Corporate Business',
     description: 'Professional design for corporate websites',
     category: 'business',
@@ -591,7 +591,7 @@ body { font-family: 'Roboto', sans-serif; line-height: 1.6; color: #333; }
 
   // Landing Page Template
   {
-    id: 'landing-saas',
+    id: '4',
     name: 'SaaS Landing',
     description: 'Modern landing page for SaaS products',
     category: 'landing',
