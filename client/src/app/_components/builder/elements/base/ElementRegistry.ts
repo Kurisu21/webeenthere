@@ -18,6 +18,14 @@ import ContactElement from '../forms/ContactElement';
 import AboutElement from '../sections/AboutElement';
 import GalleryElement from '../sections/GalleryElement';
 import SocialElement from '../sections/SocialElement';
+import NavigationElement from '../sections/NavigationElement';
+import ServicesElement from '../sections/ServicesElement';
+import ProjectsElement from '../sections/ProjectsElement';
+import StatsElement from '../sections/StatsElement';
+import FooterElement from '../sections/FooterElement';
+import SectionElement from '../sections/SectionElement';
+import WebsiteElement from '../custom/WebsiteElement';
+import InlineEditableWebsite from '../custom/InlineEditableWebsite';
 
 // Element configurations
 const elementConfigs: Record<string, ElementConfig> = {
@@ -308,6 +316,125 @@ const elementConfigs: Record<string, ElementConfig> = {
     defaultSize: { width: 200, height: 50 },
     icon: 'L',
     description: 'Social media links'
+  },
+  navigation: {
+    type: 'navigation',
+    name: 'Navigation',
+    category: 'sections',
+    defaultContent: 'Navigation Bar',
+    defaultStyles: {
+      backgroundColor: '#2c3e50',
+      color: 'white',
+      padding: '20px 40px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    },
+    defaultSize: { width: 1200, height: 80 },
+    icon: '🧭',
+    description: 'Navigation bar with logo and links'
+  },
+  services: {
+    type: 'services',
+    name: 'Services',
+    category: 'sections',
+    defaultContent: 'Our Services',
+    defaultStyles: {
+      backgroundColor: '#f8f9fa',
+      padding: '60px 40px',
+      textAlign: 'center'
+    },
+    defaultSize: { width: 1200, height: 500 },
+    icon: '⚙️',
+    description: 'Services showcase section'
+  },
+  projects: {
+    type: 'projects',
+    name: 'Projects',
+    category: 'sections',
+    defaultContent: 'My Projects',
+    defaultStyles: {
+      backgroundColor: 'white',
+      padding: '60px 40px',
+      textAlign: 'center'
+    },
+    defaultSize: { width: 1200, height: 600 },
+    icon: '💼',
+    description: 'Projects portfolio section'
+  },
+  stats: {
+    type: 'stats',
+    name: 'Statistics',
+    category: 'sections',
+    defaultContent: 'Our Statistics',
+    defaultStyles: {
+      backgroundColor: '#2c3e50',
+      color: 'white',
+      padding: '60px 40px',
+      textAlign: 'center'
+    },
+    defaultSize: { width: 1200, height: 400 },
+    icon: '📊',
+    description: 'Statistics and numbers section'
+  },
+  footer: {
+    type: 'footer',
+    name: 'Footer',
+    category: 'sections',
+    defaultContent: 'Company Name',
+    defaultStyles: {
+      backgroundColor: '#34495e',
+      color: 'white',
+      padding: '40px'
+    },
+    defaultSize: { width: 1200, height: 300 },
+    icon: '🦶',
+    description: 'Website footer section'
+  },
+  section: {
+    type: 'section',
+    name: 'Section',
+    category: 'sections',
+    defaultContent: 'Section Title',
+    defaultStyles: {
+      backgroundColor: 'white',
+      padding: '40px',
+      textAlign: 'center',
+      border: '1px solid #e9ecef',
+      borderRadius: '8px'
+    },
+    defaultSize: { width: 1200, height: 300 },
+    icon: '📄',
+    description: 'Generic content section'
+  },
+  website: {
+    type: 'website',
+    name: 'Website Content',
+    category: 'custom',
+    defaultContent: '<div>Website content will be loaded here</div>',
+    defaultStyles: {
+      width: '100%',
+      height: '100%',
+      overflow: 'auto'
+    },
+    defaultSize: { width: 1200, height: 800 },
+    icon: '🌐',
+    description: 'Full website content from database'
+  },
+  'inline-editable-website': {
+    type: 'inline-editable-website',
+    name: 'Editable Website',
+    category: 'custom',
+    defaultContent: '<div>Editable website content</div>',
+    defaultStyles: {
+      width: '100%',
+      height: '100%',
+      overflow: 'auto',
+      position: 'relative'
+    },
+    defaultSize: { width: 1200, height: 800 },
+    icon: '✏️',
+    description: 'Website with inline editing capabilities'
   }
 };
 
@@ -329,7 +456,15 @@ const elementRenderers: Record<string, React.ComponentType<ElementRendererProps>
   contact: ContactElement,
   about: AboutElement,
   gallery: GalleryElement,
-  social: SocialElement
+  social: SocialElement,
+  navigation: NavigationElement,
+  services: ServicesElement,
+  projects: ProjectsElement,
+  stats: StatsElement,
+  footer: FooterElement,
+  section: SectionElement,
+  website: WebsiteElement,
+  'inline-editable-website': InlineEditableWebsite
 };
 
 // Element factory implementation

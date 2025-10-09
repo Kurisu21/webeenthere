@@ -1,8 +1,30 @@
 import { Element } from '../elements';
 import { EnhancedTemplate } from '../../../_data/enhanced-templates';
+import { WebsiteSectionParser } from './websiteSectionParser';
+import { API_ENDPOINTS, apiPost, apiPut } from '../../../../lib/apiConfig';
 
 export const generateHTML = (elements: Element[]): string => {
+  // Check if we have a single website element with existing HTML
+  const websiteElement = elements.find(el => el.type === 'website');
+  if (websiteElement && websiteElement.content.includes('<')) {
+    // Use the existing HTML content directly
+    return websiteElement.content;
+  }
+  
+  // Check if we have section-based elements
+  const hasSections = elements.some(el => ['hero', 'navigation', 'about', 'gallery', 'services', 'projects', 'footer', 'stats', 'section'].includes(el.type));
+  
+  if (hasSections) {
+    // Use section parser for structured HTML generation
+    return WebsiteSectionParser.sectionsToHTML(elements);
+  }
+  
   return elements.map(element => {
+    // Handle website element specially - return the raw HTML content
+    if (element.type === 'website') {
+      return element.content;
+    }
+    
     const buttonHtml = `<button style="width: 100%; height: 100%; border: none; cursor: pointer;">${element.content}</button>`;
     const imageHtml = `<img src="${element.imageUrl || 'https://via.placeholder.com/300x200'}" alt="${element.content}" style="width: 100%; height: 100%; object-fit: cover;" />`;
     const defaultHtml = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">${element.content}</div>`;
@@ -19,8 +41,21 @@ export const generateHTML = (elements: Element[]): string => {
 };
 
 export const generateCSS = (elements: Element[], selectedTemplate?: EnhancedTemplate | null): string => {
+  // Check if we have a single website element with existing CSS
+  const websiteElement = elements.find(el => el.type === 'website');
+  if (websiteElement && (websiteElement as any).cssContent) {
+    // Use the existing CSS content directly
+    return (websiteElement as any).cssContent;
+  }
+  
   const templateCSS = selectedTemplate?.css_base ? selectedTemplate.css_base : '';
-  const elementsCSS = elements.map(element => `
+  const elementsCSS = elements.map(element => {
+    // Handle website element specially - return the raw CSS content
+    if (element.type === 'website') {
+      return (element as any).cssContent || '';
+    }
+    
+    return `
     .element-${element.id} {
       color: ${element.styles.color || '#333333'};
       font-size: ${element.styles.fontSize || '16px'};
@@ -66,7 +101,8 @@ export const generateCSS = (elements: Element[], selectedTemplate?: EnhancedTemp
         ${element.interaction.hover.styles ? Object.entries(element.interaction.hover.styles).map(([key, value]) => `${key}: ${value};`).join(' ') : ''}
       }
     ` : ''}
-  `).join('');
+  `;
+  }).join('');
   
   return templateCSS + '\n' + elementsCSS;
 };
@@ -110,7 +146,8 @@ export const handleSaveWebsite = async (
   setWebsiteTitle: (title: string) => void,
   setWebsiteSlug: (slug: string) => void,
   setElements: (elements: Element[]) => void,
-  setSelectedElement: (element: Element | null) => void
+  setSelectedElement: (element: Element | null) => void,
+  websiteId?: string
 ) => {
   setIsCreating(true);
   try {
@@ -127,15 +164,27 @@ export const handleSaveWebsite = async (
     };
 
     console.log('Saving website:', websiteData);
-    alert('Website saved successfully! (Demo mode)');
     
-    // Reset form
-    setCurrentStep('template-selection');
-    setSelectedTemplate(null);
-    setWebsiteTitle('');
-    setWebsiteSlug('');
-    setElements([]);
-    setSelectedElement(null);
+    let response;
+    if (websiteId) {
+      // Update existing website
+      response = await apiPut(`${API_ENDPOINTS.WEBSITES}/${websiteId}`, websiteData);
+    } else {
+      // Create new website
+      response = await apiPost(API_ENDPOINTS.WEBSITES, websiteData);
+    }
+    
+    if (response.success) {
+      alert('Website saved successfully!');
+      
+      if (!websiteId) {
+        // Redirect to edit the newly created website
+        window.location.href = `/user/build/${response.data.id}`;
+      }
+    } else {
+      alert('Error saving website: ' + response.message);
+    }
+    
   } catch (error) {
     console.error('Error saving website:', error);
     alert('Error saving website. Please try again.');
@@ -143,6 +192,10 @@ export const handleSaveWebsite = async (
     setIsCreating(false);
   }
 };
+
+
+
+
 
 
 

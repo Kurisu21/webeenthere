@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { SidebarProvider } from '../_components/layout/SidebarContext';
+import { AuthGuard } from '../_components/auth/AuthGuard';
 
 export default function UserLayout({
   children,
@@ -9,9 +10,11 @@ export default function UserLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
-      {children}
-    </SidebarProvider>
+    <AuthGuard>
+      <SidebarProvider>
+        {children}
+      </SidebarProvider>
+    </AuthGuard>
   );
 }
 

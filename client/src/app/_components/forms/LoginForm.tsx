@@ -3,14 +3,19 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { API_ENDPOINTS, apiPost } from '@/lib/apiConfig';
+import { useAuth } from '../auth/AuthContext';
 
 const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
+
+
   const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -21,15 +26,38 @@ const LoginForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // TODO: Replace with actual API call
-      // For now, simulate login success
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Attempting login with:', { email, password: '***' });
+      console.log('API endpoint:', `${API_ENDPOINTS.USERS}/login`);
       
-      // Redirect to dashboard
-      router.push('/user');
-    } catch (error) {
+      const response = await apiPost(`${API_ENDPOINTS.USERS}/login`, {
+        email: email,
+        password: password,
+      });
+
+      if (response.token && response.user) {
+        // Use auth context to manage login
+        login(response.token, response.user);
+        
+        if (rememberMe) {
+          localStorage.setItem('rememberMe', 'true');
+        } else {
+          localStorage.removeItem('rememberMe');
+        }
+        
+        // Redirect to dashboard
+        router.push('/user');
+      }
+    } catch (error: any) {
       console.error('Login failed:', error);
-      alert('Login failed. Please try again.');
+      
+      if (error.response?.status === 400) {
+        const errorData = await error.response.json();
+        alert(errorData.error || 'Invalid credentials. Please try again.');
+      } else if (error.response?.status === 401) {
+        alert('Invalid credentials. Please check your email and password.');
+      } else {
+        alert('Login failed. Please check your connection and try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -56,14 +84,14 @@ const LoginForm: React.FC = () => {
       <div className="space-y-6">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-            Login
+            Email or Username
           </label>
           <input
-            type="email"
+            type="text"
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email or phone number"
+            placeholder="Email or Username"
             className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
@@ -117,9 +145,9 @@ const LoginForm: React.FC = () => {
             </button>
             <span className="ml-3 text-sm text-gray-300">Remember me</span>
           </div>
-          <a href="#" className="text-sm text-blue-400 hover:text-blue-300">
+          <Link href="/forgot-password" className="text-sm text-blue-400 hover:text-blue-300">
             Forgot password?
-          </a>
+          </Link>
         </div>
 
         <button 

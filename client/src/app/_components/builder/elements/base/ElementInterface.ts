@@ -35,6 +35,11 @@ export interface Element {
     cursor?: string;
     width?: string;
     height?: string;
+    position?: string;
+    top?: string;
+    left?: string;
+    right?: string;
+    bottom?: string;
   };
   position: {
     x: number;
@@ -44,6 +49,8 @@ export interface Element {
     width: number;
     height: number;
   };
+  classes?: string[];
+  attributes?: Record<string, string>;
   imageUrl?: string;
   videoUrl?: string;
   url?: string;

@@ -30,13 +30,18 @@ export { AboutElement } from './sections/AboutElement';
 export { GalleryElement } from './sections/GalleryElement';
 export { SocialElement } from './sections/SocialElement';
 
+// Enhanced elements
+export * from './enhancedElements';
+
 // Element categories for easy access
 export const ELEMENT_CATEGORIES = {
   basic: ['text', 'button', 'image', 'hero'],
   layout: ['divider', 'spacer', 'link', 'logo'],
   interactive: ['modal', 'tabs', 'accordion', 'slider', 'rating'],
   forms: ['contact'],
-  sections: ['about', 'gallery', 'social']
+  sections: ['about', 'gallery', 'social', 'navigation', 'services', 'projects', 'stats', 'footer', 'section'],
+  enhanced: ['hero', 'navigation', 'gallery', 'services', 'stats', 'footer'],
+  custom: ['website', 'inline-editable-website']
 } as const;
 
 export type ElementCategory = keyof typeof ELEMENT_CATEGORIES;

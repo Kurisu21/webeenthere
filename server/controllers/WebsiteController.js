@@ -3,9 +3,9 @@ const Website = require('../models/Website');
 const Template = require('../models/Template');
 
 class WebsiteController {
-  constructor() {
-    this.websiteModel = new Website();
-    this.templateModel = new Template();
+  constructor(db) {
+    this.websiteModel = new Website(db);
+    this.templateModel = new Template(db);
   }
 
   // Get all websites for a user

@@ -20,11 +20,44 @@ export default function CreateWebsitePage() {
   const [templateSuggestions, setTemplateSuggestions] = useState([]);
   const [showTemplateSection, setShowTemplateSection] = useState(false);
 
-  const handleTemplateSelect = (template: any) => {
+  const handleTemplateSelect = async (template: any) => {
     setSelectedTemplate(template);
-    // Navigate to build page with a placeholder ID
-    const websiteId = `website_${Date.now()}`;
-    router.push(`/user/build/${websiteId}?template=${template.id}`);
+    
+    try {
+      // Check if user is authenticated before making API calls
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) {
+        console.log('No authentication token found, redirecting to login');
+        window.location.href = '/login';
+        return;
+      }
+
+      // Create website in database immediately
+      const websiteData = {
+        title: `${template.name} Website`,
+        slug: `${template.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+        template_id: template.id,
+        html_content: '',
+        css_content: '',
+        is_published: false
+      };
+
+      const response = await apiPost(API_ENDPOINTS.WEBSITES, websiteData);
+      
+      if (response.success) {
+        // Navigate to build page with the actual database ID
+        router.push(`/user/build/${response.data.id}`);
+      } else {
+        throw new Error(response.message || 'Failed to create website');
+      }
+    } catch (error) {
+      console.error('Error creating website:', error);
+      if (error instanceof Error && error.message.includes('Authentication required')) {
+        console.log('User needs to authenticate');
+        return;
+      }
+      alert('Error creating website. Please try again.');
+    }
   };
 
   const handleAIGenerate = async (description: string, options: { websiteType: string; style: string; colorScheme: string }) => {
@@ -66,11 +99,82 @@ export default function CreateWebsitePage() {
   };
 
   // Handle using the generated template
-  const handleUseGeneratedTemplate = (template: any) => {
+  const handleUseGeneratedTemplate = async (template: any) => {
     setSelectedTemplate(template);
-    // Navigate to build page with the generated template
-    const websiteId = `website_${Date.now()}`;
-    router.push(`/user/build/${websiteId}?template=ai_generated&generated=${encodeURIComponent(JSON.stringify(template))}`);
+    
+    try {
+      // Check if user is authenticated before making API calls
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) {
+        console.log('No authentication token found, redirecting to login');
+        window.location.href = '/login';
+        return;
+      }
+
+      // Create website in database immediately with AI-generated template
+      const websiteData = {
+        title: `${template.name || 'AI Generated'} Website`,
+        slug: `ai-generated-${Date.now()}`,
+        template_id: 'ai_generated',
+        html_content: '',
+        css_content: '',
+        is_published: false
+      };
+
+      const response = await apiPost(API_ENDPOINTS.WEBSITES, websiteData);
+      
+      if (response.success) {
+        // Navigate to build page with the actual database ID
+        router.push(`/user/build/${response.data.id}`);
+      } else {
+        throw new Error(response.message || 'Failed to create website');
+      }
+    } catch (error) {
+      console.error('Error creating website:', error);
+      if (error instanceof Error && error.message.includes('Authentication required')) {
+        console.log('User needs to authenticate');
+        return;
+      }
+      alert('Error creating website. Please try again.');
+    }
+  };
+
+  const handleBuildFromScratch = async () => {
+    try {
+      // Check if user is authenticated before making API calls
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) {
+        console.log('No authentication token found, redirecting to login');
+        window.location.href = '/login';
+        return;
+      }
+
+      // Create blank website in database immediately
+      const websiteData = {
+        title: 'My Website',
+        slug: `blank-website-${Date.now()}`,
+        template_id: 'blank',
+        html_content: '',
+        css_content: '',
+        is_published: false
+      };
+
+      const response = await apiPost(API_ENDPOINTS.WEBSITES, websiteData);
+      
+      if (response.success) {
+        // Navigate to build page with the actual database ID
+        router.push(`/user/build/${response.data.id}`);
+      } else {
+        throw new Error(response.message || 'Failed to create website');
+      }
+    } catch (error) {
+      console.error('Error creating website:', error);
+      if (error instanceof Error && error.message.includes('Authentication required')) {
+        console.log('User needs to authenticate');
+        return;
+      }
+      alert('Error creating website. Please try again.');
+    }
   };
 
   return (
@@ -164,10 +268,7 @@ export default function CreateWebsitePage() {
                     {showTemplateSection ? 'Hide Templates' : 'Browse Templates'}
                   </button>
                   <button
-                    onClick={() => {
-                      const websiteId = `website_${Date.now()}`;
-                      router.push(`/user/build/${websiteId}?template=blank`);
-                    }}
+                    onClick={handleBuildFromScratch}
                     className="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white px-4 md:px-6 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-lg shadow-emerald-500/20 w-full sm:w-auto text-sm md:text-base"
                   >
                     <svg className="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,10 +299,7 @@ export default function CreateWebsitePage() {
                 </div>
                 <TemplateSelector 
                   onTemplateSelect={handleTemplateSelect}
-                  onStartFromScratch={() => {
-                    const websiteId = `website_${Date.now()}`;
-                    router.push(`/user/build/${websiteId}?template=blank`);
-                  }}
+                  onStartFromScratch={handleBuildFromScratch}
                 />
               </div>
             )}

@@ -37,13 +37,13 @@ const websiteRoutes = require('./routes/websiteRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 
 // Database connection
-const database = require('./database');
+const { getDatabaseConnection } = require('./database/database');
 
 // Use routes
 app.use('/api/users', userRoutes);
-app.use('/api/templates', templateRoutes);
-app.use('/api/websites', websiteRoutes);
-app.use('/api/ai', aiRoutes(database));
+app.use('/api/templates', templateRoutes(getDatabaseConnection()));
+app.use('/api/websites', websiteRoutes(getDatabaseConnection()));
+app.use('/api/ai', aiRoutes(getDatabaseConnection()));
 
 // Health check route
 app.get('/', (req, res) => {

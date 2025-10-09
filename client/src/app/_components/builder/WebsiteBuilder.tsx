@@ -3,12 +3,14 @@
 import React, { useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useWebsiteBuilder } from './hooks/useWebsiteBuilder';
+import { Element as BuilderElement } from './elements';
 import { enhancedTemplates } from '../../_data/enhanced-templates';
 import { convertTemplateElementsToElements } from './utils/templateConverter';
 import { useElementManagement } from './hooks/useElementManagement';
 import { useAIServices } from './hooks/useAIServices';
 import { handlePreview, handleSaveWebsite } from './utils/websiteUtils';
-import { API_ENDPOINTS, apiPost, logApiConfig } from '../../../lib/apiConfig';
+import { WebsiteSectionParser } from './utils/websiteSectionParser';
+import { API_ENDPOINTS, apiPost } from '../../../lib/apiConfig';
 import { BuilderToolbar } from './components/BuilderToolbar';
 import { ElementsPanel } from './components/ElementsPanel';
 import { EnhancedPropertiesPanel } from './components/EnhancedPropertiesPanel';
@@ -174,7 +176,8 @@ const WebsiteBuilder: React.FC<WebsiteBuilderProps> = ({ currentWebsite, website
       setWebsiteTitle,
       setWebsiteSlug,
       setElements,
-      setSelectedElement
+      setSelectedElement,
+      websiteId
     );
   };
 
@@ -237,7 +240,6 @@ const WebsiteBuilder: React.FC<WebsiteBuilderProps> = ({ currentWebsite, website
       console.log('Request body JSON:', JSON.stringify(requestBody));
 
       console.log('=== SENDING API REQUEST ===');
-      logApiConfig();
       console.log('Method: POST');
       console.log('Headers: Content-Type: application/json');
       
@@ -277,13 +279,114 @@ const WebsiteBuilder: React.FC<WebsiteBuilderProps> = ({ currentWebsite, website
     setCurrentStep('builder');
   };
 
-  // Load template from URL params if available
+  // Load website data if websiteId is provided (editing existing website)
+  useEffect(() => {
+    const loadWebsiteData = async () => {
+      if (websiteId && !currentWebsite) {
+        try {
+          // Check if user is authenticated before making API calls
+          const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+          if (!token) {
+            console.log('No authentication token found, redirecting to login');
+            window.location.href = '/login';
+            return;
+          }
+
+          const { API_ENDPOINTS, apiGet } = await import('../../../lib/apiConfig');
+          const response = await apiGet(`${API_ENDPOINTS.WEBSITES}/${websiteId}`);
+          
+          if (response.success) {
+            const website = response.data;
+            setWebsiteTitle(website.title);
+            setWebsiteSlug(website.slug);
+            
+            // Load existing HTML/CSS content if available
+            if (website.html_content && website.css_content) {
+              console.log('Loading existing website content...');
+              
+              // Use inline-editable website element for seeded websites
+              const websiteElement = {
+                id: 'website-content',
+                type: 'inline-editable-website',
+                content: website.html_content,
+                position: { x: 0, y: 0 },
+                size: { width: 1200, height: 800 },
+                styles: {
+                  width: '100%',
+                  height: '100%',
+                  overflow: 'auto',
+                  position: 'relative'
+                },
+                classes: ['website-content'],
+                attributes: {},
+                animation: undefined,
+                interaction: undefined,
+                cssContent: website.css_content
+              };
+              
+              setElements([websiteElement]);
+              setCurrentStep('builder');
+              return;
+            }
+            
+            // Fallback to template loading
+            if (website.template_id && website.template_id !== 'blank' && website.template_id !== 'ai_generated') {
+              const template = enhancedTemplates.find(t => t.id === website.template_id);
+              if (template) {
+                setSelectedTemplate(template);
+                // Convert and load template elements
+                const convertedElements = convertTemplateElementsToElements(template.elements || []);
+                setElements(convertedElements);
+              }
+            } else if (website.template_id === 'blank') {
+              setSelectedTemplate({
+                id: 'blank',
+                name: 'Blank Template',
+                description: 'Start from scratch',
+                category: 'business',
+                image: '/api/placeholder/400/300',
+                elements: [],
+                css_base: '',
+                is_featured: false,
+                tags: ['blank']
+              });
+              setElements([]);
+            }
+            
+            // Go directly to builder for existing websites
+            setCurrentStep('builder');
+          }
+        } catch (error) {
+          console.error('Error loading website:', error);
+          // If it's an authentication error, the apiCall function will handle redirect
+          if (error instanceof Error && error.message.includes('Authentication required')) {
+            console.log('User needs to authenticate');
+          }
+          // If it's an access denied error, the apiCall function will handle redirect
+          if (error instanceof Error && error.message.includes('Access denied')) {
+            console.log('User does not have access to this website');
+          }
+        }
+      }
+    };
+
+    loadWebsiteData();
+  }, [websiteId, currentWebsite]);
+
+  // Load template from URL params if available (only for new websites)
   useEffect(() => {
     const templateId = searchParams.get('template');
     console.log('Template ID from URL:', templateId);
     console.log('isGeneratingTemplate:', isGeneratingTemplate);
     console.log('selectedTemplate:', selectedTemplate);
     console.log('aiGenerationInitiated:', aiGenerationInitiated.current);
+    console.log('websiteId:', websiteId);
+    
+    // Only load from URL if no websiteId (new website) and no existing website data
+    if (websiteId || currentWebsite) {
+      console.log('Website ID exists, skipping URL-based template loading');
+      return;
+    }
     
     // Prevent navigation during AI generation
     if (isGeneratingTemplate) {

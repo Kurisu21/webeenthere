@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { API_ENDPOINTS, apiPost } from '@/lib/apiConfig';
+import { useAuth } from '../auth/AuthContext';
 
 interface FormData {
   username: string;
   email: string;
   password: string;
   confirmPassword: string;
-  profileImage: File | null;
 }
 
 interface FormErrors {
@@ -17,7 +18,6 @@ interface FormErrors {
   email?: string;
   password?: string;
   confirmPassword?: string;
-  profileImage?: string;
 }
 
 const RegistrationForm: React.FC = () => {
@@ -26,21 +26,19 @@ const RegistrationForm: React.FC = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    profileImage: null,
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
     if (!formData.username.trim()) {
       newErrors.username = "Username is required";
-    } else if (formData.username.length < 3) {
-      newErrors.username = "Username must be at least 3 characters";
+    } else if (formData.username.length < 3 || formData.username.length > 20) {
+      newErrors.username = "Username must be between 3 and 20 characters";
     } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
       newErrors.username = "Username can only contain letters, numbers, and underscores";
     }
@@ -53,21 +51,13 @@ const RegistrationForm: React.FC = () => {
       newErrors.password = "Password is required";
     } else if (formData.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters";
+    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      newErrors.password = "Password must contain at least one lowercase letter, one uppercase letter, and a number";
     }
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = "Please confirm your password";
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
-    }
-    if (formData.profileImage) {
-      const maxSize = 5 * 1024 * 1024;
-      if (formData.profileImage.size > maxSize) {
-        newErrors.profileImage = "Profile image must be less than 5MB";
-      }
-      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
-      if (!allowedTypes.includes(formData.profileImage.type)) {
-        newErrors.profileImage = "Profile image must be JPEG, PNG, or GIF";
-      }
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -81,30 +71,50 @@ const RegistrationForm: React.FC = () => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setFormData((prev) => ({ ...prev, profileImage: file }));
-    if (errors.profileImage) {
-      setErrors((prev) => ({ ...prev, profileImage: undefined }));
-    }
-  };
-
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
     setIsSubmitting(true);
+    
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert("Registration successful! Redirecting to dashboard...");
-      // Redirect to dashboard after successful registration
-      router.push('/user');
-    } catch (error) {
-      alert("Registration failed. Please try again.");
+      console.log('Attempting registration for:', formData.email);
+      const response = await apiPost(`${API_ENDPOINTS.USERS}/register`, {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+      });
+
+      console.log('Registration response:', response);
+
+      if (response.message) {
+        alert("Registration successful! Please check your email for verification.");
+        router.push('/login');
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      
+      if (error.response?.status === 400) {
+        const errorData = error.response.data;
+        console.log('Server validation errors:', errorData);
+        
+        if (errorData.error === 'Email already in use') {
+          setErrors({ email: 'This email is already registered' });
+        } else if (errorData.errors) {
+          // Handle validation errors from server
+          const fieldErrors: FormErrors = {};
+          errorData.errors.forEach((err: any) => {
+            if (err.path === 'username') fieldErrors.username = err.msg;
+            else if (err.path === 'email') fieldErrors.email = err.msg;
+            else if (err.path === 'password') fieldErrors.password = err.msg;
+            else if (err.path === 'confirmPassword') fieldErrors.confirmPassword = err.msg;
+          });
+          setErrors(fieldErrors);
+        }
+      } else {
+        alert('Registration failed. Please check your connection and try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -130,36 +140,8 @@ const RegistrationForm: React.FC = () => {
         <h2 className="text-3xl font-bold text-center mt-4 mb-2 text-purple-300">Sign Up</h2>
         <div className="text-center text-gray-200 mb-6">
           Already have an account?{' '}
-          <Link href="/guest" className="text-purple-300 hover:text-purple-400 font-medium">Login</Link>
+          <Link href="/login" className="text-purple-300 hover:text-purple-400 font-medium">Login</Link>
         </div>
-      </div>
-      {/* Profile Image Upload */}
-      <div className="flex flex-col items-center mb-6 w-full">
-        <div
-          onClick={handleImageClick}
-          className="w-20 h-20 rounded-full bg-transparent border-2 border-dashed border-gray-400 flex items-center justify-center cursor-pointer hover:border-purple-400 transition-colors"
-        >
-          {formData.profileImage ? (
-            <img
-              src={URL.createObjectURL(formData.profileImage)}
-              alt="Profile preview"
-              className="w-full h-full rounded-full object-cover"
-            />
-          ) : (
-            <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <circle cx="12" cy="8" r="4" strokeWidth="2" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 20c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-            </svg>
-          )}
-        </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-        <span className="text-xs text-gray-400 mt-2">Profile image (optional)</span>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4 w-full">
         <div>

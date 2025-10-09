@@ -4,7 +4,8 @@ const router = express.Router();
 const WebsiteController = require('../controllers/WebsiteController');
 const authMiddleware = require('../middleware/auth');
 
-const websiteController = new WebsiteController();
+module.exports = (db) => {
+  const websiteController = new WebsiteController(db);
 
 // Public routes (no authentication required)
 router.get('/public/:slug', websiteController.getPublicWebsite.bind(websiteController));
@@ -18,7 +19,8 @@ router.delete('/:id', authMiddleware, websiteController.deleteWebsite.bind(websi
 router.post('/:id/publish', authMiddleware, websiteController.publishWebsite.bind(websiteController));
 router.post('/:id/unpublish', authMiddleware, websiteController.unpublishWebsite.bind(websiteController));
 
-module.exports = router;
+  return router;
+};
 
 
 

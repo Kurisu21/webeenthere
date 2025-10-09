@@ -2,8 +2,8 @@
 const Template = require('../models/Template');
 
 class TemplateController {
-  constructor() {
-    this.templateModel = new Template();
+  constructor(db) {
+    this.templateModel = new Template(db);
   }
 
   // Get all templates

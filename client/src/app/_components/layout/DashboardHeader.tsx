@@ -2,9 +2,11 @@
 
 import React, { memo } from 'react';
 import { useSidebar } from './SidebarContext';
+import { useAuth } from '../auth/AuthContext';
 
 const DashboardHeader = memo(() => {
   const { isCollapsed } = useSidebar();
+  const { user, logout } = useAuth();
   return (
     <header className={`bg-gray-900 px-4 md:px-8 py-3 md:py-4 relative z-10 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
       <div className="flex justify-center items-center relative">
@@ -57,10 +59,32 @@ const DashboardHeader = memo(() => {
             </a>
           </div>
           
+          {/* Desktop user menu */}
+          <div className="hidden md:flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-semibold text-sm">
+                  {user ? user.username.substring(0, 2).toUpperCase() : 'U'}
+                </span>
+              </div>
+              <span className="text-white text-sm font-medium">
+                {user ? user.username : 'User'}
+              </span>
+            </div>
+            <button
+              onClick={logout}
+              className="text-gray-300 hover:text-white transition-colors text-sm"
+            >
+              Logout
+            </button>
+          </div>
+          
           {/* Mobile user avatar */}
           <div className="md:hidden">
             <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">JD</span>
+              <span className="text-white font-semibold text-sm">
+                {user ? user.username.substring(0, 2).toUpperCase() : 'U'}
+              </span>
             </div>
           </div>
         </div>

@@ -37,14 +37,32 @@ export const API_ENDPOINTS = {
   WEBSITES: `${API_BASE_URL}/api/websites`,
 } as const;
 
+// Helper function to get authentication token
+const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  
+  // Try to get token from localStorage
+  const token = localStorage.getItem('token');
+  if (token) return token;
+  
+  // Try to get token from sessionStorage
+  const sessionToken = sessionStorage.getItem('token');
+  if (sessionToken) return sessionToken;
+  
+  return null;
+};
+
 // Helper function to make API calls with consistent error handling
 export const apiCall = async (
   endpoint: string,
   options: RequestInit = {}
 ): Promise<Response> => {
+  const token = getAuthToken();
+  
   const defaultOptions: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
       ...options.headers,
     },
     ...options,
@@ -54,6 +72,25 @@ export const apiCall = async (
     const response = await fetch(endpoint, defaultOptions);
     
     if (!response.ok) {
+      // Handle 401 specifically
+      if (response.status === 401) {
+        // Clear stored tokens and redirect to login
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          sessionStorage.removeItem('token');
+          window.location.href = '/login';
+        }
+        throw new Error('Authentication required');
+      }
+      
+      // Handle 403 specifically (Access denied)
+      if (response.status === 403) {
+        if (typeof window !== 'undefined') {
+          window.location.href = '/user/main';
+        }
+        throw new Error('Access denied');
+      }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
@@ -81,6 +118,19 @@ export const apiPost = async (
 export const apiGet = async (endpoint: string): Promise<any> => {
   const response = await apiCall(endpoint, {
     method: 'GET',
+  });
+  
+  return response.json();
+};
+
+// Helper function for PUT requests
+export const apiPut = async (
+  endpoint: string,
+  data: any
+): Promise<any> => {
+  const response = await apiCall(endpoint, {
+    method: 'PUT',
+    body: JSON.stringify(data),
   });
   
   return response.json();

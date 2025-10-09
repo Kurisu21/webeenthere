@@ -10,6 +10,10 @@
     "build": "npm run install-all && npm run build-client",
     "build-client": "cd client && npm run build",
     "install-all": "npm install && cd server && npm install && cd ../client && npm install",
+    "init-db": "cd server && npm run init-db",
+    "db-status": "cd server && npm run db-status",
+    "backup": "cd server && node -e \"require('./backupService').createBackup().then(r => console.log(r))\"",
+    "list-backups": "cd server && node -e \"console.log(require('./backupService').listBackups())\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

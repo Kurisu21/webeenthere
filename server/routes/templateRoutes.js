@@ -4,7 +4,8 @@ const router = express.Router();
 const TemplateController = require('../controllers/TemplateController');
 const authMiddleware = require('../middleware/auth');
 
-const templateController = new TemplateController();
+module.exports = (db) => {
+  const templateController = new TemplateController(db);
 
 // Public routes (no authentication required)
 router.get('/', templateController.getAllTemplates.bind(templateController));
@@ -17,7 +18,8 @@ router.post('/', authMiddleware, templateController.createTemplate.bind(template
 router.put('/:id', authMiddleware, templateController.updateTemplate.bind(templateController));
 router.delete('/:id', authMiddleware, templateController.deleteTemplate.bind(templateController));
 
-module.exports = router;
+  return router;
+};
 
 
 
