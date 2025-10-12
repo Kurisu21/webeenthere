@@ -8,7 +8,7 @@ const DashboardHeader = memo(() => {
   const { isCollapsed } = useSidebar();
   const { user, logout } = useAuth();
   return (
-    <header className={`bg-gray-900 px-4 md:px-8 py-3 md:py-4 relative z-10 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
+    <header className={`bg-gray-900/80 backdrop-blur-sm border-b border-gray-700/50 px-4 md:px-8 py-3 md:py-4 relative z-10 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
       <div className="flex justify-center items-center relative">
         {/* Left side - Mobile menu button */}
         <div className="absolute left-0 flex items-center gap-2">
@@ -20,7 +20,7 @@ const DashboardHeader = memo(() => {
         </div>
 
         {/* Center - Brand name with gradient */}
-        <div className="text-lg md:text-xl lg:text-2xl font-bold bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent animate-pulse">
+        <div className="text-lg md:text-xl lg:text-2xl font-bold bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
           WEBeenThere
         </div>
 
@@ -62,10 +62,10 @@ const DashboardHeader = memo(() => {
           {/* Desktop user menu */}
           <div className="hidden md:flex items-center space-x-3">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">
-                  {user ? user.username.substring(0, 2).toUpperCase() : 'U'}
-                </span>
+              <div className="w-8 h-8 bg-gray-700 border border-gray-600 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
               </div>
               <span className="text-white text-sm font-medium">
                 {user ? user.username : 'User'}
@@ -73,7 +73,7 @@ const DashboardHeader = memo(() => {
             </div>
             <button
               onClick={logout}
-              className="text-gray-300 hover:text-white transition-colors text-sm"
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
             >
               Logout
             </button>
@@ -81,10 +81,10 @@ const DashboardHeader = memo(() => {
           
           {/* Mobile user avatar */}
           <div className="md:hidden">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">
-                {user ? user.username.substring(0, 2).toUpperCase() : 'U'}
-              </span>
+            <div className="w-8 h-8 bg-gray-700 border border-gray-600 rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
             </div>
           </div>
         </div>

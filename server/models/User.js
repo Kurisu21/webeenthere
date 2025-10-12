@@ -97,6 +97,133 @@ class User {
     return rows[0];
   }
 
+  // Find all users with pagination and filters
+  async findAll({ page, limit, offset, search, role, status }) {
+    let query = 'SELECT id, username, email, profile_image, role, theme_mode, is_verified, is_active, created_at FROM users';
+    const conditions = [];
+    const params = [];
+
+    if (search) {
+      conditions.push('(username LIKE ? OR email LIKE ?)');
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    if (role) {
+      conditions.push('role = ?');
+      params.push(role);
+    }
+
+    if (status === 'active') {
+      conditions.push('is_active = TRUE');
+    } else if (status === 'inactive') {
+      conditions.push('is_active = FALSE');
+    } else if (status === 'verified') {
+      conditions.push('is_verified = TRUE');
+    } else if (status === 'unverified') {
+      conditions.push('is_verified = FALSE');
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+
+    const [rows] = await this.db.execute(query, params);
+    return rows;
+  }
+
+  // Count all users with filters
+  async countAll({ search, role, status }) {
+    let query = 'SELECT COUNT(*) as count FROM users';
+    const conditions = [];
+    const params = [];
+
+    if (search) {
+      conditions.push('(username LIKE ? OR email LIKE ?)');
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    if (role) {
+      conditions.push('role = ?');
+      params.push(role);
+    }
+
+    if (status === 'active') {
+      conditions.push('is_active = TRUE');
+    } else if (status === 'inactive') {
+      conditions.push('is_active = FALSE');
+    } else if (status === 'verified') {
+      conditions.push('is_verified = TRUE');
+    } else if (status === 'unverified') {
+      conditions.push('is_verified = FALSE');
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    const [rows] = await this.db.execute(query, params);
+    return rows[0].count;
+  }
+
+  // Update user role
+  async updateRole(userId, role) {
+    const [result] = await this.db.execute(
+      'UPDATE users SET role = ? WHERE id = ?',
+      [role, userId]
+    );
+    return result.affectedRows > 0;
+  }
+
+  // Update user status
+  async updateStatus(userId, { is_active, is_verified }) {
+    const fields = [];
+    const values = [];
+
+    if (is_active !== undefined) {
+      fields.push('is_active = ?');
+      values.push(is_active);
+    }
+
+    if (is_verified !== undefined) {
+      fields.push('is_verified = ?');
+      values.push(is_verified);
+    }
+
+    if (fields.length === 0) return true;
+
+    values.push(userId);
+    const [result] = await this.db.execute(
+      `UPDATE users SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+    return result.affectedRows > 0;
+  }
+
+  // Get dashboard statistics
+  async getStats() {
+    const [totalUsers] = await this.db.execute('SELECT COUNT(*) as count FROM users');
+    const [activeUsers] = await this.db.execute('SELECT COUNT(*) as count FROM users WHERE is_active = TRUE');
+    const [verifiedUsers] = await this.db.execute('SELECT COUNT(*) as count FROM users WHERE is_verified = TRUE');
+    const [adminUsers] = await this.db.execute('SELECT COUNT(*) as count FROM users WHERE role = "admin"');
+    const [recentUsers] = await this.db.execute(`
+      SELECT id, username, email, role, theme_mode, is_verified, is_active, created_at 
+      FROM users 
+      ORDER BY created_at DESC 
+      LIMIT 5
+    `);
+
+    return {
+      totalUsers: totalUsers[0].count,
+      activeUsers: activeUsers[0].count,
+      verifiedUsers: verifiedUsers[0].count,
+      adminUsers: adminUsers[0].count,
+      recentUsers
+    };
+  }
+
   // ...other user-related methods
 }
 

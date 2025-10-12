@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Background from '../_components/layout/Background';
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -105,5 +105,23 @@ export default function VerifyEmailPage() {
         </div>
       </main>
     </Background>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <Background>
+        <main className="min-h-screen flex items-center justify-center px-4">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <h2 className="text-xl font-semibold text-white mb-2">Verifying...</h2>
+            <p className="text-gray-400">Please wait while we verify your email</p>
+          </div>
+        </main>
+      </Background>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

@@ -19,18 +19,17 @@ export const LoginRequired: React.FC<LoginRequiredProps> = ({
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          router.push(redirectTo);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setCountdown((prev) => prev - 1);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [router, redirectTo]);
+  }, []);
+
+  useEffect(() => {
+    if (countdown <= 0) {
+      router.push(redirectTo);
+    }
+  }, [countdown, router, redirectTo]);
 
   return (
     <Background>

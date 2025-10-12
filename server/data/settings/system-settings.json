@@ -1,0 +1,12 @@
+{
+  "appName": "WEBeenThere",
+  "maintenanceMode": false,
+  "registrationEnabled": true,
+  "maxUploadSizeMB": 10,
+  "siteDescription": "Professional Website Builder Platform",
+  "contactEmail": "admin@webeenthere.com",
+  "maxUsersPerDay": 100,
+  "sessionTimeout": 24,
+  "updatedAt": "2025-10-10T00:00:00Z",
+  "updatedBy": "admin"
+}

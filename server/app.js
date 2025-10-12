@@ -35,6 +35,9 @@ const userRoutes = require('./routes/userRoutes');
 const templateRoutes = require('./routes/templateRoutes');
 const websiteRoutes = require('./routes/websiteRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
+const activityRoutes = require('./routes/activityRoutes');
 
 // Database connection
 const { getDatabaseConnection } = require('./database/database');
@@ -44,6 +47,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/templates', templateRoutes(getDatabaseConnection()));
 app.use('/api/websites', websiteRoutes(getDatabaseConnection()));
 app.use('/api/ai', aiRoutes(getDatabaseConnection()));
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin/settings', settingsRoutes);
+app.use('/api/admin/activity', activityRoutes);
 
 // Health check route
 app.get('/', (req, res) => {

@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const TemplateController = require('../controllers/TemplateController');
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 
 module.exports = (db) => {
   const templateController = new TemplateController(db);

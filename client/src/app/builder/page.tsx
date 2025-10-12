@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 
 // Dynamically import the GrapesJS builder to avoid SSR issues
 const GrapesJSBuilder = dynamic(
-  () => import('../_components/builder/GrapesJSBuilder'),
+  () => import('../_components/builder/GrapesJSBuilderModular'),
   {
     ssr: false,
     loading: () => (

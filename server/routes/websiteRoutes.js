@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const WebsiteController = require('../controllers/WebsiteController');
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 
 module.exports = (db) => {
   const websiteController = new WebsiteController(db);

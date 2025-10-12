@@ -4,6 +4,7 @@ const Template = require('../models/Template');
 
 class WebsiteController {
   constructor(db) {
+    this.db = db;
     this.websiteModel = new Website(db);
     this.templateModel = new Template(db);
   }

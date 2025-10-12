@@ -113,6 +113,18 @@ Thumbs.db
 # AI generated files (optional - you might want to keep these)
 # /server/ai-responses/
 
+# Database backup files - exclude all SQL backup files
+/server/backups/
+*.sql
+
+# JSON data files - exclude logs but keep settings templates
+/server/data/logs/*.json
+
+# Keep data directory structure and settings templates for deployment
+!/server/data/
+!/server/data/settings/
+!/server/data/settings/*.json
+
 # Package lock files (optional - some prefer to include these)
 # package-lock.json
 # yarn.lock

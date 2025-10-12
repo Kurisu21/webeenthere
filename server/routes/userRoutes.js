@@ -2,6 +2,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router();
+const { authMiddleware } = require('../middleware/auth');
 
 // Import User model and controller
 const { getDatabaseConnection } = require('../database/database');
@@ -99,6 +100,34 @@ router.post(
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   ],
   (req, res) => userController.resetPassword(req, res)
+);
+
+// Update user profile route (authenticated)
+router.put(
+  '/profile',
+  authMiddleware,
+  [
+    body('username')
+      .optional()
+      .isLength({ min: 3, max: 20 })
+      .withMessage('Username must be between 3 and 20 characters')
+      .matches(/^[a-zA-Z0-9_]+$/)
+      .withMessage('Username can only contain letters, numbers, and underscores'),
+    body('email')
+      .optional()
+      .isEmail()
+      .withMessage('Please enter a valid email address')
+      .normalizeEmail(),
+    body('profile_image')
+      .optional()
+      .isURL()
+      .withMessage('Profile image must be a valid URL'),
+    body('theme_mode')
+      .optional()
+      .isIn(['light', 'dark'])
+      .withMessage('Theme mode must be either light or dark'),
+  ],
+  (req, res) => userController.updateProfile(req, res)
 );
 
 module.exports = router; 
