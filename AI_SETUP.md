@@ -6,7 +6,7 @@
    - Visit [OpenRouter.ai](https://openrouter.ai/)
    - Sign up for a free account
    - Go to [API Keys](https://openrouter.ai/keys)
-   - Create a new API key
+   - Create a new API keyy
 
 2. **Configure Environment Variables**:
    Create a `.env` file in the `server` directory with:
