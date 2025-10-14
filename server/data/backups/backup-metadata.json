@@ -1,0 +1,20 @@
+{
+  "backups": [
+    {
+      "id": "c986c6c2-a29c-4381-9ec3-1c43c8f743f0",
+      "type": "files",
+      "fileName": "webeenthere_files_2025-10-14_18-39-37.tar.gz",
+      "dateFolder": "2025-10-14",
+      "size": 25868,
+      "created": "2025-10-14T18:39:37.482Z",
+      "description": "",
+      "isEncrypted": false,
+      "status": "completed",
+      "integrityHash": "02814f66da4e830d1ceebeb305c90a3eaf439f354f4b6e1e04618d6be4a9543e",
+      "duration": 28
+    }
+  ],
+  "lastIncrementalBackup": null,
+  "created": "2025-10-14T18:30:00.000Z",
+  "updated": "2025-10-14T18:30:00.000Z"
+}

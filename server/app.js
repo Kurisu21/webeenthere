@@ -38,6 +38,7 @@ const aiRoutes = require('./routes/aiRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const activityRoutes = require('./routes/activityRoutes');
+const backupRoutes = require('./routes/backupRoutes');
 
 // Database connection
 const { getDatabaseConnection } = require('./database/database');
@@ -50,6 +51,7 @@ app.use('/api/ai', aiRoutes(getDatabaseConnection()));
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/settings', settingsRoutes);
 app.use('/api/admin/activity', activityRoutes);
+app.use('/api/admin/backup', backupRoutes);
 
 // Health check route
 app.get('/', (req, res) => {

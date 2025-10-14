@@ -1,0 +1,11 @@
+{
+  "enabled": false,
+  "frequency": "daily",
+  "time": "02:00",
+  "dayOfWeek": 0,
+  "dayOfMonth": 1,
+  "retentionDays": 30,
+  "autoDelete": true,
+  "created": "2025-10-14T18:30:00.000Z",
+  "updated": "2025-10-14T18:30:00.000Z"
+}

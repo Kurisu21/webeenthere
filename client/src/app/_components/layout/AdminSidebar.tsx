@@ -58,6 +58,11 @@ const Icons = {
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
     </svg>
+  ),
+  backup: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
+    </svg>
   )
 };
 
@@ -70,6 +75,7 @@ const navItems = [
   { id: 'systemSettings', label: 'System Settings', icon: Icons.systemSettings, href: '/admin/settings-system' },
   { id: 'activityLogs', label: 'Activity Logs', icon: Icons.activityLogs, href: '/admin/activity-logs' },
   { id: 'analytics', label: 'Analytics', icon: Icons.analytics, href: '/admin/analytics' },
+  { id: 'backupRecovery', label: 'Backup & Recovery', icon: Icons.backup, href: '/admin/backup-recovery' },
   { id: 'security', label: 'Security', icon: Icons.security, href: '/admin/security' },
 ];
 
