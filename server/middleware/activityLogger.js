@@ -1,8 +1,4 @@
-const ActivityLogger = require('../services/ActivityLogger');
-const { getDatabaseConnection } = require('../database/database');
-
-// Initialize activity logger
-const activityLogger = new ActivityLogger(getDatabaseConnection());
+const databaseActivityLogger = require('../services/DatabaseActivityLogger');
 
 /**
  * Middleware to automatically log admin actions
@@ -33,13 +29,15 @@ const activityLoggerMiddleware = (actionType = 'unknown') => {
       };
 
       // Log the activity
-      await activityLogger.logActivity(
-        req.user.id,
-        actionType,
-        details,
-        ipAddress,
-        userAgent
-      );
+      await databaseActivityLogger.logActivity({
+        userId: req.user.id,
+        action: actionType,
+        entityType: 'user',
+        entityId: req.user.id,
+        ipAddress: ipAddress,
+        userAgent: userAgent,
+        details: details
+      });
 
       next();
     } catch (error) {
@@ -81,13 +79,15 @@ const logFailedLogin = async (req, res, next) => {
       reason: 'Failed login attempt'
     };
 
-    await activityLogger.logActivity(
-      null, // No user ID for failed attempts
-      'failed_login_attempt',
-      details,
-      ipAddress,
-      userAgent
-    );
+    await databaseActivityLogger.logActivity({
+      userId: null,
+      action: 'failed_login_attempt',
+      entityType: 'user',
+      entityId: null,
+      ipAddress: ipAddress,
+      userAgent: userAgent,
+      details: details
+    });
 
     next();
   } catch (error) {
@@ -117,13 +117,15 @@ const logAdminLogin = async (req, res, next) => {
       success: true
     };
 
-    await activityLogger.logActivity(
-      req.user.id,
-      'admin_login',
-      details,
-      ipAddress,
-      userAgent
-    );
+    await databaseActivityLogger.logActivity({
+      userId: req.user.id,
+      action: 'admin_login',
+      entityType: 'user',
+      entityId: req.user.id,
+      ipAddress: ipAddress,
+      userAgent: userAgent,
+      details: details
+    });
 
     next();
   } catch (error) {

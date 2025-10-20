@@ -7,6 +7,7 @@ interface User {
   email: string;
   username: string;
   role: string;
+  theme_mode?: 'light' | 'dark';
 }
 
 interface AuthContextType {

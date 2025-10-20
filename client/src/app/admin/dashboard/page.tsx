@@ -37,32 +37,20 @@ export default function AdminDashboardPage() {
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
-        <DashboardHeader />
-        <div className="flex flex-col md:flex-row">
-          <AdminSidebar />
-          <MainContentWrapper>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+      <DashboardHeader />
+      <div className="flex flex-col md:flex-row">
+        <AdminSidebar />
+        <MainContentWrapper>
+          {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
                 <p className="text-white">Loading dashboard...</p>
               </div>
             </div>
-          </MainContentWrapper>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
-        <DashboardHeader />
-        <div className="flex flex-col md:flex-row">
-          <AdminSidebar />
-          <MainContentWrapper>
+          ) : error ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -74,18 +62,7 @@ export default function AdminDashboardPage() {
                 <p className="text-gray-400">{error}</p>
               </div>
             </div>
-          </MainContentWrapper>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
-      <DashboardHeader />
-      <div className="flex flex-col md:flex-row">
-        <AdminSidebar />
-        <MainContentWrapper>
+          ) : (
           <div className="p-6">
             {/* Header */}
             <div className="mb-8">
@@ -252,6 +229,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
           </div>
+          )}
         </MainContentWrapper>
       </div>
     </div>

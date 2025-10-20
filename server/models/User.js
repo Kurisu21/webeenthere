@@ -91,7 +91,7 @@ class User {
   // Get user by ID
   async findById(userId) {
     const [rows] = await this.db.execute(
-      'SELECT id, username, email, profile_image, role, theme_mode, is_verified, created_at FROM users WHERE id = ?',
+      'SELECT id, username, email, profile_image, role, theme_mode, is_verified, is_active, created_at FROM users WHERE id = ?',
       [userId]
     );
     return rows[0];

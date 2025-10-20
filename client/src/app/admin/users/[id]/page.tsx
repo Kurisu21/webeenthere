@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import DashboardHeader from '../../../_components/layout/DashboardHeader';
 import AdminSidebar from '../../../_components/layout/AdminSidebar';
 import MainContentWrapper from '../../../_components/layout/MainContentWrapper';
@@ -10,12 +10,13 @@ import { adminApi, User } from '../../../../lib/adminApi';
 import { useRouter } from 'next/navigation';
 
 interface UserDetailsPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function UserDetailsPage({ params }: UserDetailsPageProps) {
+  const resolvedParams = use(params);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -38,7 +39,7 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
         setIsLoading(true);
         setError(null);
         
-        const response = await adminApi.getUserById(parseInt(params.id));
+        const response = await adminApi.getUserById(parseInt(resolvedParams.id));
         setUser(response.user);
         setFormData({
           username: response.user.username,
@@ -58,7 +59,7 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
     };
 
     fetchUser();
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
@@ -72,7 +73,7 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
       setIsSaving(true);
       
       // Update profile data
-      await adminApi.updateUserProfile(parseInt(params.id), {
+      await adminApi.updateUserProfile(parseInt(resolvedParams.id), {
         username: formData.username,
         email: formData.email,
         profile_image: formData.profile_image,
@@ -80,18 +81,18 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
       });
 
       // Update status
-      await adminApi.updateUserStatus(parseInt(params.id), {
+      await adminApi.updateUserStatus(parseInt(resolvedParams.id), {
         is_active: formData.is_active,
         is_verified: formData.is_verified,
       });
 
       // Update role (only if changing to user)
       if (formData.role === 'user') {
-        await adminApi.updateUserRole(parseInt(params.id), formData.role);
+        await adminApi.updateUserRole(parseInt(resolvedParams.id), formData.role);
       }
 
       // Refresh user data
-      const response = await adminApi.getUserById(parseInt(params.id));
+      const response = await adminApi.getUserById(parseInt(resolvedParams.id));
       setUser(response.user);
       setIsEditing(false);
       
@@ -267,7 +268,7 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
                     {isEditing ? (
                       <input
                         type="text"
-                        value={formData.username}
+                        value={formData.username || ''}
                         onChange={(e) => handleInputChange('username', e.target.value)}
                         className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
@@ -283,7 +284,7 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
                     {isEditing ? (
                       <input
                         type="email"
-                        value={formData.email}
+                        value={formData.email || ''}
                         onChange={(e) => handleInputChange('email', e.target.value)}
                         className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
@@ -299,7 +300,7 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
                     {isEditing ? (
                       <input
                         type="text"
-                        value={formData.profile_image}
+                        value={formData.profile_image || ''}
                         onChange={(e) => handleInputChange('profile_image', e.target.value)}
                         placeholder="https://example.com/image.jpg"
                         className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -315,7 +316,7 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
                     </label>
                     {isEditing ? (
                       <select
-                        value={formData.theme_mode}
+                        value={formData.theme_mode || 'dark'}
                         onChange={(e) => handleInputChange('theme_mode', e.target.value)}
                         className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       >
@@ -339,7 +340,7 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
                     </label>
                     {isEditing ? (
                       <select
-                        value={formData.role}
+                        value={formData.role || 'user'}
                         onChange={(e) => handleInputChange('role', e.target.value)}
                         className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       >

@@ -308,30 +308,32 @@ export default function AdminActivityLogsPage() {
                     </thead>
                     <tbody className="divide-y divide-gray-700">
                       {logs.map((log) => (
-                        <tr key={log.id} className="hover:bg-gray-700/30 transition-colors">
+                        <tr key={log.id || Math.random()} className="hover:bg-gray-700/30 transition-colors">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
-                              <span className="text-lg mr-2">{getActionIcon(log.action)}</span>
-                              <span className={`text-sm font-medium ${getActionColor(log.action)}`}>
-                                {log.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              <span className="text-lg mr-2">{getActionIcon(log.action || '')}</span>
+                              <span className={`text-sm font-medium ${getActionColor(log.action || '')}`}>
+                                {(log.action || 'Unknown Action').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                               </span>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-white">{log.username}</div>
-                            <div className="text-xs text-gray-400">ID: {log.userId}</div>
+                            <div className="text-sm text-white">{log.username || 'Unknown User'}</div>
+                            <div className="text-xs text-gray-400">ID: {log.userId || 'N/A'}</div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-gray-300 max-w-xs truncate">
-                              {JSON.stringify(log.details).substring(0, 100)}
-                              {JSON.stringify(log.details).length > 100 && '...'}
+                              {log.details && typeof log.details === 'object' 
+                                ? JSON.stringify(log.details).substring(0, 100) + (JSON.stringify(log.details).length > 100 ? '...' : '')
+                                : String(log.details || 'N/A').substring(0, 100)
+                              }
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                             {log.ipAddress || 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                            {formatActivityDate(log.timestamp)}
+                            {formatActivityDate(log.timestamp || '')}
                           </td>
                         </tr>
                       ))}

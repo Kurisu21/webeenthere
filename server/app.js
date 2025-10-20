@@ -39,6 +39,13 @@ const adminRoutes = require('./routes/adminRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const activityRoutes = require('./routes/activityRoutes');
 const backupRoutes = require('./routes/backupRoutes');
+const helpCenterRoutes = require('./routes/helpCenterRoutes');
+const forumRoutes = require('./routes/forumRoutes');
+const feedbackRoutes = require('./routes/feedbackRoutes');
+const supportRoutes = require('./routes/supportRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+const performanceRoutes = require('./routes/performanceRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 // Database connection
 const { getDatabaseConnection } = require('./database/database');
@@ -52,6 +59,13 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/admin/settings', settingsRoutes);
 app.use('/api/admin/activity', activityRoutes);
 app.use('/api/admin/backup', backupRoutes);
+app.use('/api/help', helpCenterRoutes);
+app.use('/api/forum', forumRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/support', supportRoutes);
+app.use('/api/admin/analytics', analyticsRoutes);
+app.use('/api/admin/performance', performanceRoutes);
+app.use('/api/admin/reports', reportRoutes);
 
 // Health check route
 app.get('/', (req, res) => {

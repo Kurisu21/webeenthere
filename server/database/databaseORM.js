@@ -203,6 +203,187 @@ class DatabaseORM {
           FOREIGN KEY (user_id) REFERENCES users(id),
           FOREIGN KEY (plan_id) REFERENCES plans(id)
         )
+      `,
+      feedback: `
+        CREATE TABLE IF NOT EXISTS feedback (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          type VARCHAR(50) NOT NULL,
+          message TEXT NOT NULL,
+          priority ENUM('low', 'medium', 'high') DEFAULT 'medium',
+          status ENUM('open', 'assigned', 'responded', 'closed') DEFAULT 'open',
+          assigned_to INT NULL,
+          response TEXT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
+          INDEX idx_user_id (user_id),
+          INDEX idx_status (status),
+          INDEX idx_priority (priority)
+        )
+      `,
+      feedback_responses: `
+        CREATE TABLE IF NOT EXISTS feedback_responses (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          feedback_id INT NOT NULL,
+          admin_id INT NOT NULL,
+          response TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (feedback_id) REFERENCES feedback(id) ON DELETE CASCADE,
+          FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_feedback_id (feedback_id)
+        )
+      `,
+      forum_categories: `
+        CREATE TABLE IF NOT EXISTS forum_categories (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(100) NOT NULL,
+          description TEXT,
+          icon VARCHAR(50),
+          color VARCHAR(7),
+          is_active BOOLEAN DEFAULT TRUE,
+          thread_count INT DEFAULT 0,
+          last_activity DATETIME NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          INDEX idx_is_active (is_active)
+        )
+      `,
+      forum_threads: `
+        CREATE TABLE IF NOT EXISTS forum_threads (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          category_id INT NOT NULL,
+          author_id INT NOT NULL,
+          title VARCHAR(200) NOT NULL,
+          content TEXT NOT NULL,
+          views INT DEFAULT 0,
+          replies_count INT DEFAULT 0,
+          likes INT DEFAULT 0,
+          is_pinned BOOLEAN DEFAULT FALSE,
+          is_locked BOOLEAN DEFAULT FALSE,
+          is_deleted BOOLEAN DEFAULT FALSE,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (category_id) REFERENCES forum_categories(id) ON DELETE CASCADE,
+          FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_category_id (category_id),
+          INDEX idx_author_id (author_id),
+          INDEX idx_is_deleted (is_deleted),
+          INDEX idx_created_at (created_at)
+        )
+      `,
+      forum_replies: `
+        CREATE TABLE IF NOT EXISTS forum_replies (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          thread_id INT NOT NULL,
+          author_id INT NOT NULL,
+          content TEXT NOT NULL,
+          likes INT DEFAULT 0,
+          is_deleted BOOLEAN DEFAULT FALSE,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (thread_id) REFERENCES forum_threads(id) ON DELETE CASCADE,
+          FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_thread_id (thread_id),
+          INDEX idx_author_id (author_id),
+          INDEX idx_is_deleted (is_deleted)
+        )
+      `,
+      help_categories: `
+        CREATE TABLE IF NOT EXISTS help_categories (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(100) NOT NULL,
+          description TEXT,
+          icon VARCHAR(50),
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+      `,
+      help_articles: `
+        CREATE TABLE IF NOT EXISTS help_articles (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          category_id INT NOT NULL,
+          title VARCHAR(200) NOT NULL,
+          content LONGTEXT NOT NULL,
+          author_id INT NOT NULL,
+          views INT DEFAULT 0,
+          helpful_count INT DEFAULT 0,
+          not_helpful_count INT DEFAULT 0,
+          is_published BOOLEAN DEFAULT FALSE,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (category_id) REFERENCES help_categories(id) ON DELETE CASCADE,
+          FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_category_id (category_id),
+          INDEX idx_is_published (is_published)
+        )
+      `,
+      support_tickets: `
+        CREATE TABLE IF NOT EXISTS support_tickets (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          ticket_number VARCHAR(20) UNIQUE NOT NULL,
+          user_id INT NOT NULL,
+          subject VARCHAR(200) NOT NULL,
+          description TEXT NOT NULL,
+          priority ENUM('low', 'medium', 'high') DEFAULT 'medium',
+          status ENUM('open', 'assigned', 'in_progress', 'closed') DEFAULT 'open',
+          assigned_to INT NULL,
+          resolution TEXT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          closed_at DATETIME NULL,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
+          INDEX idx_user_id (user_id),
+          INDEX idx_status (status),
+          INDEX idx_assigned_to (assigned_to),
+          INDEX idx_ticket_number (ticket_number)
+        )
+      `,
+      support_messages: `
+        CREATE TABLE IF NOT EXISTS support_messages (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          ticket_id INT NOT NULL,
+          sender_id INT NOT NULL,
+          sender_type ENUM('user', 'admin') NOT NULL,
+          message TEXT NOT NULL,
+          is_internal BOOLEAN DEFAULT FALSE,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (ticket_id) REFERENCES support_tickets(id) ON DELETE CASCADE,
+          FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_ticket_id (ticket_id),
+          INDEX idx_sender_id (sender_id)
+        )
+      `,
+      activity_logs: `
+        CREATE TABLE IF NOT EXISTS activity_logs (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NULL,
+          action VARCHAR(100) NOT NULL,
+          entity_type VARCHAR(50),
+          entity_id INT NULL,
+          ip_address VARCHAR(45),
+          user_agent TEXT,
+          details JSON,
+          timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+          INDEX idx_user_id (user_id),
+          INDEX idx_action (action),
+          INDEX idx_timestamp (timestamp),
+          INDEX idx_entity (entity_type, entity_id)
+        )
+      `,
+      system_settings: `
+        CREATE TABLE IF NOT EXISTS system_settings (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          setting_key VARCHAR(100) UNIQUE NOT NULL,
+          setting_value JSON NOT NULL,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          updated_by INT NULL,
+          FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
+          INDEX idx_setting_key (setting_key)
+        )
       `
     };
 
@@ -831,6 +1012,580 @@ class DatabaseORM {
         console.log(`ℹ️  Plans table already has data, skipping`);
       }
 
+      // Seed feedback
+      if (!(await this.tableHasData('feedback'))) {
+        const feedback = [
+          {
+            user_id: 1,
+            type: 'bug',
+            message: 'The drag and drop feature is not working properly on mobile devices.',
+            priority: 'high',
+            status: 'open'
+          },
+          {
+            user_id: 2,
+            type: 'feature',
+            message: 'It would be great to have more color themes for the templates.',
+            priority: 'medium',
+            status: 'assigned',
+            assigned_to: 3
+          },
+          {
+            user_id: 4,
+            type: 'improvement',
+            message: 'The preview mode could be faster when switching between desktop and mobile views.',
+            priority: 'low',
+            status: 'responded',
+            response: 'Thank you for the feedback. We are working on optimizing the preview performance.'
+          },
+          {
+            user_id: 5,
+            type: 'general',
+            message: 'Love the platform! Great job on the recent updates.',
+            priority: 'low',
+            status: 'closed',
+            response: 'Thank you for your kind words!'
+          },
+          {
+            user_id: 1,
+            type: 'bug',
+            message: 'Images are not uploading correctly in the gallery section.',
+            priority: 'high',
+            status: 'open'
+          }
+        ];
+
+        for (const item of feedback) {
+          await connection.promise().execute(
+            `INSERT INTO feedback (user_id, type, message, priority, status, assigned_to, response) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [item.user_id, item.type, item.message, item.priority, item.status, item.assigned_to || null, item.response || null]
+          );
+        }
+        console.log(`✅ Seeded ${feedback.length} feedback items`);
+      } else {
+        console.log(`ℹ️  Feedback table already has data, skipping`);
+      }
+
+      // Seed forum categories
+      if (!(await this.tableHasData('forum_categories'))) {
+        const categories = [
+          {
+            name: 'General Discussion',
+            description: 'General discussions about the platform',
+            icon: '💬',
+            color: '#3498db',
+            thread_count: 0
+          },
+          {
+            name: 'Feature Requests',
+            description: 'Suggest new features and improvements',
+            icon: '💡',
+            color: '#e74c3c',
+            thread_count: 0
+          },
+          {
+            name: 'Bug Reports',
+            description: 'Report bugs and issues',
+            icon: '🐛',
+            color: '#f39c12',
+            thread_count: 0
+          }
+        ];
+
+        for (const category of categories) {
+          await connection.promise().execute(
+            `INSERT INTO forum_categories (name, description, icon, color, thread_count) VALUES (?, ?, ?, ?, ?)`,
+            [category.name, category.description, category.icon, category.color, category.thread_count]
+          );
+        }
+        console.log(`✅ Seeded ${categories.length} forum categories`);
+      } else {
+        console.log(`ℹ️  Forum categories table already has data, skipping`);
+      }
+
+      // Seed forum threads
+      if (!(await this.tableHasData('forum_threads'))) {
+        const threads = [
+          {
+            category_id: 1,
+            author_id: 1,
+            title: 'Welcome to the community!',
+            content: 'Hello everyone! Excited to be part of this community. Looking forward to sharing ideas and learning from others.',
+            views: 25,
+            replies_count: 3,
+            likes: 5,
+            is_pinned: true
+          },
+          {
+            category_id: 2,
+            author_id: 2,
+            title: 'Dark mode theme request',
+            content: 'Would love to see a dark mode theme option for the website builder interface. It would be easier on the eyes during long editing sessions.',
+            views: 18,
+            replies_count: 2,
+            likes: 8,
+            is_pinned: false
+          },
+          {
+            category_id: 3,
+            author_id: 4,
+            title: 'Mobile responsiveness issue',
+            content: 'I noticed that some templates don\'t display correctly on mobile devices. The layout seems to break on smaller screens.',
+            views: 12,
+            replies_count: 1,
+            likes: 2,
+            is_pinned: false
+          },
+          {
+            category_id: 1,
+            author_id: 5,
+            title: 'Best practices for SEO',
+            content: 'What are some best practices for optimizing websites built with this platform for search engines?',
+            views: 31,
+            replies_count: 4,
+            likes: 6,
+            is_pinned: false
+          },
+          {
+            category_id: 2,
+            author_id: 1,
+            title: 'Custom CSS editor feature',
+            content: 'It would be amazing to have a custom CSS editor where users can add their own styles without affecting the template structure.',
+            views: 22,
+            replies_count: 3,
+            likes: 9,
+            is_pinned: false
+          }
+        ];
+
+        for (const thread of threads) {
+          await connection.promise().execute(
+            `INSERT INTO forum_threads (category_id, author_id, title, content, views, replies_count, likes, is_pinned) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [thread.category_id, thread.author_id, thread.title, thread.content, thread.views, thread.replies_count, thread.likes, thread.is_pinned]
+          );
+        }
+        console.log(`✅ Seeded ${threads.length} forum threads`);
+      } else {
+        console.log(`ℹ️  Forum threads table already has data, skipping`);
+      }
+
+      // Seed forum replies
+      if (!(await this.tableHasData('forum_replies'))) {
+        // Get the actual thread IDs that were created
+        const [threadRows] = await connection.promise().execute('SELECT id FROM forum_threads ORDER BY id ASC');
+        const threadIds = threadRows.map(row => row.id);
+        
+        const replies = [
+          {
+            thread_id: threadIds[0], // Welcome thread
+            author_id: 2,
+            content: 'Welcome! Great to have you here. Looking forward to seeing your projects!',
+            likes: 2
+          },
+          {
+            thread_id: threadIds[0], // Welcome thread
+            author_id: 3,
+            content: 'Welcome to the community! Feel free to ask any questions.',
+            likes: 1
+          },
+          {
+            thread_id: threadIds[0], // Welcome thread
+            author_id: 4,
+            content: 'Thanks for the warm welcome everyone!',
+            likes: 0
+          },
+          {
+            thread_id: threadIds[1], // Dark mode thread
+            author_id: 3,
+            content: 'Great suggestion! Dark mode is definitely on our roadmap. We\'ll prioritize this feature.',
+            likes: 5
+          },
+          {
+            thread_id: threadIds[1], // Dark mode thread
+            author_id: 1,
+            content: 'I second this request! Dark mode would be perfect for late-night editing sessions.',
+            likes: 3
+          },
+          {
+            thread_id: threadIds[2], // Mobile responsiveness thread
+            author_id: 3,
+            content: 'Thanks for reporting this. We\'re investigating the mobile responsiveness issues and will fix them in the next update.',
+            likes: 2
+          },
+          {
+            thread_id: threadIds[3], // SEO thread
+            author_id: 3,
+            content: 'For SEO optimization, make sure to use descriptive titles, meta descriptions, and alt text for images.',
+            likes: 4
+          },
+          {
+            thread_id: threadIds[3], // SEO thread
+            author_id: 2,
+            content: 'Also consider using semantic HTML structure and optimizing your content for relevant keywords.',
+            likes: 2
+          },
+          {
+            thread_id: threadIds[3], // SEO thread
+            author_id: 1,
+            content: 'Don\'t forget about page loading speed - compress images and minimize CSS/JS files.',
+            likes: 3
+          },
+          {
+            thread_id: threadIds[3], // SEO thread
+            author_id: 5,
+            content: 'Thanks for all the great tips! This is really helpful.',
+            likes: 1
+          }
+        ];
+
+        for (const reply of replies) {
+          await connection.promise().execute(
+            `INSERT INTO forum_replies (thread_id, author_id, content, likes) VALUES (?, ?, ?, ?)`,
+            [reply.thread_id, reply.author_id, reply.content, reply.likes]
+          );
+        }
+        console.log(`✅ Seeded ${replies.length} forum replies`);
+      } else {
+        console.log(`ℹ️  Forum replies table already has data, skipping`);
+      }
+
+      // Seed help categories
+      if (!(await this.tableHasData('help_categories'))) {
+        const helpCategories = [
+          {
+            name: 'Getting Started',
+            description: 'Basic guides for new users',
+            icon: '🚀'
+          },
+          {
+            name: 'Website Builder',
+            description: 'How to use the website builder',
+            icon: '🛠️'
+          },
+          {
+            name: 'Templates',
+            description: 'Working with templates',
+            icon: '📄'
+          }
+        ];
+
+        for (const category of helpCategories) {
+          await connection.promise().execute(
+            `INSERT INTO help_categories (name, description, icon) VALUES (?, ?, ?)`,
+            [category.name, category.description, category.icon]
+          );
+        }
+        console.log(`✅ Seeded ${helpCategories.length} help categories`);
+      } else {
+        console.log(`ℹ️  Help categories table already has data, skipping`);
+      }
+
+      // Seed help articles
+      if (!(await this.tableHasData('help_articles'))) {
+        const articles = [
+          {
+            category_id: 1,
+            title: 'How to create your first website',
+            content: 'This guide will walk you through creating your first website using our platform. Start by selecting a template that matches your needs, then customize it with your content.',
+            author_id: 3,
+            views: 45,
+            helpful_count: 12,
+            not_helpful_count: 1,
+            is_published: true
+          },
+          {
+            category_id: 1,
+            title: 'Account setup and verification',
+            content: 'Learn how to set up your account and verify your email address to unlock all platform features.',
+            author_id: 3,
+            views: 32,
+            helpful_count: 8,
+            not_helpful_count: 0,
+            is_published: true
+          },
+          {
+            category_id: 2,
+            title: 'Using the drag and drop editor',
+            content: 'Master the drag and drop editor to easily customize your website layout and content.',
+            author_id: 3,
+            views: 67,
+            helpful_count: 15,
+            not_helpful_count: 2,
+            is_published: true
+          },
+          {
+            category_id: 2,
+            title: 'Adding and managing images',
+            content: 'Learn how to upload, organize, and optimize images for your website.',
+            author_id: 3,
+            views: 38,
+            helpful_count: 10,
+            not_helpful_count: 1,
+            is_published: true
+          },
+          {
+            category_id: 2,
+            title: 'Customizing colors and fonts',
+            content: 'Personalize your website by changing colors, fonts, and styling options.',
+            author_id: 3,
+            views: 29,
+            helpful_count: 7,
+            not_helpful_count: 0,
+            is_published: true
+          },
+          {
+            category_id: 3,
+            title: 'Choosing the right template',
+            content: 'Tips for selecting a template that best fits your business or personal needs.',
+            author_id: 3,
+            views: 41,
+            helpful_count: 11,
+            not_helpful_count: 1,
+            is_published: true
+          },
+          {
+            category_id: 3,
+            title: 'Template customization best practices',
+            content: 'Best practices for customizing templates while maintaining professional appearance.',
+            author_id: 3,
+            views: 23,
+            helpful_count: 6,
+            not_helpful_count: 0,
+            is_published: true
+          },
+          {
+            category_id: 1,
+            title: 'Publishing your website',
+            content: 'Step-by-step guide to publishing your website and making it live on the internet.',
+            author_id: 3,
+            views: 52,
+            helpful_count: 14,
+            not_helpful_count: 1,
+            is_published: true
+          }
+        ];
+
+        for (const article of articles) {
+          await connection.promise().execute(
+            `INSERT INTO help_articles (category_id, title, content, author_id, views, helpful_count, not_helpful_count, is_published) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [article.category_id, article.title, article.content, article.author_id, article.views, article.helpful_count, article.not_helpful_count, article.is_published]
+          );
+        }
+        console.log(`✅ Seeded ${articles.length} help articles`);
+      } else {
+        console.log(`ℹ️  Help articles table already has data, skipping`);
+      }
+
+      // Seed support tickets
+      if (!(await this.tableHasData('support_tickets'))) {
+        const tickets = [
+          {
+            ticket_number: 'TICKET-001',
+            user_id: 1,
+            subject: 'Website not loading properly',
+            description: 'My website is not loading correctly. The layout appears broken and some images are missing.',
+            priority: 'high',
+            status: 'open'
+          },
+          {
+            ticket_number: 'TICKET-002',
+            user_id: 2,
+            subject: 'Account billing question',
+            description: 'I have a question about my monthly billing. Can you help me understand the charges?',
+            priority: 'medium',
+            status: 'assigned',
+            assigned_to: 3
+          },
+          {
+            ticket_number: 'TICKET-003',
+            user_id: 4,
+            subject: 'Feature request: Export functionality',
+            description: 'Would it be possible to add an export feature to download the website as HTML/CSS files?',
+            priority: 'low',
+            status: 'closed',
+            resolution: 'Thank you for the suggestion. We have added this feature to our roadmap and will implement it in a future update.'
+          }
+        ];
+
+        for (const ticket of tickets) {
+          await connection.promise().execute(
+            `INSERT INTO support_tickets (ticket_number, user_id, subject, description, priority, status, assigned_to, resolution) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [ticket.ticket_number, ticket.user_id, ticket.subject, ticket.description, ticket.priority, ticket.status, ticket.assigned_to || null, ticket.resolution || null]
+          );
+        }
+        console.log(`✅ Seeded ${tickets.length} support tickets`);
+      } else {
+        console.log(`ℹ️  Support tickets table already has data, skipping`);
+      }
+
+      // Seed support messages
+      if (!(await this.tableHasData('support_messages'))) {
+        const messages = [
+          {
+            ticket_id: 1,
+            sender_id: 1,
+            sender_type: 'user',
+            message: 'The website was working fine yesterday, but today it\'s completely broken. Can you please help?',
+            is_internal: false
+          },
+          {
+            ticket_id: 1,
+            sender_id: 3,
+            sender_type: 'admin',
+            message: 'I\'m looking into this issue. Can you provide the URL of your website so I can investigate?',
+            is_internal: false
+          },
+          {
+            ticket_id: 2,
+            sender_id: 2,
+            sender_type: 'user',
+            message: 'I was charged $19.99 this month but I only have the Pro plan which should be $9.99.',
+            is_internal: false
+          },
+          {
+            ticket_id: 2,
+            sender_id: 3,
+            sender_type: 'admin',
+            message: 'I can see the issue in your account. It looks like you were upgraded to Business plan. Let me check the billing history.',
+            is_internal: false
+          },
+          {
+            ticket_id: 3,
+            sender_id: 4,
+            sender_type: 'user',
+            message: 'This would be really useful for backing up my work and using it elsewhere.',
+            is_internal: false
+          }
+        ];
+
+        for (const message of messages) {
+          await connection.promise().execute(
+            `INSERT INTO support_messages (ticket_id, sender_id, sender_type, message, is_internal) VALUES (?, ?, ?, ?, ?)`,
+            [message.ticket_id, message.sender_id, message.sender_type, message.message, message.is_internal]
+          );
+        }
+        console.log(`✅ Seeded ${messages.length} support messages`);
+      } else {
+        console.log(`ℹ️  Support messages table already has data, skipping`);
+      }
+
+      // Seed activity logs
+      if (!(await this.tableHasData('activity_logs'))) {
+        const activities = [
+          {
+            user_id: 1,
+            action: 'website_created',
+            entity_type: 'website',
+            entity_id: 1,
+            ip_address: '192.168.1.100',
+            user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            details: JSON.stringify({ template_id: 1, title: 'John\'s Portfolio' })
+          },
+          {
+            user_id: 2,
+            action: 'website_published',
+            entity_type: 'website',
+            entity_id: 2,
+            ip_address: '192.168.1.101',
+            user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+            details: JSON.stringify({ slug: 'jane-art-gallery' })
+          },
+          {
+            user_id: 3,
+            action: 'admin_login',
+            entity_type: 'user',
+            entity_id: 3,
+            ip_address: '192.168.1.102',
+            user_agent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36',
+            details: JSON.stringify({ login_method: 'password' })
+          },
+          {
+            user_id: 4,
+            action: 'feedback_submitted',
+            entity_type: 'feedback',
+            entity_id: 1,
+            ip_address: '192.168.1.103',
+            user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15',
+            details: JSON.stringify({ type: 'bug', priority: 'high' })
+          },
+          {
+            user_id: 5,
+            action: 'forum_thread_created',
+            entity_type: 'forum_thread',
+            entity_id: 1,
+            ip_address: '192.168.1.104',
+            user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            details: JSON.stringify({ category_id: 1, title: 'Welcome to the community!' })
+          }
+        ];
+
+        for (const activity of activities) {
+          await connection.promise().execute(
+            `INSERT INTO activity_logs (user_id, action, entity_type, entity_id, ip_address, user_agent, details) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [activity.user_id, activity.action, activity.entity_type, activity.entity_id, activity.ip_address, activity.user_agent, activity.details]
+          );
+        }
+        console.log(`✅ Seeded ${activities.length} activity logs`);
+      } else {
+        console.log(`ℹ️  Activity logs table already has data, skipping`);
+      }
+
+      // Seed system settings
+      if (!(await this.tableHasData('system_settings'))) {
+        const settings = [
+          {
+            setting_key: 'email_config',
+            setting_value: JSON.stringify({
+              smtp_host: 'smtp.gmail.com',
+              smtp_port: 587,
+              smtp_user: 'noreply@webeenthere.com',
+              smtp_secure: false
+            }),
+            updated_by: 3
+          },
+          {
+            setting_key: 'feature_flags',
+            setting_value: JSON.stringify({
+              dark_mode: true,
+              custom_css: false,
+              analytics: true,
+              export_feature: false
+            }),
+            updated_by: 3
+          },
+          {
+            setting_key: 'site_settings',
+            setting_value: JSON.stringify({
+              site_name: 'Webeenthere',
+              site_description: 'Build beautiful websites easily',
+              maintenance_mode: false,
+              registration_enabled: true
+            }),
+            updated_by: 3
+          },
+          {
+            setting_key: 'notification_settings',
+            setting_value: JSON.stringify({
+              email_notifications: true,
+              push_notifications: false,
+              weekly_digest: true,
+              marketing_emails: false
+            }),
+            updated_by: 3
+          }
+        ];
+
+        for (const setting of settings) {
+          await connection.promise().execute(
+            `INSERT INTO system_settings (setting_key, setting_value, updated_by) VALUES (?, ?, ?)`,
+            [setting.setting_key, setting.setting_value, setting.updated_by]
+          );
+        }
+        console.log(`✅ Seeded ${settings.length} system settings`);
+      } else {
+        console.log(`ℹ️  System settings table already has data, skipping`);
+      }
+
     } finally {
       connection.end();
     }
@@ -879,7 +1634,18 @@ class DatabaseORM {
             users: { exists: false, hasData: false },
             templates: { exists: false, hasData: false },
             websites: { exists: false, hasData: false },
-            plans: { exists: false, hasData: false }
+            plans: { exists: false, hasData: false },
+            feedback: { exists: false, hasData: false },
+            feedback_responses: { exists: false, hasData: false },
+            forum_categories: { exists: false, hasData: false },
+            forum_threads: { exists: false, hasData: false },
+            forum_replies: { exists: false, hasData: false },
+            help_categories: { exists: false, hasData: false },
+            help_articles: { exists: false, hasData: false },
+            support_tickets: { exists: false, hasData: false },
+            support_messages: { exists: false, hasData: false },
+            activity_logs: { exists: false, hasData: false },
+            system_settings: { exists: false, hasData: false }
           }
         };
       }
@@ -887,7 +1653,7 @@ class DatabaseORM {
       // Database exists, now check tables
       const connection = await this.createConnectionWithDB();
       
-      const tables = ['users', 'templates', 'websites', 'plans'];
+      const tables = ['users', 'templates', 'websites', 'plans', 'feedback', 'feedback_responses', 'forum_categories', 'forum_threads', 'forum_replies', 'help_categories', 'help_articles', 'support_tickets', 'support_messages', 'activity_logs', 'system_settings'];
       const status = {
         database: dbExists,
         tables: {}

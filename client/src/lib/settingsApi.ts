@@ -73,80 +73,100 @@ interface AllSettingsResponse {
 export const settingsApi = {
   // Get all settings
   getAllSettings: async (): Promise<AllSettings> => {
-    const response = await apiCall('/admin/settings/all', 'GET');
-    if (response.success && response.settings) {
-      return response.settings;
+    const response = await apiCall('/api/admin/settings/all');
+    const data = await response.json();
+    if (data.success && data.settings) {
+      return data.settings;
     }
-    throw new Error(response.error || 'Failed to fetch all settings');
+    throw new Error(data.error || 'Failed to fetch all settings');
   },
 
   // System Settings
   getSystemSettings: async (): Promise<SystemSettings> => {
-    const response = await apiCall('/admin/settings/system', 'GET');
-    if (response.success && response.settings) {
-      return response.settings;
+    const response = await apiCall('/api/admin/settings/system');
+    const data = await response.json();
+    if (data.success && data.settings) {
+      return data.settings;
     }
-    throw new Error(response.error || 'Failed to fetch system settings');
+    throw new Error(data.error || 'Failed to fetch system settings');
   },
 
   updateSystemSettings: async (settings: Partial<SystemSettings>): Promise<SystemSettings> => {
-    const response = await apiCall('/admin/settings/system', 'PUT', settings);
-    if (response.success && response.settings) {
-      return response.settings;
+    const response = await apiCall('/api/admin/settings/system', {
+      method: 'PUT',
+      body: JSON.stringify(settings)
+    });
+    const data = await response.json();
+    if (data.success && data.settings) {
+      return data.settings;
     }
-    throw new Error(response.error || 'Failed to update system settings');
+    throw new Error(data.error || 'Failed to update system settings');
   },
 
   // Feature Flags
   getFeatureFlags: async (): Promise<FeatureFlags> => {
-    const response = await apiCall('/admin/settings/features', 'GET');
-    if (response.success && response.flags) {
-      return response.flags;
+    const response = await apiCall('/api/admin/settings/features');
+    const data = await response.json();
+    if (data.success && data.flags) {
+      return data.flags;
     }
-    throw new Error(response.error || 'Failed to fetch feature flags');
+    throw new Error(data.error || 'Failed to fetch feature flags');
   },
 
   updateFeatureFlags: async (flags: Partial<FeatureFlags>): Promise<FeatureFlags> => {
-    const response = await apiCall('/admin/settings/features', 'PUT', flags);
-    if (response.success && response.flags) {
-      return response.flags;
+    const response = await apiCall('/api/admin/settings/features', {
+      method: 'PUT',
+      body: JSON.stringify(flags)
+    });
+    const data = await response.json();
+    if (data.success && data.flags) {
+      return data.flags;
     }
-    throw new Error(response.error || 'Failed to update feature flags');
+    throw new Error(data.error || 'Failed to update feature flags');
   },
 
   // Email Configuration
   getEmailConfig: async (): Promise<EmailConfig> => {
-    const response = await apiCall('/admin/settings/email', 'GET');
-    if (response.success && response.config) {
-      return response.config;
+    const response = await apiCall('/api/admin/settings/email');
+    const data = await response.json();
+    if (data.success && data.config) {
+      return data.config;
     }
-    throw new Error(response.error || 'Failed to fetch email configuration');
+    throw new Error(data.error || 'Failed to fetch email configuration');
   },
 
   updateEmailConfig: async (config: Partial<EmailConfig>): Promise<EmailConfig> => {
-    const response = await apiCall('/admin/settings/email', 'PUT', config);
-    if (response.success && response.config) {
-      return response.config;
+    const response = await apiCall('/api/admin/settings/email', {
+      method: 'PUT',
+      body: JSON.stringify(config)
+    });
+    const data = await response.json();
+    if (data.success && data.config) {
+      return data.config;
     }
-    throw new Error(response.error || 'Failed to update email configuration');
+    throw new Error(data.error || 'Failed to update email configuration');
   },
 
   // Test email configuration
   testEmailConfig: async (): Promise<{ success: boolean; message: string }> => {
-    const response = await apiCall('/admin/settings/email/test', 'POST');
-    if (response.success) {
-      return { success: true, message: response.message || 'Email test successful' };
+    const response = await apiCall('/api/admin/settings/email/test', {
+      method: 'POST'
+    });
+    const data = await response.json();
+    if (data.success) {
+      return { success: true, message: data.message || 'Email test successful' };
     }
-    throw new Error(response.error || 'Failed to test email configuration');
+    throw new Error(data.error || 'Failed to test email configuration');
   },
 
   // Get settings metadata
   getSettingsMetadata: async (): Promise<SettingsMetadata[]> => {
-    const response = await apiCall('/admin/settings/metadata', 'GET');
-    if (response.success && response.metadata) {
-      return response.metadata;
+    const response = await apiCall('/api/admin/settings/metadata');
+    const data = await response.json();
+    if (data.success && data.metadata) {
+      return data.metadata;
     }
-    throw new Error(response.error || 'Failed to fetch settings metadata');
+    throw new Error(data.error || 'Failed to fetch settings metadata');
   }
 };
 

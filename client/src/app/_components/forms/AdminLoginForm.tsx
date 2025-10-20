@@ -30,7 +30,7 @@ const AdminLoginForm: React.FC = () => {
       console.log('API endpoint:', `${API_ENDPOINTS.USERS}/login`);
       
       const response = await apiPost(`${API_ENDPOINTS.USERS}/login`, {
-        email: email,
+        email: email.trim(),
         password: password,
       });
 
@@ -56,14 +56,9 @@ const AdminLoginForm: React.FC = () => {
     } catch (error: any) {
       console.error('Admin login failed:', error);
       
-      if (error.response?.status === 400) {
-        const errorData = await error.response.json();
-        setError(errorData.error || 'Invalid credentials. Please try again.');
-      } else if (error.response?.status === 401) {
-        setError('Invalid credentials. Please check your email and password.');
-      } else {
-        setError('Login failed. Please check your connection and try again.');
-      }
+      // Display the specific error message from backend
+      const errorMessage = error.message || 'Login failed. Please check your connection and try again.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

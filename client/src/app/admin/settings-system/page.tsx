@@ -5,8 +5,10 @@ import DashboardHeader from '../../_components/layout/DashboardHeader';
 import AdminSidebar from '../../_components/layout/AdminSidebar';
 import MainContentWrapper from '../../_components/layout/MainContentWrapper';
 import { settingsApi, SystemSettings, FeatureFlags, EmailConfig, validateSystemSettings, validateEmailConfig } from '../../../lib/settingsApi';
+import { useAuth } from '../../_components/auth/AuthContext';
 
 export default function AdminSystemSettingsPage() {
+  const { isAuthenticated, isAdmin, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<'system' | 'features' | 'email'>('system');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -56,8 +58,11 @@ export default function AdminSystemSettingsPage() {
   });
 
   useEffect(() => {
-    fetchAllSettings();
-  }, []);
+    // Only fetch settings when authentication is complete and user is admin
+    if (!authLoading && isAuthenticated && isAdmin) {
+      fetchAllSettings();
+    }
+  }, [authLoading, isAuthenticated, isAdmin]);
 
   const fetchAllSettings = async () => {
     try {
@@ -162,7 +167,7 @@ export default function AdminSystemSettingsPage() {
     setSuccess(null);
   };
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
         <DashboardHeader />

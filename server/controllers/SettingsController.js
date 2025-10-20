@@ -1,8 +1,8 @@
-const JsonDataManager = require('../services/JsonDataManager');
+const databaseSettingsService = require('../services/DatabaseSettingsService');
 
 class SettingsController {
   constructor() {
-    this.jsonManager = new JsonDataManager();
+    this.settingsService = databaseSettingsService;
   }
 
   /**
@@ -10,7 +10,7 @@ class SettingsController {
    */
   async getSystemSettings(req, res) {
     try {
-      const settings = await this.jsonManager.readJsonFile('settings/system-settings.json');
+      const settings = await this.settingsService.getSystemSettings();
       res.json({ success: true, settings });
     } catch (error) {
       console.error('Get system settings error:', error);
@@ -45,7 +45,7 @@ class SettingsController {
         });
       }
 
-      const currentSettings = await this.jsonManager.readJsonFile('settings/system-settings.json');
+      const currentSettings = await this.settingsService.getSystemSettings();
       
       // Update only provided fields
       const updatedSettings = {
@@ -58,7 +58,7 @@ class SettingsController {
         updatedBy: req.user.username || 'admin'
       };
 
-      await this.jsonManager.writeJsonFile('settings/system-settings.json', updatedSettings);
+      await this.settingsService.setSystemSettings(updatedSettings, req.user.username || 'admin');
 
       res.json({ 
         success: true, 
@@ -76,7 +76,7 @@ class SettingsController {
    */
   async getFeatureFlags(req, res) {
     try {
-      const flags = await this.jsonManager.readJsonFile('settings/feature-flags.json');
+      const flags = await this.settingsService.getFeatureFlags();
       res.json({ success: true, flags });
     } catch (error) {
       console.error('Get feature flags error:', error);
@@ -97,7 +97,7 @@ class SettingsController {
         supportTickets
       } = req.body;
 
-      const currentFlags = await this.jsonManager.readJsonFile('settings/feature-flags.json');
+      const currentFlags = await this.settingsService.getFeatureFlags();
       
       // Update only provided flags
       const updatedFlags = {
@@ -111,7 +111,7 @@ class SettingsController {
         updatedBy: req.user.username || 'admin'
       };
 
-      await this.jsonManager.writeJsonFile('settings/feature-flags.json', updatedFlags);
+      await this.settingsService.updateFeatureFlags(updatedFlags, req.user.username || 'admin');
 
       res.json({ 
         success: true, 
@@ -129,7 +129,7 @@ class SettingsController {
    */
   async getEmailConfig(req, res) {
     try {
-      const config = await this.jsonManager.readJsonFile('settings/email-config.json');
+      const config = await this.settingsService.getEmailConfig();
       
       // Don't send password in response
       const safeConfig = {
@@ -180,7 +180,7 @@ class SettingsController {
         });
       }
 
-      const currentConfig = await this.jsonManager.readJsonFile('settings/email-config.json');
+      const currentConfig = await this.settingsService.getEmailConfig();
       
       // Update only provided fields
       const updatedConfig = {
@@ -195,7 +195,7 @@ class SettingsController {
         updatedBy: req.user.username || 'admin'
       };
 
-      await this.jsonManager.writeJsonFile('settings/email-config.json', updatedConfig);
+      await this.settingsService.updateEmailConfig(updatedConfig, req.user.username || 'admin');
 
       // Don't send password in response
       const safeConfig = {
@@ -219,7 +219,7 @@ class SettingsController {
    */
   async testEmailConfig(req, res) {
     try {
-      const config = await this.jsonManager.readJsonFile('settings/email-config.json');
+      const config = await this.settingsService.getEmailConfig();
       
       // Basic validation
       if (!config.smtpHost || !config.smtpPort || !config.smtpUser || !config.smtpPassword) {
@@ -247,9 +247,9 @@ class SettingsController {
   async getAllSettings(req, res) {
     try {
       const [systemSettings, featureFlags, emailConfig] = await Promise.all([
-        this.jsonManager.readJsonFile('settings/system-settings.json'),
-        this.jsonManager.readJsonFile('settings/feature-flags.json'),
-        this.jsonManager.readJsonFile('settings/email-config.json')
+        this.settingsService.getSystemSettings(),
+        this.settingsService.getFeatureFlags(),
+        this.settingsService.getEmailConfig()
       ]);
 
       // Don't send password in response

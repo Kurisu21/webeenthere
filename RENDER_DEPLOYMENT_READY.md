@@ -110,7 +110,7 @@ NEXT_PUBLIC_API_URL=https://your-backend-service.onrender.com
 - express, mysql2, dotenv, bcryptjs, jsonwebtoken, express-validator, axios, cors
 
 ### Client Dependencies ✅
-- next, react, react-dom, grapesjs (with plugins), tailwindcss, typescript
+- next, react, react-dom, @dnd-kit, tailwindcss, typescript
 
 ## 🎯 Build Status
 - ✅ Server builds successfully

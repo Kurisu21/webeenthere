@@ -30,8 +30,8 @@ async function main() {
     console.log('\n🎉 Database setup completed successfully!');
     console.log('\n📝 Summary:');
     console.log('- Database: webeenthere');
-    console.log('- Tables: users, templates, websites, ai_prompts, media_assets, website_analytics, custom_blocks, plans, user_plan');
-    console.log('- Dummy data: 5 users, 5 templates, 5 websites, 3 plans');
+    console.log('- Tables: users, templates, websites, ai_prompts, media_assets, website_analytics, custom_blocks, plans, user_plan, feedback, feedback_responses, forum_categories, forum_threads, forum_replies, help_categories, help_articles, support_tickets, support_messages, activity_logs, system_settings');
+    console.log('- Dummy data: 5 users, 5 templates, 5 websites, 3 plans, 5 feedback items, 3 forum categories, 5 forum threads, 10 forum replies, 3 help categories, 8 help articles, 3 support tickets, 5 support messages, 5 activity logs, 4 system settings');
     console.log('\n🔑 Default login credentials:');
     console.log('- Username: john_doe, Password: password123');
     console.log('- Username: admin_user, Password: password123');

@@ -1,9 +1,8 @@
-const ActivityLogger = require('../services/ActivityLogger');
-const { getDatabaseConnection } = require('../database/database');
+const databaseActivityLogger = require('../services/DatabaseActivityLogger');
 
 class ActivityController {
   constructor() {
-    this.activityLogger = new ActivityLogger(getDatabaseConnection());
+    this.activityLogger = databaseActivityLogger;
   }
 
   /**
@@ -237,42 +236,11 @@ class ActivityController {
         });
       }
 
-      const result = await this.activityLogger.getActivityLogs({ 
-        limit: 10000 
-      });
-
-      // Group logs by period
-      const trends = {};
-      const now = new Date();
-
-      result.logs.forEach(log => {
-        const logDate = new Date(log.timestamp);
-        let key;
-
-        if (period === 'daily') {
-          key = logDate.toISOString().split('T')[0]; // YYYY-MM-DD
-        } else if (period === 'weekly') {
-          const weekStart = new Date(logDate);
-          weekStart.setDate(logDate.getDate() - logDate.getDay());
-          key = weekStart.toISOString().split('T')[0];
-        } else if (period === 'monthly') {
-          key = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}`;
-        }
-
-        if (!trends[key]) {
-          trends[key] = 0;
-        }
-        trends[key]++;
-      });
-
-      // Convert to array and sort
-      const trendArray = Object.entries(trends)
-        .map(([date, count]) => ({ date, count }))
-        .sort((a, b) => a.date.localeCompare(b.date));
+      const trends = await this.activityLogger.getActivityTrends(period, parseInt(days));
 
       res.json({ 
         success: true, 
-        trends: trendArray,
+        trends: trends,
         period: period
       });
     } catch (error) {
@@ -304,17 +272,15 @@ class ActivityController {
    */
   async getLogFileMetadata(req, res) {
     try {
-      const files = await this.activityLogger.jsonManager.listJsonFiles();
-      const logFiles = files.filter(file => 
-        file.path.startsWith('logs/')
-      );
-
-      const metadata = logFiles.map(file => ({
-        path: file.path,
-        size: file.size,
-        modified: file.modified,
-        sizeFormatted: this.formatFileSize(file.size)
-      }));
+      // For MySQL, we don't have separate log files, but we can return database stats
+      const stats = await this.activityLogger.getStats();
+      
+      const metadata = [{
+        path: 'mysql://activity_logs',
+        size: stats.total * 100, // Rough estimate of bytes per log entry
+        modified: new Date().toISOString(),
+        sizeFormatted: this.formatFileSize(stats.total * 100)
+      }];
 
       res.json({ success: true, metadata });
     } catch (error) {

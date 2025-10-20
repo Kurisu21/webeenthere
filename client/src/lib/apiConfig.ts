@@ -69,7 +69,8 @@ export const apiCall = async (
   };
 
   try {
-    const response = await fetch(endpoint, defaultOptions);
+    const fullUrl = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+    const response = await fetch(fullUrl, defaultOptions);
     
     if (!response.ok) {
       // Handle 401 specifically
@@ -91,12 +92,18 @@ export const apiCall = async (
         }
         throw new Error('Access denied');
       }
-      throw new Error(`HTTP error! status: ${response.status}`);
+      
+      // For other errors, create error with response for parsing later
+      const error: any = new Error(`HTTP error! status: ${response.status}`);
+      error.status = response.status;
+      error.response = response;
+      throw error;
     }
     
     return response;
   } catch (error) {
-    console.error('API call failed:', error);
+    // Don't log to console.error to avoid Next.js error overlay
+    // The error will be caught and displayed in the UI
     throw error;
   }
 };
@@ -106,21 +113,89 @@ export const apiPost = async (
   endpoint: string,
   data: any
 ): Promise<any> => {
-  const response = await apiCall(endpoint, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-  
-  return response.json();
+  try {
+    const response = await apiCall(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    
+    return response.json();
+  } catch (error: any) {
+    // If error has a response, parse the error message
+    if (error.response) {
+      try {
+        const errorData = await error.response.json();
+        
+        // Handle express-validator errors array
+        let errorMessage = error.message;
+        if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+          errorMessage = errorData.errors[0].msg || errorData.errors[0].message || error.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+        
+        // Return a rejected promise instead of throwing an Error to avoid Next.js overlay
+        return Promise.reject({
+          message: errorMessage,
+          status: error.status,
+          data: errorData
+        });
+      } catch (e: any) {
+        // If e is the error we just threw, rethrow it
+        if (e.status && e.data) {
+          throw e;
+        }
+        // If JSON parsing failed, throw original error
+        throw error;
+      }
+    }
+    throw error;
+  }
 };
 
 // Helper function for GET requests
 export const apiGet = async (endpoint: string): Promise<any> => {
-  const response = await apiCall(endpoint, {
-    method: 'GET',
-  });
-  
-  return response.json();
+  try {
+    const response = await apiCall(endpoint, {
+      method: 'GET',
+    });
+    
+    return response.json();
+  } catch (error: any) {
+    // If error has a response, parse the error message
+    if (error.response) {
+      try {
+        const errorData = await error.response.json();
+        
+        // Handle express-validator errors array
+        let errorMessage = error.message;
+        if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+          errorMessage = errorData.errors[0].msg || errorData.errors[0].message || error.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+        
+        // Return a rejected promise instead of throwing an Error to avoid Next.js overlay
+        return Promise.reject({
+          message: errorMessage,
+          status: error.status,
+          data: errorData
+        });
+      } catch (e: any) {
+        // If e is the error we just threw, rethrow it
+        if (e.status && e.data) {
+          throw e;
+        }
+        // If JSON parsing failed, throw original error
+        throw error;
+      }
+    }
+    throw error;
+  }
 };
 
 // Helper function for PUT requests
@@ -128,12 +203,46 @@ export const apiPut = async (
   endpoint: string,
   data: any
 ): Promise<any> => {
-  const response = await apiCall(endpoint, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
-  
-  return response.json();
+  try {
+    const response = await apiCall(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    
+    return response.json();
+  } catch (error: any) {
+    // If error has a response, parse the error message
+    if (error.response) {
+      try {
+        const errorData = await error.response.json();
+        
+        // Handle express-validator errors array
+        let errorMessage = error.message;
+        if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+          errorMessage = errorData.errors[0].msg || errorData.errors[0].message || error.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+        
+        // Return a rejected promise instead of throwing an Error to avoid Next.js overlay
+        return Promise.reject({
+          message: errorMessage,
+          status: error.status,
+          data: errorData
+        });
+      } catch (e: any) {
+        // If e is the error we just threw, rethrow it
+        if (e.status && e.data) {
+          throw e;
+        }
+        // If JSON parsing failed, throw original error
+        throw error;
+      }
+    }
+    throw error;
+  }
 };
 
 // Debug function to log current API configuration

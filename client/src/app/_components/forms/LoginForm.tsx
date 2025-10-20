@@ -8,29 +8,26 @@ import { useAuth } from '../auth/AuthContext';
 
 const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
-
-
   const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
   const { login } = useAuth();
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      alert('Please enter both email and password');
+      setError('Please enter both email and password');
       return;
     }
 
     setIsLoading(true);
+    setError('');
     
     try {
-      console.log('Attempting login with:', { email, password: '***' });
-      console.log('API endpoint:', `${API_ENDPOINTS.USERS}/login`);
-      
       const response = await apiPost(`${API_ENDPOINTS.USERS}/login`, {
-        email: email,
+        email: email.trim(),
         password: password,
       });
 
@@ -48,16 +45,9 @@ const LoginForm: React.FC = () => {
         router.push('/user');
       }
     } catch (error: any) {
-      console.error('Login failed:', error);
-      
-      if (error.response?.status === 400) {
-        const errorData = await error.response.json();
-        alert(errorData.error || 'Invalid credentials. Please try again.');
-      } else if (error.response?.status === 401) {
-        alert('Invalid credentials. Please check your email and password.');
-      } else {
-        alert('Login failed. Please check your connection and try again.');
-      }
+      // Display the specific error message from backend
+      const errorMessage = error.message || 'Login failed. Please check your connection and try again.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -79,6 +69,18 @@ const LoginForm: React.FC = () => {
       <h2 className="text-2xl font-bold mb-8 text-center">
         <span className="bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">WEBeenThere</span>
       </h2>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-900/50 border border-red-500/30 rounded-lg">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <span className="text-red-300 text-sm">{error}</span>
+          </div>
+        </div>
+      )}
 
       {/* Login Form */}
       <div className="space-y-6">

@@ -82,7 +82,7 @@ export const activityApi = {
     if (filters.endDate) queryParams.append('endDate', filters.endDate);
     if (filters.search) queryParams.append('search', filters.search);
 
-    const url = `/admin/activity/logs${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const url = `/api/admin/activity/logs${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
     const response = await apiCall(url, { method: 'GET' });
     const data = await response.json() as ActivityResponse;
     
@@ -97,7 +97,7 @@ export const activityApi = {
 
   // Get activity statistics
   getActivityStats: async (): Promise<ActivityStats> => {
-    const response = await apiCall('/admin/activity/stats', { method: 'GET' });
+    const response = await apiCall('/api/admin/activity/stats', { method: 'GET' });
     const data = await response.json() as ActivityResponse;
     if (data.success && data.stats) {
       return data.stats;
@@ -107,7 +107,7 @@ export const activityApi = {
 
   // Get specific activity log by ID
   getActivityLogById: async (id: string): Promise<ActivityLog> => {
-    const response = await apiCall(`/admin/activity/logs/${id}`, { method: 'GET' });
+    const response = await apiCall(`/api/admin/activity/logs/${id}`, { method: 'GET' });
     const data = await response.json() as any;
     if (data.success && data.log) {
       return data.log;
@@ -124,7 +124,7 @@ export const activityApi = {
     queryParams.append('page', page.toString());
     queryParams.append('limit', limit.toString());
 
-    const url = `/admin/activity/user/${userId}?${queryParams.toString()}`;
+    const url = `/api/admin/activity/user/${userId}?${queryParams.toString()}`;
     const response = await apiCall(url, { method: 'GET' });
     const data = await response.json() as ActivityResponse;
     
@@ -142,7 +142,7 @@ export const activityApi = {
     const queryParams = new URLSearchParams();
     queryParams.append('limit', limit.toString());
 
-    const url = `/admin/activity/critical?${queryParams.toString()}`;
+    const url = `/api/admin/activity/critical?${queryParams.toString()}`;
     const response = await apiCall(url, { method: 'GET' });
     const data = await response.json() as ActivityResponse;
     
@@ -158,7 +158,7 @@ export const activityApi = {
     queryParams.append('period', period);
     queryParams.append('days', days.toString());
 
-    const url = `/admin/activity/trends?${queryParams.toString()}`;
+    const url = `/api/admin/activity/trends?${queryParams.toString()}`;
     const response = await apiCall(url, { method: 'GET' });
     const data = await response.json() as ActivityResponse;
     
@@ -179,7 +179,7 @@ export const activityApi = {
     if (filters.endDate) queryParams.append('endDate', filters.endDate);
     if (filters.search) queryParams.append('search', filters.search);
 
-    const url = `/admin/activity/export?${queryParams.toString()}`;
+    const url = `/api/admin/activity/export?${queryParams.toString()}`;
     
     try {
       const token = localStorage.getItem('token');
@@ -204,7 +204,7 @@ export const activityApi = {
 
   // Rotate log files manually
   rotateLogFiles: async (): Promise<{ success: boolean; message: string; archiveFile?: string }> => {
-    const response = await apiCall('/admin/activity/rotate', { method: 'POST' });
+    const response = await apiCall('/api/admin/activity/rotate', { method: 'POST' });
     const data = await response.json() as any;
     if (data.success) {
       return {
@@ -218,7 +218,7 @@ export const activityApi = {
 
   // Get log file metadata
   getLogFileMetadata: async (): Promise<LogFileMetadata[]> => {
-    const response = await apiCall('/admin/activity/metadata', { method: 'GET' });
+    const response = await apiCall('/api/admin/activity/metadata', { method: 'GET' });
     const data = await response.json() as any;
     if (data.success && data.metadata) {
       return data.metadata;
@@ -229,14 +229,27 @@ export const activityApi = {
 
 // Utility functions
 export const formatActivityDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
+  if (!dateString) {
+    return 'N/A';
+  }
+
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
+    
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  } catch (error) {
+    return 'Invalid Date';
+  }
 };
 
 export const formatActivityTime = (dateString: string): string => {
@@ -248,6 +261,10 @@ export const formatActivityTime = (dateString: string): string => {
 };
 
 export const getActionIcon = (action: string): string => {
+  if (!action || typeof action !== 'string') {
+    return '📝'; // Default icon for invalid actions
+  }
+
   const actionIcons: Record<string, string> = {
     'user_management': '👤',
     'settings_update': '⚙️',
@@ -272,6 +289,10 @@ export const getActionIcon = (action: string): string => {
 };
 
 export const getActionColor = (action: string): string => {
+  if (!action || typeof action !== 'string') {
+    return 'text-gray-400'; // Default color for invalid actions
+  }
+
   if (action.includes('login')) return 'text-green-400';
   if (action.includes('failed')) return 'text-red-400';
   if (action.includes('role') || action.includes('status')) return 'text-yellow-400';

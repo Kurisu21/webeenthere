@@ -4,14 +4,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const EmailService = require('../services/EmailService');
 const TokenStorage = require('../services/TokenStorage');
-const JsonDataManager = require('../services/JsonDataManager');
+const databaseActivityLogger = require('../services/DatabaseActivityLogger');
 
 class UserController {
   constructor(userModel) {
     this.userModel = userModel;
     this.emailService = new EmailService();
     this.tokenStorage = new TokenStorage();
-    this.jsonManager = new JsonDataManager();
     
     // Initialize token storage
     this.tokenStorage.initialize().catch(err => {
@@ -70,21 +69,78 @@ class UserController {
       }
       const { email, password } = req.body;
       
+      // Trim whitespace from email
+      const trimmedEmail = email ? email.trim() : '';
+      
+      // Get IP address and user agent for logging
+      const ipAddress = req.ip || 
+        req.connection.remoteAddress || 
+        req.socket.remoteAddress ||
+        (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
+        req.headers['x-forwarded-for']?.split(',')[0] ||
+        'unknown';
+      const userAgent = req.headers['user-agent'] || 'unknown';
+      
       // Try to find user by email first, then by username if not found
-      let user = await this.userModel.findByEmail(email);
+      let user = await this.userModel.findByEmail(trimmedEmail);
       if (!user) {
-        user = await this.userModel.findByUsername(email);
+        user = await this.userModel.findByUsername(trimmedEmail);
       }
       if (!user) {
+        // Log failed login attempt - user not found
+        await databaseActivityLogger.logActivity({
+          userId: null,
+          action: 'failed_login_attempt',
+          entityType: 'user',
+          entityId: null,
+          ipAddress: ipAddress,
+          userAgent: userAgent,
+          details: { 
+            email: trimmedEmail, 
+            reason: 'User not found',
+            timestamp: new Date().toISOString()
+          }
+        });
         return res.status(400).json({ error: 'Invalid credentials' });
       }
+      
       const isMatch = await bcrypt.compare(password, user.password_hash);
       if (!isMatch) {
+        // Log failed login attempt - wrong password
+        await databaseActivityLogger.logActivity({
+          userId: user.id,
+          action: 'failed_login_attempt',
+          entityType: 'user',
+          entityId: user.id,
+          ipAddress: ipAddress,
+          userAgent: userAgent,
+          details: { 
+            email: trimmedEmail, 
+            username: user.username,
+            reason: 'Invalid password',
+            timestamp: new Date().toISOString()
+          }
+        });
         return res.status(400).json({ error: 'Invalid credentials' });
       }
       
       // Check if user is active
       if (!user.is_active) {
+        // Log failed login attempt - account deactivated
+        await databaseActivityLogger.logActivity({
+          userId: user.id,
+          action: 'failed_login_attempt',
+          entityType: 'user',
+          entityId: user.id,
+          ipAddress: ipAddress,
+          userAgent: userAgent,
+          details: { 
+            email: trimmedEmail, 
+            username: user.username,
+            reason: 'Account deactivated',
+            timestamp: new Date().toISOString()
+          }
+        });
         return res.status(400).json({ 
           error: 'Account is deactivated. Please contact support.' 
         });
@@ -92,10 +148,42 @@ class UserController {
       
       // Check if user is verified
       if (!user.is_verified) {
+        // Log failed login attempt - account not verified
+        await databaseActivityLogger.logActivity({
+          userId: user.id,
+          action: 'failed_login_attempt',
+          entityType: 'user',
+          entityId: user.id,
+          ipAddress: ipAddress,
+          userAgent: userAgent,
+          details: { 
+            email: trimmedEmail, 
+            username: user.username,
+            reason: 'Account not verified',
+            timestamp: new Date().toISOString()
+          }
+        });
         return res.status(400).json({ 
           error: 'Account not verified. Please check your email and verify your account.' 
         });
       }
+      
+      // Log successful login
+      await databaseActivityLogger.logActivity({
+        userId: user.id,
+        action: user.role === 'admin' ? 'admin_login' : 'user_login',
+        entityType: 'user',
+        entityId: user.id,
+        ipAddress: ipAddress,
+        userAgent: userAgent,
+        details: { 
+          email: trimmedEmail, 
+          username: user.username,
+          role: user.role,
+          login_method: 'password',
+          timestamp: new Date().toISOString()
+        }
+      });
       
       const token = jwt.sign(
         { id: user.id, email: user.email, username: user.username, role: user.role },
@@ -112,6 +200,7 @@ class UserController {
         } 
       });
     } catch (err) {
+      console.error('Login error:', err);
       res.status(500).json({ error: 'Server error' });
     }
   }
@@ -286,19 +375,10 @@ class UserController {
       if (profile_image) updateData.profile_image = profile_image;
       if (theme_mode) updateData.theme_mode = theme_mode;
 
-      const success = await this.userModel.updateUser(userId, updateData);
+      const success = await this.userModel.updateProfile(userId, updateData);
 
       if (success) {
-        // Sync username in JSON files if username was updated
-        if (username) {
-          try {
-            await this.jsonManager.syncUserDataInJson(userId, username);
-            console.log(`Synced username ${username} for userId ${userId} across JSON files`);
-          } catch (syncError) {
-            console.error('Failed to sync username in JSON files:', syncError);
-            // Don't fail the request if sync fails
-          }
-        }
+        // User updated successfully
 
         res.json({
           success: true,
@@ -393,18 +473,6 @@ class UserController {
 
       const success = await this.userModel.updateRole(id, role);
       if (success) {
-        // Get user data for JSON sync
-        try {
-          const userData = await this.jsonManager.getUserData(id, this.userModel.db);
-          if (userData) {
-            await this.jsonManager.syncUserDataInJson(id, userData.username);
-            console.log(`Synced user data after role change for userId ${id}`);
-          }
-        } catch (syncError) {
-          console.error('Failed to sync user data after role change:', syncError);
-          // Don't fail the request if sync fails
-        }
-
         res.json({ message: 'User role updated successfully' });
       } else {
         res.status(404).json({ error: 'User not found' });
@@ -423,18 +491,6 @@ class UserController {
 
       const success = await this.userModel.updateStatus(id, { is_active, is_verified });
       if (success) {
-        // Get user data for JSON sync
-        try {
-          const userData = await this.jsonManager.getUserData(id, this.userModel.db);
-          if (userData) {
-            await this.jsonManager.syncUserDataInJson(id, userData.username);
-            console.log(`Synced user data after status change for userId ${id}`);
-          }
-        } catch (syncError) {
-          console.error('Failed to sync user data after status change:', syncError);
-          // Don't fail the request if sync fails
-        }
-
         res.json({ message: 'User status updated successfully' });
       } else {
         res.status(404).json({ error: 'User not found' });

@@ -4,13 +4,11 @@ const crypto = require('crypto');
 const archiver = require('archiver');
 const DatabaseBackup = require('./DatabaseBackup');
 const FileSystemBackup = require('./FileSystemBackup');
-const JsonDataManager = require('./JsonDataManager');
 
 class BackupManager {
   constructor() {
     this.backupDir = path.join(__dirname, '..', 'backups');
     this.dataDir = path.join(__dirname, '..', 'data', 'backups');
-    this.jsonManager = new JsonDataManager();
     this.databaseBackup = new DatabaseBackup();
     this.fileSystemBackup = new FileSystemBackup();
     

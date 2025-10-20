@@ -28,6 +28,7 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
     } catch (err) {
       console.error('Failed to fetch activity stats:', err);
       setError('Failed to load activity statistics');
+      setStats(null); // Set to null on error
     } finally {
       setIsLoading(false);
     }
@@ -36,13 +37,18 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
   const fetchTrends = async () => {
     try {
       const trendsData = await activityApi.getActivityTrends(selectedPeriod, 30);
-      setTrends(trendsData);
+      setTrends(trendsData || []); // Ensure it's always an array
     } catch (err) {
       console.error('Failed to fetch activity trends:', err);
+      setTrends([]); // Set to empty array on error
     }
   };
 
   const formatNumber = (num: number): string => {
+    if (typeof num !== 'number' || isNaN(num)) {
+      return '0';
+    }
+    
     if (num >= 1000000) {
       return (num / 1000000).toFixed(1) + 'M';
     } else if (num >= 1000) {

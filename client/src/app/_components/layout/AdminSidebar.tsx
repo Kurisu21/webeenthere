@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from './SidebarContext';
@@ -38,11 +38,6 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
     </svg>
   ),
-  security: (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-    </svg>
-  ),
   logout: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -66,22 +61,100 @@ const Icons = {
   )
 };
 
-const navItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: Icons.dashboard, href: '/admin/dashboard' },
-  { id: 'users', label: 'User Management', icon: Icons.users, href: '/admin/users' },
-  { id: 'profile', label: 'Profile Management', icon: Icons.profile, href: '/admin/profile' },
-  { id: 'settings', label: 'Account Settings', icon: Icons.settings, href: '/admin/settings' },
-  { id: 'roles', label: 'Role Management', icon: Icons.roles, href: '/admin/roles' },
-  { id: 'systemSettings', label: 'System Settings', icon: Icons.systemSettings, href: '/admin/settings-system' },
-  { id: 'activityLogs', label: 'Activity Logs', icon: Icons.activityLogs, href: '/admin/activity-logs' },
-  { id: 'analytics', label: 'Analytics', icon: Icons.analytics, href: '/admin/analytics' },
-  { id: 'backupRecovery', label: 'Backup & Recovery', icon: Icons.backup, href: '/admin/backup-recovery' },
-  { id: 'security', label: 'Security', icon: Icons.security, href: '/admin/security' },
+const navSections = [
+  {
+    id: 'core',
+    label: 'Core',
+    items: [
+      { id: 'dashboard', label: 'Dashboard', icon: Icons.dashboard, href: '/admin/dashboard' },
+      { id: 'users', label: 'User Management', icon: Icons.users, href: '/admin/users' },
+      { id: 'profile', label: 'Profile Management', icon: Icons.profile, href: '/admin/profile' },
+      { id: 'settings', label: 'Account Settings', icon: Icons.settings, href: '/admin/settings' },
+      { id: 'roles', label: 'Role Management', icon: Icons.roles, href: '/admin/roles' },
+    ]
+  },
+  {
+    id: 'analytics',
+    label: 'Dashboard & Analytics',
+    items: [
+      { id: 'analytics', label: 'Analytics', icon: Icons.analytics, href: '/admin/analytics' },
+      { id: 'reports', label: 'Reports', icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ), href: '/admin/reports' },
+    ]
+  },
+  {
+    id: 'support',
+    label: 'Support & Community',
+    items: [
+      { id: 'helpCenter', label: 'Help Center', icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ), href: '/admin/help-center' },
+      { id: 'forum', label: 'Forum Management', icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+        </svg>
+      ), href: '/admin/forum' },
+      { id: 'feedback', label: 'Feedback Management', icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+        </svg>
+      ), href: '/admin/feedback' },
+      { id: 'support', label: 'Support Tickets', icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      ), href: '/admin/support' },
+    ]
+  },
+  {
+    id: 'system',
+    label: 'System',
+    items: [
+      { id: 'systemSettings', label: 'System Settings', icon: Icons.systemSettings, href: '/admin/settings-system' },
+      { id: 'activityLogs', label: 'Activity Logs', icon: Icons.activityLogs, href: '/admin/activity-logs' },
+      { id: 'backupRecovery', label: 'Backup & Recovery', icon: Icons.backup, href: '/admin/backup-recovery' },
+    ]
+  }
 ];
 
 const AdminSidebar = memo(() => {
   const pathname = usePathname();
   const { isCollapsed, toggleSidebar } = useSidebar();
+  
+  // Accordion state management
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['core']));
+  
+  // Load saved preferences from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('admin-sidebar-sections');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setExpandedSections(new Set(parsed));
+      } catch (error) {
+        console.warn('Failed to parse saved sidebar sections:', error);
+      }
+    }
+  }, []);
+  
+  // Save preferences to localStorage
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId);
+      } else {
+        newSet.add(sectionId);
+      }
+      localStorage.setItem('admin-sidebar-sections', JSON.stringify([...newSet]));
+      return newSet;
+    });
+  };
 
   // Placeholder admin user data (replace with actual user data when available)
   const currentAdmin = {
@@ -132,37 +205,80 @@ const AdminSidebar = memo(() => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex md:flex-col flex-1 space-y-2 overflow-x-auto md:overflow-x-visible">
-        {navItems.map((item, index) => {
-          const isActive = pathname === item.href;
+      <nav className="flex md:flex-col flex-1 space-y-1 overflow-x-auto md:overflow-x-visible overflow-y-auto max-h-[calc(100vh-280px)] scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-800 hover:scrollbar-thumb-gray-400">
+        {navSections.map((section) => {
+          const isExpanded = expandedSections.has(section.id);
+          const hasActiveItem = section.items.some(item => pathname === item.href);
+          
           return (
-            <Link
-              key={item.id}
-              href={item.href}
-              className={`
-                flex-shrink-0 md:w-full flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg transition-all duration-300 transform hover:scale-105 md:hover:translate-x-2 group
-                ${isActive
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/30 border border-purple-500/50'
-                  : 'hover:bg-gray-800 text-gray-300 hover:text-white border border-transparent'
-                }
-                ${isCollapsed ? 'justify-center' : ''}
-              `}
-              title={isCollapsed ? item.label : ''}
-            >
-              <span className="flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
-                {item.icon}
-              </span>
+            <div key={section.id} className="space-y-1">
+              {/* Section Header */}
               {!isCollapsed && (
-                <>
-                  <span className="font-medium text-sm md:text-base whitespace-nowrap">
-                    {item.label}
+                <button
+                  onClick={() => toggleSection(section.id)}
+                  className={`
+                    w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group
+                    ${hasActiveItem 
+                      ? 'bg-gray-800/50 text-purple-300 border border-purple-500/30' 
+                      : 'text-gray-400 hover:text-gray-300 hover:bg-gray-800/30'
+                    }
+                  `}
+                >
+                  <span className="font-semibold text-xs uppercase tracking-wider">
+                    {section.label}
                   </span>
-                  {isActive && (
-                    <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
-                  )}
-                </>
+                  <svg 
+                    className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
               )}
-            </Link>
+              
+              {/* Section Items */}
+              <div className={`
+                transition-all duration-300 ease-in-out overflow-hidden
+                ${isExpanded || isCollapsed ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}
+              `}>
+                <div className="space-y-1 pl-2">
+                  {section.items.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        className={`
+                          flex-shrink-0 md:w-full flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-2.5 rounded-lg transition-all duration-300 transform hover:scale-105 md:hover:translate-x-2 group
+                          ${isActive
+                            ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/30 border border-purple-500/50'
+                            : 'hover:bg-gray-800 text-gray-300 hover:text-white border border-transparent'
+                          }
+                          ${isCollapsed ? 'justify-center' : ''}
+                        `}
+                        title={isCollapsed ? item.label : ''}
+                      >
+                        <span className="flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
+                          {item.icon}
+                        </span>
+                        {!isCollapsed && (
+                          <>
+                            <span className="font-medium text-sm whitespace-nowrap">
+                              {item.label}
+                            </span>
+                            {isActive && (
+                              <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
+                            )}
+                          </>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           );
         })}
       </nav>
