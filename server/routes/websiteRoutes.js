@@ -18,6 +18,8 @@ router.put('/:id', authMiddleware, websiteController.updateWebsite.bind(websiteC
 router.delete('/:id', authMiddleware, websiteController.deleteWebsite.bind(websiteController));
 router.post('/:id/publish', authMiddleware, websiteController.publishWebsite.bind(websiteController));
 router.post('/:id/unpublish', authMiddleware, websiteController.unpublishWebsite.bind(websiteController));
+router.put('/:id/slug', authMiddleware, websiteController.updateWebsiteSlug.bind(websiteController));
+router.get('/:id/export', authMiddleware, websiteController.exportWebsite.bind(websiteController));
 
   return router;
 };

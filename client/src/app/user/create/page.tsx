@@ -178,7 +178,7 @@ export default function CreateWebsitePage() {
   };
 
   return (
-        <div className="min-h-screen bg-gray-900 relative overflow-hidden">
+        <div className="min-h-screen bg-surface relative overflow-hidden">
           {/* Moving Templates Background - Hidden on mobile for performance */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
             {/* Template 1 - Moving from left to right */}
@@ -252,10 +252,10 @@ export default function CreateWebsitePage() {
 
             {/* Professional Navigation to Templates */}
             <div className="text-center mb-6 md:mb-8 w-full max-w-4xl">
-              <div className="inline-flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 bg-gray-800/50 backdrop-blur-sm border border-blue-500/30 rounded-xl p-3 md:p-4 w-full sm:w-auto">
+              <div className="inline-flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 bg-surface-elevated/50 backdrop-blur-sm border border-app rounded-xl p-3 md:p-4 w-full sm:w-auto">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-gray-300 text-xs sm:text-sm">Or browse our pre-built templates and community-made templates</span>
+                  <span className="text-secondary text-xs sm:text-sm">Or browse our pre-built templates and community-made templates</span>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
                   <button
@@ -285,17 +285,17 @@ export default function CreateWebsitePage() {
               <div className="animate-fadeIn w-full max-w-6xl">
                 <div className="mb-4 md:mb-6">
                   <div className="flex items-center justify-between mb-3 md:mb-4">
-                    <h2 className="text-xl md:text-2xl font-bold text-white">Choose Your Template</h2>
+                    <h2 className="text-xl md:text-2xl font-bold text-primary">Choose Your Template</h2>
                     <button
                       onClick={() => setShowTemplateSection(false)}
-                      className="text-gray-400 hover:text-white transition-colors p-1"
+                      className="text-secondary hover:text-primary transition-colors p-1"
                     >
                       <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
-                  <p className="text-gray-400 text-sm md:text-base">Select from our professional template collection</p>
+                  <p className="text-secondary text-sm md:text-base">Select from our professional template collection</p>
                 </div>
                 <TemplateSelector 
                   onTemplateSelect={handleTemplateSelect}

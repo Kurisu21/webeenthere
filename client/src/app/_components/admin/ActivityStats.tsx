@@ -85,20 +85,20 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
     if (action.includes('role') || action.includes('status')) return 'text-yellow-400';
     if (action.includes('settings') || action.includes('system')) return 'text-blue-400';
     if (action.includes('export') || action.includes('maintenance')) return 'text-purple-400';
-    return 'text-gray-400';
+    return 'text-secondary';
   };
 
   if (isLoading) {
     return (
-      <div className={`bg-gray-800 rounded-lg border border-gray-700 p-6 ${className}`}>
+      <div className={`bg-surface-elevated rounded-lg border border-app p-6 ${className}`}>
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-700 rounded w-1/4 mb-4"></div>
+          <div className="h-6 bg-surface rounded w-1/4 mb-4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-20 bg-gray-700 rounded"></div>
+              <div key={i} className="h-20 bg-surface rounded"></div>
             ))}
           </div>
-          <div className="h-64 bg-gray-700 rounded"></div>
+          <div className="h-64 bg-surface rounded"></div>
         </div>
       </div>
     );
@@ -106,7 +106,7 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
 
   if (error) {
     return (
-      <div className={`bg-gray-800 rounded-lg border border-gray-700 p-6 ${className}`}>
+      <div className={`bg-surface-elevated rounded-lg border border-app p-6 ${className}`}>
         <div className="text-center">
           <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,10 +114,10 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
             </svg>
           </div>
           <p className="text-red-400 text-lg font-medium mb-2">Error Loading Statistics</p>
-          <p className="text-gray-400">{error}</p>
+          <p className="text-secondary">{error}</p>
           <button
             onClick={fetchStats}
-            className="mt-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300"
+            className="mt-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary font-medium py-2 px-4 rounded-lg transition-all duration-300"
           >
             Retry
           </button>
@@ -131,10 +131,10 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
   }
 
   return (
-    <div className={`bg-gray-800 rounded-lg border border-gray-700 p-6 ${className}`}>
+    <div className={`bg-surface-elevated rounded-lg border border-app p-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-white">Activity Statistics</h2>
+        <h2 className="text-xl font-semibold text-primary">Activity Statistics</h2>
         <div className="flex space-x-2">
           {(['daily', 'weekly', 'monthly'] as const).map((period) => (
             <button
@@ -142,8 +142,8 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
               onClick={() => setSelectedPeriod(period)}
               className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
                 selectedPeriod === period
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  ? 'bg-purple-600 text-primary'
+                  : 'bg-surface-elevated text-secondary hover:bg-surface'
               }`}
             >
               {period.charAt(0).toUpperCase() + period.slice(1)}
@@ -154,11 +154,11 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-gray-700/50 rounded-lg p-4">
+        <div className="bg-surface-elevated rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Total Activities</p>
-              <p className="text-2xl font-bold text-white">{formatNumber(stats.totalActivities)}</p>
+              <p className="text-secondary text-sm">Total Activities</p>
+              <p className="text-2xl font-bold text-primary">{formatNumber(stats.totalActivities)}</p>
             </div>
             <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,11 +168,11 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
           </div>
         </div>
 
-        <div className="bg-gray-700/50 rounded-lg p-4">
+        <div className="bg-surface-elevated rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Today's Activities</p>
-              <p className="text-2xl font-bold text-white">{formatNumber(stats.todayActivities)}</p>
+              <p className="text-secondary text-sm">Today's Activities</p>
+              <p className="text-2xl font-bold text-primary">{formatNumber(stats.todayActivities)}</p>
             </div>
             <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,14 +182,14 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
           </div>
         </div>
 
-        <div className="bg-gray-700/50 rounded-lg p-4">
+        <div className="bg-surface-elevated rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Top Action</p>
-              <p className="text-lg font-semibold text-white truncate">
+              <p className="text-secondary text-sm">Top Action</p>
+              <p className="text-lg font-semibold text-primary truncate">
                 {stats.topActions[0]?.action || 'N/A'}
               </p>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-secondary">
                 {stats.topActions[0]?.count || 0} times
               </p>
             </div>
@@ -201,14 +201,14 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
           </div>
         </div>
 
-        <div className="bg-gray-700/50 rounded-lg p-4">
+        <div className="bg-surface-elevated rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Most Active User</p>
-              <p className="text-lg font-semibold text-white truncate">
+              <p className="text-secondary text-sm">Most Active User</p>
+              <p className="text-lg font-semibold text-primary truncate">
                 {stats.topUsers[0]?.user.split(' (')[0] || 'N/A'}
               </p>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-secondary">
                 {stats.topUsers[0]?.count || 0} activities
               </p>
             </div>
@@ -223,8 +223,8 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
 
       {/* Activity Trends Chart */}
       <div className="mb-8">
-        <h3 className="text-lg font-semibold text-white mb-4">Activity Trends ({selectedPeriod})</h3>
-        <div className="bg-gray-700/30 rounded-lg p-4">
+        <h3 className="text-lg font-semibold text-primary mb-4">Activity Trends ({selectedPeriod})</h3>
+        <div className="bg-surface-elevated rounded-lg p-4">
           {trends.length > 0 ? (
             <div className="flex items-end justify-between h-32 space-x-1">
               {trends.slice(-14).map((trend, index) => {
@@ -238,7 +238,7 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
                       style={{ height: `${Math.max(height, 4)}%` }}
                       title={`${trend.date}: ${trend.count} activities`}
                     ></div>
-                    <span className="text-xs text-gray-400 mt-2 transform -rotate-45 origin-left">
+                    <span className="text-xs text-secondary mt-2 transform -rotate-45 origin-left">
                       {new Date(trend.date).toLocaleDateString('en-US', { 
                         month: 'short', 
                         day: 'numeric' 
@@ -250,7 +250,7 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-400">No activity data available</p>
+              <p className="text-secondary">No activity data available</p>
             </div>
           )}
         </div>
@@ -258,17 +258,17 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
 
       {/* Top Actions */}
       <div className="mb-8">
-        <h3 className="text-lg font-semibold text-white mb-4">Top Actions</h3>
+        <h3 className="text-lg font-semibold text-primary mb-4">Top Actions</h3>
         <div className="space-y-2">
           {stats.topActions.slice(0, 5).map((action, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
+            <div key={index} className="flex items-center justify-between p-3 bg-surface-elevated rounded-lg">
               <div className="flex items-center">
                 <span className="text-lg mr-3">{getTrendIcon(action.action)}</span>
                 <span className={`font-medium ${getActionColor(action.action)}`}>
                   {action.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </span>
               </div>
-              <span className="text-white font-semibold">{action.count}</span>
+              <span className="text-primary font-semibold">{action.count}</span>
             </div>
           ))}
         </div>
@@ -276,20 +276,20 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
 
       {/* Recent Activities */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-4">Recent Activities</h3>
+        <h3 className="text-lg font-semibold text-primary mb-4">Recent Activities</h3>
         <div className="space-y-2">
           {stats.recentActivities.slice(0, 5).map((activity, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
+            <div key={index} className="flex items-center justify-between p-3 bg-surface-elevated rounded-lg">
               <div className="flex items-center">
                 <span className="text-lg mr-3">{getTrendIcon(activity.action)}</span>
                 <div>
                   <p className={`text-sm font-medium ${getActionColor(activity.action)}`}>
                     {activity.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </p>
-                  <p className="text-xs text-gray-400">{activity.username}</p>
+                  <p className="text-xs text-secondary">{activity.username}</p>
                 </div>
               </div>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-secondary">
                 {new Date(activity.timestamp).toLocaleTimeString('en-US', {
                   hour: '2-digit',
                   minute: '2-digit'

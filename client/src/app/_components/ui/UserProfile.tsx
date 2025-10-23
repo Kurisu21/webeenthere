@@ -10,7 +10,7 @@ const UserProfile = memo(() => {
     username: '',
     email: '',
     profile_image: '',
-    theme_mode: 'dark' as 'light' | 'dark',
+    theme_mode: 'light' as 'light' | 'dark',
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -86,7 +86,7 @@ const UserProfile = memo(() => {
         username: user.username,
         email: user.email,
         profile_image: '',
-        theme_mode: 'dark',
+        theme_mode: 'light',
       });
     }
     setIsEditing(false);

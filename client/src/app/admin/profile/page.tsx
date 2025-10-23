@@ -138,7 +138,7 @@ export default function ProfileManagementPage() {
   }, [selectedUsers]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className="min-h-screen bg-surface">
       <DashboardHeader />
       <div className="flex flex-col md:flex-row">
         <AdminSidebar />
@@ -146,12 +146,12 @@ export default function ProfileManagementPage() {
           <div className="p-6">
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">Profile Management</h1>
-              <p className="text-gray-400">Search and manage user profiles with bulk operations</p>
+              <h1 className="text-3xl font-bold text-primary mb-2">Profile Management</h1>
+              <p className="text-secondary">Search and manage user profiles with bulk operations</p>
             </div>
 
             {/* Search Bar */}
-            <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 mb-6">
+            <div className="bg-surface-elevated rounded-lg border border-app p-6 mb-6">
               <form onSubmit={handleSearch} className="space-y-4">
                 <div className="flex items-center space-x-4">
                   <div className="flex-1">
@@ -161,9 +161,9 @@ export default function ProfileManagementPage() {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search users by username or email..."
-                        className="w-full px-4 py-3 pl-10 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-3 pl-10 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
-                      <svg className="w-5 h-5 absolute left-3 top-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 absolute left-3 top-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                     </div>
@@ -180,7 +180,7 @@ export default function ProfileManagementPage() {
                       setSearchTerm('');
                       setCurrentPage(1);
                     }}
-                    className="text-gray-400 hover:text-white transition-colors px-4 py-3"
+                    className="text-secondary hover:text-primary transition-colors px-4 py-3"
                   >
                     Clear
                   </button>
@@ -190,15 +190,15 @@ export default function ProfileManagementPage() {
 
             {/* Bulk Actions */}
             {showBulkActions && (
-              <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-lg p-4 mb-6">
+              <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/30 rounded-lg p-4 mb-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <span className="text-white font-medium">
+                    <span className="text-primary font-medium">
                       {selectedUsers.length} user(s) selected
                     </span>
                     <button
                       onClick={() => setSelectedUsers([])}
-                      className="text-gray-400 hover:text-white transition-colors text-sm"
+                      className="text-secondary hover:text-primary transition-colors text-sm"
                     >
                       Clear Selection
                     </button>
@@ -236,7 +236,7 @@ export default function ProfileManagementPage() {
             {/* Results Summary */}
             {pagination && (
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-gray-400 text-sm">
+                <p className="text-secondary text-sm">
                   Showing {users.length} of {pagination.totalUsers} users
                   {searchTerm && ` matching "${searchTerm}"`}
                 </p>
@@ -252,48 +252,48 @@ export default function ProfileManagementPage() {
             )}
 
             {/* User Table with Selection */}
-            <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+            <div className="bg-surface-elevated rounded-lg border border-app overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-700/50">
+                  <thead className="bg-surface/50">
                     <tr>
                       <th className="px-6 py-3 text-left">
                         <input
                           type="checkbox"
                           checked={selectedUsers.length === users.length && users.length > 0}
                           onChange={handleSelectAll}
-                          className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+                          className="w-4 h-4 text-purple-600 bg-surface border-app rounded focus:ring-purple-500"
                         />
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                         User
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                         Email
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                         Role
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                         Created
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-700">
+                  <tbody className="divide-y divide-app">
                     {users.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-700/30 transition-colors">
+                      <tr key={user.id} className="hover:bg-surface/30 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <input
                             type="checkbox"
                             checked={selectedUsers.includes(user.id)}
                             onChange={() => handleUserSelect(user.id)}
-                            className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+                            className="w-4 h-4 text-purple-600 bg-surface border-app rounded focus:ring-purple-500"
                           />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -304,12 +304,12 @@ export default function ProfileManagementPage() {
                               </span>
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-white">{user.username}</div>
-                              <div className="text-xs text-gray-400">#{user.id}</div>
+                              <div className="text-sm font-medium text-primary">{user.username}</div>
+                              <div className="text-xs text-secondary">#{user.id}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                           {user.email}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -339,7 +339,7 @@ export default function ProfileManagementPage() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                           {new Date(user.created_at).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -379,7 +379,7 @@ export default function ProfileManagementPage() {
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={!pagination.hasPrev}
-                    className="px-3 py-2 text-sm font-medium text-gray-300 bg-gray-800 border border-gray-700 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-2 text-sm font-medium text-secondary bg-surface-elevated border border-app rounded-lg hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Previous
                   </button>
@@ -395,7 +395,7 @@ export default function ProfileManagementPage() {
                         className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                           isCurrentPage
                             ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
-                            : 'text-gray-300 bg-gray-800 border border-gray-700 hover:bg-gray-700'
+                            : 'text-secondary bg-surface-elevated border border-app hover:bg-surface'
                         }`}
                       >
                         {page}
@@ -406,7 +406,7 @@ export default function ProfileManagementPage() {
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={!pagination.hasNext}
-                    className="px-3 py-2 text-sm font-medium text-gray-300 bg-gray-800 border border-gray-700 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-2 text-sm font-medium text-secondary bg-surface-elevated border border-app rounded-lg hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Next
                   </button>
@@ -416,12 +416,12 @@ export default function ProfileManagementPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="mt-6 p-4 bg-red-900/50 border border-red-500/30 rounded-lg">
+              <div className="mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
                 <div className="flex items-center">
                   <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
-                  <span className="text-red-300">{error}</span>
+                  <span className="text-red-400">{error}</span>
                 </div>
               </div>
             )}

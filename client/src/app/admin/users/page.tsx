@@ -87,7 +87,7 @@ export default function UserManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className="min-h-screen bg-surface">
       <DashboardHeader />
       <div className="flex flex-col md:flex-row">
         <AdminSidebar />
@@ -96,16 +96,16 @@ export default function UserManagementPage() {
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-white">User Management</h1>
+                <h1 className="text-3xl font-bold text-primary">User Management</h1>
                 <div className="flex items-center space-x-3">
                   <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
                     {users.length} Users
                   </span>
                   <div className="flex space-x-1">
-                    <button className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1 rounded text-sm transition-colors">
+                    <button className="bg-surface-elevated hover:bg-surface text-secondary px-3 py-1 rounded text-sm transition-colors">
                       Active
                     </button>
-                    <button className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1 rounded text-sm transition-colors">
+                    <button className="bg-surface-elevated hover:bg-surface text-secondary px-3 py-1 rounded text-sm transition-colors">
                       Verified
                     </button>
                   </div>
@@ -114,12 +114,12 @@ export default function UserManagementPage() {
             </div>
 
             {/* Search and Filters */}
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6 mb-6">
+            <div className="bg-surface-elevated rounded-lg border border-app p-6 mb-6">
               <form onSubmit={handleSearch} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   {/* Search */}
                   <div className="md:col-span-2">
-                    <label htmlFor="search" className="block text-sm font-medium text-gray-300 mb-2">
+                    <label htmlFor="search" className="block text-sm font-medium text-primary mb-2">
                       Search Users
                     </label>
                     <div className="relative">
@@ -129,9 +129,9 @@ export default function UserManagementPage() {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search by username or email..."
-                        className="w-full px-4 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 pl-10 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
-                      <svg className="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 absolute left-3 top-2.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                     </div>
@@ -139,14 +139,14 @@ export default function UserManagementPage() {
 
                   {/* Role Filter */}
                   <div>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-300 mb-2">
+                    <label htmlFor="role" className="block text-sm font-medium text-primary mb-2">
                       Role
                     </label>
                     <select
                       id="role"
                       value={roleFilter}
                       onChange={(e) => setRoleFilter(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     >
                       <option value="">All Roles</option>
                       <option value="user">User</option>
@@ -156,14 +156,14 @@ export default function UserManagementPage() {
 
                   {/* Status Filter */}
                   <div>
-                    <label htmlFor="status" className="block text-sm font-medium text-gray-300 mb-2">
+                    <label htmlFor="status" className="block text-sm font-medium text-primary mb-2">
                       Status
                     </label>
                     <select
                       id="status"
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     >
                       <option value="">All Status</option>
                       <option value="active">Active</option>
@@ -190,7 +190,7 @@ export default function UserManagementPage() {
                       setStatusFilter('');
                       setCurrentPage(1);
                     }}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    className="text-secondary hover:text-primary transition-colors"
                   >
                     Clear Filters
                   </button>
@@ -201,7 +201,7 @@ export default function UserManagementPage() {
             {/* Results Summary */}
             {pagination && (
               <div className="mb-4">
-                <p className="text-gray-400 text-sm">
+                <p className="text-secondary text-sm">
                   Showing {users.length} of {pagination.totalUsers} users
                   {searchTerm && ` matching "${searchTerm}"`}
                   {roleFilter && ` with role "${roleFilter}"`}
@@ -227,7 +227,7 @@ export default function UserManagementPage() {
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={!pagination.hasPrev}
-                    className="px-3 py-2 text-sm font-medium text-gray-300 bg-gray-800 border border-gray-700 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-2 text-sm font-medium text-secondary bg-surface-elevated border border-app rounded-lg hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Previous
                   </button>
@@ -243,7 +243,7 @@ export default function UserManagementPage() {
                         className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                           isCurrentPage
                             ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
-                            : 'text-gray-300 bg-gray-800 border border-gray-700 hover:bg-gray-700'
+                            : 'text-secondary bg-surface-elevated border border-app hover:bg-surface'
                         }`}
                       >
                         {page}
@@ -254,7 +254,7 @@ export default function UserManagementPage() {
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={!pagination.hasNext}
-                    className="px-3 py-2 text-sm font-medium text-gray-300 bg-gray-800 border border-gray-700 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-2 text-sm font-medium text-secondary bg-surface-elevated border border-app rounded-lg hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Next
                   </button>
@@ -264,12 +264,12 @@ export default function UserManagementPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="mt-6 p-4 bg-red-900/50 border border-red-500/30 rounded-lg">
+              <div className="mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
                 <div className="flex items-center">
                   <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
-                  <span className="text-red-300">{error}</span>
+                  <span className="text-red-400">{error}</span>
                 </div>
               </div>
             )}

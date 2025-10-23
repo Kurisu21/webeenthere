@@ -30,5 +30,8 @@
   "description": "",
   "devDependencies": {
     "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "all": "^0.0.0"
   }
 }

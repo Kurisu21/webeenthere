@@ -54,11 +54,11 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
     </svg>
   ),
-  backup: (
+  hosting: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
     </svg>
-  )
+  ),
 };
 
 const navSections = [
@@ -109,6 +109,13 @@ const navSections = [
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
       ), href: '/admin/support' },
+    ]
+  },
+  {
+    id: 'hosting',
+    label: 'Hosting & Publication',
+    items: [
+      { id: 'websiteManagement', label: 'Website Management', icon: Icons.hosting, href: '/admin/hosting' },
     ]
   },
   {
@@ -165,7 +172,7 @@ const AdminSidebar = memo(() => {
 
   return (
     <aside className={`
-      fixed left-0 top-0 z-20 bg-gray-900/80 backdrop-blur-sm text-white flex flex-col py-4 md:py-8 px-4 md:min-h-screen border-r-0 md:border-r border-gray-700/50 shadow-2xl transition-all duration-300 ease-in-out
+      fixed left-0 top-0 z-20 bg-surface-elevated/80 backdrop-blur-sm text-primary flex flex-col py-4 md:py-8 px-4 md:min-h-screen border-r-0 md:border-r border-app/50 shadow-2xl transition-all duration-300 ease-in-out
       ${isCollapsed 
         ? 'w-16 md:w-16' 
         : 'w-full md:w-64'
@@ -177,7 +184,7 @@ const AdminSidebar = memo(() => {
         <div className="flex justify-end mb-4">
           <button
             onClick={toggleSidebar}
-            className="p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200 flex-shrink-0"
+            className="p-2 rounded-lg hover:bg-surface-elevated transition-colors duration-200 flex-shrink-0"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <svg 
@@ -197,7 +204,7 @@ const AdminSidebar = memo(() => {
             <div className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent text-center hover:animate-pulse transition-all duration-300">
               Admin Portal
             </div>
-            <div className="text-xs text-gray-400 text-center mt-1">
+            <div className="text-xs text-secondary text-center mt-1">
               System Administration
             </div>
           </div>
@@ -219,8 +226,8 @@ const AdminSidebar = memo(() => {
                   className={`
                     w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group
                     ${hasActiveItem 
-                      ? 'bg-gray-800/50 text-purple-300 border border-purple-500/30' 
-                      : 'text-gray-400 hover:text-gray-300 hover:bg-gray-800/30'
+                      ? 'bg-surface-elevated/50 text-purple-300 border border-purple-500/30' 
+                      : 'text-secondary hover:text-primary hover:bg-surface-elevated/30'
                     }
                   `}
                 >
@@ -254,7 +261,7 @@ const AdminSidebar = memo(() => {
                           flex-shrink-0 md:w-full flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-2.5 rounded-lg transition-all duration-300 transform hover:scale-105 md:hover:translate-x-2 group
                           ${isActive
                             ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/30 border border-purple-500/50'
-                            : 'hover:bg-gray-800 text-gray-300 hover:text-white border border-transparent'
+                            : 'hover:bg-surface-elevated text-secondary hover:text-primary border border-transparent'
                           }
                           ${isCollapsed ? 'justify-center' : ''}
                         `}
@@ -285,22 +292,22 @@ const AdminSidebar = memo(() => {
       
       {/* Bottom Admin Profile */}
       {!isCollapsed && (
-        <div className="mt-auto pt-4 border-t border-gray-700 hidden md:block">
-          <div className="bg-gray-800 border border-gray-700 rounded-xl p-3 shadow-lg">
+        <div className="mt-auto pt-4 border-t border-app hidden md:block">
+          <div className="bg-surface-elevated border border-app rounded-xl p-3 shadow-lg">
             <div className="flex items-center space-x-3">
               {/* Avatar */}
-              <div className="w-10 h-10 bg-gray-700 border border-gray-600 rounded-full flex items-center justify-center shadow-lg">
-                <svg className="w-6 h-6 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-surface border border-app rounded-full flex items-center justify-center shadow-lg">
+                <svg className="w-6 h-6 text-secondary" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                 </svg>
               </div>
               
               {/* Admin Info */}
               <div className="flex-1 min-w-0">
-                <h3 className="text-white font-semibold text-sm truncate">
+                <h3 className="text-primary font-semibold text-sm truncate">
                   {currentAdmin.name}
                 </h3>
-                <p className="text-gray-400 text-xs truncate">
+                <p className="text-secondary text-xs truncate">
                   {currentAdmin.email}
                 </p>
                 <div className="flex items-center mt-1">

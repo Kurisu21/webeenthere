@@ -169,7 +169,7 @@ export default function AdminSystemSettingsPage() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+      <div className="min-h-screen bg-surface">
         <DashboardHeader />
         <div className="flex flex-col md:flex-row">
           <AdminSidebar />
@@ -187,7 +187,7 @@ export default function AdminSystemSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className="min-h-screen bg-surface">
       <DashboardHeader />
       <div className="flex flex-col md:flex-row">
         <AdminSidebar />

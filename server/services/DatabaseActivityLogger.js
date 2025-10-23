@@ -37,7 +37,7 @@ class DatabaseActivityLogger {
 
   async getActivities(filters = {}) {
     const connection = await getDatabaseConnection();
-    let query = `SELECT a.*, u.username as user_name 
+    let query = `SELECT a.*, u.username 
                  FROM activity_logs a 
                  LEFT JOIN users u ON a.user_id = u.id 
                  WHERE 1=1`;
@@ -76,7 +76,28 @@ class DatabaseActivityLogger {
     }
     
     const [rows] = await connection.execute(query, params);
-    return rows;
+    
+    // Parse JSON details for each log entry
+    const parsedRows = rows.map(row => {
+      let parsedDetails = row.details;
+      
+      if (row.details && typeof row.details === 'string') {
+        try {
+          parsedDetails = JSON.parse(row.details);
+        } catch (error) {
+          console.error('Failed to parse activity details JSON:', error, 'Raw details:', row.details);
+          parsedDetails = { raw: row.details };
+        }
+      }
+      
+      return {
+        ...row,
+        userId: row.user_id, // Map user_id to userId for frontend
+        details: parsedDetails
+      };
+    });
+    
+    return parsedRows;
   }
 
   async getActivitiesByUser(userId, limit = 50) {
@@ -102,7 +123,7 @@ class DatabaseActivityLogger {
   // Method expected by ActivityController
   async getActivityLogs(filters = {}) {
     const connection = await getDatabaseConnection();
-    let query = `SELECT a.*, u.username as user_name 
+    let query = `SELECT a.*, u.username 
                  FROM activity_logs a 
                  LEFT JOIN users u ON a.user_id = u.id 
                  WHERE 1=1`;
@@ -139,7 +160,7 @@ class DatabaseActivityLogger {
     }
     
     // Get total count for pagination
-    const countQuery = query.replace('SELECT a.*, u.username as user_name', 'SELECT COUNT(*) as total');
+    const countQuery = query.replace('SELECT a.*, u.username', 'SELECT COUNT(*) as total');
     const [countResult] = await connection.execute(countQuery, params);
     const total = countResult[0].total;
     
@@ -157,13 +178,33 @@ class DatabaseActivityLogger {
     
     const [rows] = await connection.execute(query, params);
     
+    // Parse JSON details for each log entry
+    const parsedRows = rows.map(row => {
+      let parsedDetails = row.details;
+      
+      if (row.details && typeof row.details === 'string') {
+        try {
+          parsedDetails = JSON.parse(row.details);
+        } catch (error) {
+          console.error('Failed to parse activity details JSON:', error, 'Raw details:', row.details);
+          parsedDetails = { raw: row.details };
+        }
+      }
+      
+      return {
+        ...row,
+        userId: row.user_id, // Map user_id to userId for frontend
+        details: parsedDetails
+      };
+    });
+    
     return {
-      logs: rows,
+      logs: parsedRows,
       pagination: {
         page: filters.page || 1,
         limit: filters.limit || 50,
         total: total,
-        pages: Math.ceil(total / (filters.limit || 50))
+        totalPages: Math.ceil(total / (filters.limit || 50))
       }
     };
   }

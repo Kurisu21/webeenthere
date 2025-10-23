@@ -190,6 +190,10 @@ class UserController {
         process.env.JWT_SECRET || 'secret',
         { expiresIn: '1d' }
       );
+      
+      // Log successful login
+      await databaseActivityLogger.logUserLogin(user.id, ipAddress, userAgent);
+      
       res.json({ 
         token, 
         user: { 
@@ -328,6 +332,20 @@ class UserController {
       const success = await this.userModel.updatePassword(tokenData.userId, passwordHash);
       
       if (success) {
+        // Log password change activity
+        await databaseActivityLogger.logActivity({
+          userId: tokenData.userId,
+          action: 'password_changed',
+          entityType: 'user',
+          entityId: tokenData.userId,
+          ipAddress: req.ip,
+          userAgent: req.get('User-Agent'),
+          details: {
+            method: 'password_reset',
+            timestamp: new Date().toISOString()
+          }
+        });
+        
         res.json({ 
           message: 'Password reset successfully! You can now log in with your new password.' 
         });
@@ -515,6 +533,22 @@ class UserController {
 
       const success = await this.userModel.updateProfile(id, updateData);
       if (success) {
+        // Log profile update activity
+        await databaseActivityLogger.logActivity({
+          userId: id,
+          action: 'profile_updated',
+          entityType: 'user',
+          entityId: id,
+          ipAddress: req.ip,
+          userAgent: req.get('User-Agent'),
+          details: {
+            fields_changed: Object.keys(updateData),
+            username: updateData.username,
+            email: updateData.email,
+            theme_mode: updateData.theme_mode
+          }
+        });
+        
         res.json({ message: 'User profile updated successfully' });
       } else {
         res.status(404).json({ error: 'User not found' });

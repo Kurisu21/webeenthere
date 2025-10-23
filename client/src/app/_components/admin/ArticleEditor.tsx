@@ -109,15 +109,15 @@ export default function ArticleEditor({ article, onSave, onCancel, isOpen }: Art
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-700">
+      <div className="bg-surface-elevated rounded-xl border border-app w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-app">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">
+            <h2 className="text-2xl font-bold text-primary">
               {article ? 'Edit Article' : 'Create New Article'}
             </h2>
             <button
               onClick={onCancel}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-secondary hover:text-primary transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -134,27 +134,27 @@ export default function ArticleEditor({ article, onSave, onCancel, isOpen }: Art
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-secondary mb-2">
               Title
             </label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               placeholder="Enter article title"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-secondary mb-2">
               Category
             </label>
             <select
               value={formData.category}
               onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               required
             >
               <option value="">Select a category</option>
@@ -167,21 +167,21 @@ export default function ArticleEditor({ article, onSave, onCancel, isOpen }: Art
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-secondary mb-2">
               Content
             </label>
             <textarea
               value={formData.content}
               onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
               rows={12}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
+              className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
               placeholder="Enter article content (Markdown supported)"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-secondary mb-2">
               Tags
             </label>
             <div className="flex gap-2 mb-2">
@@ -190,13 +190,13 @@ export default function ArticleEditor({ article, onSave, onCancel, isOpen }: Art
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="flex-1 px-4 py-2 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="Add a tag and press Enter"
               />
               <button
                 type="button"
                 onClick={handleAddTag}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-primary rounded-lg transition-colors"
               >
                 Add
               </button>
@@ -230,23 +230,23 @@ export default function ArticleEditor({ article, onSave, onCancel, isOpen }: Art
               onChange={(e) => setFormData(prev => ({ ...prev, isPublished: e.target.checked }))}
               className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500 focus:ring-2"
             />
-            <label htmlFor="isPublished" className="ml-2 text-sm text-gray-300">
+            <label htmlFor="isPublished" className="ml-2 text-sm text-secondary">
               Publish immediately
             </label>
           </div>
 
-          <div className="flex justify-end gap-4 pt-4 border-t border-gray-700">
+          <div className="flex justify-end gap-4 pt-4 border-t border-app">
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-2 text-gray-400 hover:text-white transition-colors"
+              className="px-6 py-2 text-secondary hover:text-primary transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Saving...' : (article ? 'Update Article' : 'Create Article')}
             </button>

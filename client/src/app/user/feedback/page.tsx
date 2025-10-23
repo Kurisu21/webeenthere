@@ -61,7 +61,7 @@ export default function FeedbackPage() {
       case 'assigned': return 'bg-blue-500/20 text-blue-400';
       case 'responded': return 'bg-purple-500/20 text-purple-400';
       case 'closed': return 'bg-green-500/20 text-green-400';
-      default: return 'bg-gray-500/20 text-gray-400';
+      default: return 'bg-gray-500/20 text-secondary';
     }
   };
 
@@ -70,7 +70,7 @@ export default function FeedbackPage() {
       case 'high': return 'bg-red-500/20 text-red-400';
       case 'medium': return 'bg-yellow-500/20 text-yellow-400';
       case 'low': return 'bg-green-500/20 text-green-400';
-      default: return 'bg-gray-500/20 text-gray-400';
+      default: return 'bg-gray-500/20 text-secondary';
     }
   };
 
@@ -85,20 +85,20 @@ export default function FeedbackPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className="min-h-screen bg-surface">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-4">Send Feedback</h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          <h1 className="text-4xl font-bold text-primary mb-4">Send Feedback</h1>
+          <p className="text-secondary text-lg max-w-2xl mx-auto">
             We value your input! Share your thoughts, report issues, or suggest improvements to help us make our platform better.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Feedback Form */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-8">
-            <h2 className="text-2xl font-semibold text-white mb-6">Submit Feedback</h2>
+          <div className="bg-surface rounded-lg border border-app p-8">
+            <h2 className="text-2xl font-semibold text-primary mb-6">Submit Feedback</h2>
             
             {error && (
               <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 mb-6">
@@ -120,7 +120,7 @@ export default function FeedbackPage() {
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   required
                 >
                   <option value="">Select feedback type</option>
@@ -138,7 +138,7 @@ export default function FeedbackPage() {
                 <select
                   value={formData.priority}
                   onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as any }))}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -154,7 +154,7 @@ export default function FeedbackPage() {
                   value={formData.message}
                   onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
                   rows={8}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
+                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-primary placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
                   placeholder="Please describe your feedback in detail. Include steps to reproduce if reporting a bug, or explain your feature request..."
                   required
                 />
@@ -163,7 +163,7 @@ export default function FeedbackPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
               </button>
@@ -182,24 +182,24 @@ export default function FeedbackPage() {
           </div>
 
           {/* Feedback History */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-8">
-            <h2 className="text-2xl font-semibold text-white mb-6">My Feedback History</h2>
+          <div className="bg-surface rounded-lg border border-app p-8">
+            <h2 className="text-2xl font-semibold text-primary mb-6">My Feedback History</h2>
             
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                  <p className="text-white">Loading feedback...</p>
+                  <p className="text-primary">Loading feedback...</p>
                 </div>
               </div>
             ) : myFeedback.length === 0 ? (
               <div className="text-center py-12">
                 <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                   </svg>
                 </div>
-                <p className="text-gray-400">No feedback submitted yet</p>
+                <p className="text-secondary">No feedback submitted yet</p>
                 <p className="text-gray-500 text-sm mt-2">Your feedback history will appear here</p>
               </div>
             ) : (
@@ -218,7 +218,7 @@ export default function FeedbackPage() {
                           {feedback.status}
                         </span>
                       </div>
-                      <span className="text-gray-400 text-xs">
+                      <span className="text-secondary text-xs">
                         {formatDate(feedback.createdAt)}
                       </span>
                     </div>
@@ -247,15 +247,15 @@ export default function FeedbackPage() {
 
         {/* Additional Information */}
         <div className="mt-12 text-center">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-8">
-            <h3 className="text-2xl font-semibold text-white mb-4">Need More Help?</h3>
-            <p className="text-gray-400 mb-6">
+          <div className="bg-surface rounded-lg border border-app p-8">
+            <h3 className="text-2xl font-semibold text-primary mb-4">Need More Help?</h3>
+            <p className="text-secondary mb-6">
               If you need immediate assistance or have urgent issues, please use our support system.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="/support"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary rounded-lg transition-all duration-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -264,7 +264,7 @@ export default function FeedbackPage() {
               </a>
               <a
                 href="/help"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all duration-200"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-primary rounded-lg transition-all duration-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

@@ -17,7 +17,7 @@ export default function UserSettingsPage() {
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
-    theme_mode: 'dark' as 'light' | 'dark',
+    theme_mode: 'light' as 'light' | 'dark',
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);

@@ -4,6 +4,7 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import { SidebarProvider } from '../_components/layout/SidebarContext';
 import { AdminAuthGuard } from '../_components/auth/AdminAuthGuard';
+import ThemeProvider from '../_components/theme/ThemeProvider';
 
 export default function AdminLayout({
   children,
@@ -19,9 +20,11 @@ export default function AdminLayout({
 
   return (
     <AdminAuthGuard>
-      <SidebarProvider>
-        {children}
-      </SidebarProvider>
+      <ThemeProvider>
+        <SidebarProvider>
+          {children}
+        </SidebarProvider>
+      </ThemeProvider>
     </AdminAuthGuard>
   );
 }

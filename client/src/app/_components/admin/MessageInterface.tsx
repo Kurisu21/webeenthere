@@ -88,25 +88,25 @@ export default function MessageInterface({ ticket, onMessageSent }: MessageInter
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           </div>
-          <p className="text-gray-400">Select a ticket to view messages</p>
+          <p className="text-secondary">Select a ticket to view messages</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-96 bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700">
+    <div className="flex flex-col h-96 bg-gradient-to-br from-surface to-surface-elevated rounded-lg border border-app">
       {/* Header */}
-      <div className="p-4 border-b border-gray-700">
+      <div className="p-4 border-b border-app">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-white font-medium">{ticket.ticketNumber}</h3>
-            <p className="text-gray-400 text-sm">{ticket.subject}</p>
-            <p className="text-gray-500 text-xs mt-1">Created by: {ticket.userName || 'Unknown User'}</p>
+            <h3 className="text-primary font-medium">{ticket.ticketNumber}</h3>
+            <p className="text-secondary text-sm">{ticket.subject}</p>
+            <p className="text-secondary text-xs mt-1">Created by: {ticket.userName || 'Unknown User'}</p>
           </div>
           <div className="flex items-center gap-2">
             <span className={`px-2 py-1 rounded text-xs ${
@@ -134,7 +134,7 @@ export default function MessageInterface({ ticket, onMessageSent }: MessageInter
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-2"></div>
-              <p className="text-gray-400">Loading messages...</p>
+              <p className="text-secondary">Loading messages...</p>
             </div>
           </div>
         ) : (
@@ -149,13 +149,13 @@ export default function MessageInterface({ ticket, onMessageSent }: MessageInter
                   <div
                     className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                       isSender
-                        ? 'bg-purple-600 text-white'
+                        ? 'bg-purple-600 text-primary'
                         : 'bg-gray-700 text-gray-300'
                     }`}
                   >
                     <div className="text-sm whitespace-pre-wrap">{message.message}</div>
                     <div className={`text-xs mt-1 ${
-                      isSender ? 'text-purple-200' : 'text-gray-500'
+                      isSender ? 'text-purple-200' : 'text-secondary'
                     }`}>
                       {formatDate(message.createdAt)}
                     </div>
@@ -169,16 +169,16 @@ export default function MessageInterface({ ticket, onMessageSent }: MessageInter
       </div>
 
       {/* Message Input */}
-      <div className="p-4 border-t border-gray-700">
+      <div className="p-4 border-t border-app">
         {ticket.status === 'closed' ? (
           <div className="flex items-center justify-center py-4">
             <div className="text-center">
               <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-2">
-                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <p className="text-gray-400 text-sm">This ticket is closed. No further messages can be sent.</p>
+              <p className="text-secondary text-sm">This ticket is closed. No further messages can be sent.</p>
             </div>
           </div>
         ) : (
@@ -187,14 +187,14 @@ export default function MessageInterface({ ticket, onMessageSent }: MessageInter
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-primary placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               placeholder="Type your message..."
               disabled={isSending}
             />
             <button
               type="submit"
               disabled={isSending || !newMessage.trim()}
-              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSending ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>

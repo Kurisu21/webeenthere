@@ -8,7 +8,7 @@ import MainContentWrapper from '../../_components/layout/MainContentWrapper';
 
 export default function UserMainPage() {
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-surface">
       <DashboardHeader />
       <div className="flex flex-col md:flex-row">
         <DashboardSidebar />

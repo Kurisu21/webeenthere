@@ -109,10 +109,10 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-6 space-y-4 md:space-y-0">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-white mb-2">
+            <h1 className="text-xl md:text-2xl font-bold text-primary mb-2">
               Welcome, {userData?.username || userData?.name || 'User'}
             </h1>
-            <p className="text-gray-400 text-sm md:text-base">{currentTime}</p>
+            <p className="text-secondary text-sm md:text-base">{currentTime}</p>
           </div>
           <div className="flex items-center space-x-2 md:space-x-4">
             {/* Search Bar */}
@@ -120,16 +120,16 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
               <input
                 type="text"
                 placeholder="Search websites..."
-                className="w-full md:w-auto pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 group-hover:border-blue-400 text-sm md:text-base"
+                className="w-full md:w-auto pl-10 pr-4 py-2 bg-surface-elevated border border-app rounded-lg text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-all duration-300 group-hover:border-app text-sm md:text-base"
               />
-              <svg className="w-4 h-4 md:w-5 md:h-5 absolute left-3 top-2.5 text-gray-400 group-hover:text-blue-400 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 md:w-5 md:h-5 absolute left-3 top-2.5 text-secondary group-hover:text-primary transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
             
             {/* Profile Picture */}
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all duration-300 transform hover:scale-110 cursor-pointer">
-              <span className="text-gray-300 font-medium text-sm md:text-base">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-surface-elevated rounded-full flex items-center justify-center hover:bg-[var(--accent)] transition-all duration-300 transform hover:scale-110 cursor-pointer">
+              <span className="text-secondary font-medium text-sm md:text-base">
                 {getUserInitial(userData?.username || userData?.name || '')}
               </span>
             </div>
@@ -137,9 +137,9 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
         </div>
 
         {/* Website Preview */}
-        <div className="bg-gray-800 rounded-lg p-6 mb-6 hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02]">
+        <div className="bg-surface-elevated rounded-lg p-6 mb-6 hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02]">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-white">Hiflux</h2>
+            <h2 className="text-xl font-semibold text-primary">Hiflux</h2>
             <button 
               onClick={handleContinueEditing}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
@@ -147,9 +147,9 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
               Continue Editing →
             </button>
           </div>
-          <div className="bg-gray-900 rounded-lg p-8 text-center hover:bg-gray-850 transition-colors duration-300">
-            <p className="text-gray-400">Website preview will be shown here</p>
-            <p className="text-sm text-gray-500 mt-2">Your current website: Hiflux</p>
+          <div className="bg-surface rounded-lg p-8 text-center hover:bg-surface-elevated transition-colors duration-300">
+            <p className="text-secondary">Website preview will be shown here</p>
+            <p className="text-sm text-secondary mt-2">Your current website: Hiflux</p>
           </div>
         </div>
       </div>
@@ -162,10 +162,10 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-6 space-y-4 md:space-y-0">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white mb-2">
+          <h1 className="text-xl md:text-2xl font-bold text-primary mb-2">
             Welcome, {userData?.username || userData?.name || 'User'}
           </h1>
-          <p className="text-gray-400 text-sm md:text-base">{currentTime}</p>
+          <p className="text-secondary text-sm md:text-base">{currentTime}</p>
         </div>
         <div className="flex items-center space-x-2 md:space-x-4">
           {/* Search Bar */}
@@ -173,9 +173,9 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
             <input
               type="text"
               placeholder="Search websites..."
-              className="w-full md:w-auto pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 group-hover:border-blue-400 text-sm md:text-base"
+              className="w-full md:w-auto pl-10 pr-4 py-2 bg-surface-elevated border border-app rounded-lg text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-all duration-300 group-hover:border-app text-sm md:text-base"
             />
-            <svg className="w-4 h-4 md:w-5 md:h-5 absolute left-3 top-2.5 text-gray-400 group-hover:text-blue-400 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 md:w-5 md:h-5 absolute left-3 top-2.5 text-secondary group-hover:text-primary transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
@@ -190,12 +190,12 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
       </div>
 
       {/* Create New Website Section */}
-      <div className="bg-gray-800 rounded-lg p-4 md:p-6 mb-6 hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02]">
+      <div className="bg-surface-elevated rounded-lg p-4 md:p-6 mb-6 hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02]">
         <div className="text-center">
-          <h2 className="text-xl md:text-2xl font-bold text-white mb-4">
+          <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">
             {userWebsites.length > 0 ? 'Create New Website' : 'Create Your First Website'}
           </h2>
-          <p className="text-gray-400 mb-6 text-sm md:text-base">
+          <p className="text-secondary mb-6 text-sm md:text-base">
             {userWebsites.length > 0 
               ? 'Start building another amazing website' 
               : 'Start building your perfect website with our easy-to-use builder'
@@ -212,13 +212,13 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
 
       {/* Past Websites Section */}
       {userWebsites.length > 0 && (
-        <div className="bg-gray-800 rounded-lg p-4 md:p-6">
-          <h3 className="text-lg md:text-xl font-semibold text-white mb-4">Your Websites</h3>
+        <div className="bg-surface-elevated rounded-lg p-4 md:p-6">
+          <h3 className="text-lg md:text-xl font-semibold text-primary mb-4">Your Websites</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {userWebsites.map((website) => (
-              <div key={website.id} className="bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition-colors duration-300">
+              <div key={website.id} className="bg-surface rounded-lg p-4 hover:bg-surface-elevated transition-colors duration-300">
                 <div className="flex justify-between items-start mb-3">
-                  <h4 className="text-white font-medium text-sm md:text-base truncate">{website.title}</h4>
+                  <h4 className="text-primary font-medium text-sm md:text-base truncate">{website.title}</h4>
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     website.is_published 
                       ? 'bg-green-600 text-green-100' 
@@ -227,7 +227,7 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
                     {website.is_published ? 'Published' : 'Draft'}
                   </span>
                 </div>
-                <p className="text-gray-400 text-xs mb-3">
+                <p className="text-secondary text-xs mb-3">
                   Created: {formatDate(website.created_at)}
                 </p>
                 <div className="flex space-x-2">

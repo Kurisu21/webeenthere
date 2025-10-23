@@ -98,7 +98,7 @@ export default function AdminSettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className="min-h-screen bg-surface">
       <DashboardHeader />
       <div className="flex flex-col md:flex-row">
         <AdminSidebar />
@@ -108,8 +108,8 @@ export default function AdminSettingsPage() {
             <div className="mb-8">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold text-white mb-2">Account Settings</h1>
-                  <p className="text-gray-400">Manage your admin account preferences and security</p>
+                  <h1 className="text-3xl font-bold text-primary mb-2">Account Settings</h1>
+                  <p className="text-secondary">Manage your admin account preferences and security</p>
                 </div>
                 {!isEditing ? (
                   <button

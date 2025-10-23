@@ -47,7 +47,7 @@ export const UserTable: React.FC<UserTableProps> = ({
   const SortIcon = ({ field }: { field: keyof User }) => {
     if (sortField !== field) {
       return (
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
         </svg>
       );
@@ -61,13 +61,13 @@ export const UserTable: React.FC<UserTableProps> = ({
 
   if (isLoading) {
     return (
-      <div className="bg-gray-800 rounded-lg border border-gray-700">
+      <div className="bg-surface-elevated rounded-lg border border-app">
         <div className="p-6">
           <div className="animate-pulse">
-            <div className="h-4 bg-gray-700 rounded w-1/4 mb-4"></div>
+            <div className="h-4 bg-surface rounded w-1/4 mb-4"></div>
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-12 bg-gray-700 rounded"></div>
+                <div key={i} className="h-12 bg-surface rounded"></div>
               ))}
             </div>
           </div>
@@ -77,13 +77,13 @@ export const UserTable: React.FC<UserTableProps> = ({
   }
 
   return (
-    <div className="bg-gradient-to-br from-stone-900 to-slate-800 rounded-lg border border-gray-700 overflow-hidden">
+    <div className="bg-surface-elevated rounded-lg border border-app overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-700/30">
+          <thead className="bg-surface/30">
             <tr>
               <th 
-                className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
+                className="px-6 py-4 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:text-primary transition-colors"
                 onClick={() => handleSort('id')}
               >
                 <div className="flex items-center space-x-1">
@@ -92,7 +92,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                 </div>
               </th>
               <th 
-                className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
+                className="px-6 py-4 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:text-primary transition-colors"
                 onClick={() => handleSort('username')}
               >
                 <div className="flex items-center space-x-1">
@@ -101,7 +101,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                 </div>
               </th>
               <th 
-                className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
+                className="px-6 py-4 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:text-primary transition-colors"
                 onClick={() => handleSort('email')}
               >
                 <div className="flex items-center space-x-1">
@@ -110,7 +110,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                 </div>
               </th>
               <th 
-                className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
+                className="px-6 py-4 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:text-primary transition-colors"
                 onClick={() => handleSort('role')}
               >
                 <div className="flex items-center space-x-1">
@@ -118,39 +118,39 @@ export const UserTable: React.FC<UserTableProps> = ({
                   <SortIcon field="role" />
                 </div>
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 FIRST SEEN
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 SECURITY
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 ACTIONS
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-700">
+          <tbody className="divide-y divide-app">
             {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-700/30 transition-colors">
+              <tr key={user.id} className="hover:bg-surface/30 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 bg-gray-700 border border-gray-600 rounded-full flex items-center justify-center mr-3">
-                      <svg className="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                    <div className="w-10 h-10 bg-surface border border-app rounded-full flex items-center justify-center mr-3">
+                      <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                       </svg>
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-white">{user.username}</div>
-                      <div className="text-xs text-gray-400">#{user.id}</div>
+                      <div className="text-sm font-medium text-primary">{user.username}</div>
+                      <div className="text-xs text-secondary">#{user.id}</div>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="w-full bg-gray-700 rounded-full h-2 mr-3">
+                    <div className="w-full bg-surface rounded-full h-2 mr-3">
                       <div className="bg-blue-500 h-2 rounded-full" style={{width: `${Math.random() * 100}%`}}></div>
                     </div>
-                    <span className="text-sm text-gray-300">{Math.floor(Math.random() * 100)}%</span>
+                    <span className="text-sm text-secondary">{Math.floor(Math.random() * 100)}%</span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -160,18 +160,18 @@ export const UserTable: React.FC<UserTableProps> = ({
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                       </svg>
                     </div>
-                    <span className="text-sm text-gray-300">Web Platform</span>
+                    <span className="text-sm text-secondary">Web Platform</span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center justify-between">
                     <RoleBadge role={user.role} size="sm" />
-                    <div className="text-xs text-gray-400 ml-2">
+                    <div className="text-xs text-secondary ml-2">
                       {user.role === 'admin' ? '100%' : '75%'}
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                   {formatDate(user.created_at)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

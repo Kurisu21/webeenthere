@@ -65,8 +65,8 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
     <div className="p-4 md:p-6">
       {/* Header */}
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Choose Your Template</h1>
-        <p className="text-gray-400 text-sm md:text-base">Select a template to get started or build from scratch</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-primary mb-2">Choose Your Template</h1>
+        <p className="text-secondary text-sm md:text-base">Select a template to get started or build from scratch</p>
       </div>
 
       {/* Search Bar */}
@@ -77,7 +77,7 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
             placeholder="Search templates..."
             value={searchQuery}
             onChange={handleSearchChange}
-            className="w-full px-4 py-3 pl-10 bg-gray-800/50 backdrop-blur-sm border border-blue-500/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base transition-all duration-300"
+            className="w-full px-4 py-3 pl-10 bg-surface-elevated/50 backdrop-blur-sm border border-app rounded-lg text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent text-sm md:text-base transition-all duration-300 hover:shadow-md hover:shadow-blue-500/20 focus:shadow-lg focus:shadow-blue-500/30"
           />
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg className="h-4 w-4 md:h-5 md:w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,8 +171,8 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </div>
-            <h3 className="text-lg md:text-xl font-semibold text-white mb-2">Don't see what you're looking for?</h3>
-            <p className="text-gray-400 mb-6 text-sm md:text-base">Start with a blank canvas and build your website from scratch</p>
+            <h3 className="text-lg md:text-xl font-semibold text-primary mb-2">Don't see what you're looking for?</h3>
+            <p className="text-secondary mb-6 text-sm md:text-base">Start with a blank canvas and build your website from scratch</p>
           </div>
           <button
             onClick={onStartFromScratch}

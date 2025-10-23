@@ -35,15 +35,15 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
 
   if (isLoading) {
     return (
-      <div className={`bg-gray-800 rounded-lg border border-gray-700 p-6 ${className}`}>
+      <div className={`bg-surface-elevated rounded-lg border border-app p-6 ${className}`}>
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-700 rounded w-1/4 mb-6"></div>
+          <div className="h-6 bg-surface rounded w-1/4 mb-6"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-700 rounded"></div>
+              <div key={i} className="h-24 bg-surface rounded"></div>
             ))}
           </div>
-          <div className="h-64 bg-gray-700 rounded"></div>
+          <div className="h-64 bg-surface rounded"></div>
         </div>
       </div>
     );
@@ -51,7 +51,7 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
 
   if (error) {
     return (
-      <div className={`bg-gray-800 rounded-lg border border-gray-700 p-6 ${className}`}>
+      <div className={`bg-surface-elevated rounded-lg border border-app p-6 ${className}`}>
         <div className="text-center">
           <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,10 +59,10 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
             </svg>
           </div>
           <p className="text-red-400 text-lg font-medium mb-2">Error Loading Analytics</p>
-          <p className="text-gray-400 mb-4">{error}</p>
+          <p className="text-secondary mb-4">{error}</p>
           <button
             onClick={fetchMetrics}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300"
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary font-medium py-2 px-4 rounded-lg transition-all duration-300"
           >
             Retry
           </button>
@@ -79,7 +79,7 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Analytics Dashboard</h1>
+        <h1 className="text-2xl font-bold text-primary">Analytics Dashboard</h1>
         <div className="flex space-x-2">
           {(['7', '30', '90'] as const).map((period) => (
             <button
@@ -87,8 +87,8 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
               onClick={() => setSelectedPeriod(period)}
               className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
                 selectedPeriod === period
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  ? 'bg-purple-600 text-primary'
+                  : 'bg-gray-700 text-secondary hover:bg-gray-600'
               }`}
             >
               {period} Days
@@ -100,11 +100,11 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* User Metrics */}
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+        <div className="bg-surface-elevated rounded-lg border border-app p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Total Users</p>
-              <p className="text-2xl font-bold text-white">{formatNumber(metrics.users.total)}</p>
+              <p className="text-secondary text-sm">Total Users</p>
+              <p className="text-2xl font-bold text-primary">{formatNumber(metrics.users.total)}</p>
             </div>
             <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,11 +114,11 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+        <div className="bg-surface-elevated rounded-lg border border-app p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">New This Month</p>
-              <p className="text-2xl font-bold text-white">{formatNumber(metrics.users.newThisMonth)}</p>
+              <p className="text-secondary text-sm">New This Month</p>
+              <p className="text-2xl font-bold text-primary">{formatNumber(metrics.users.newThisMonth)}</p>
             </div>
             <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,11 +128,11 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+        <div className="bg-surface-elevated rounded-lg border border-app p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Active Users</p>
-              <p className="text-2xl font-bold text-white">{formatNumber(metrics.users.active)}</p>
+              <p className="text-secondary text-sm">Active Users</p>
+              <p className="text-2xl font-bold text-primary">{formatNumber(metrics.users.active)}</p>
             </div>
             <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,11 +143,11 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
         </div>
 
         {/* System Metrics */}
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+        <div className="bg-surface-elevated rounded-lg border border-app p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Total Activities</p>
-              <p className="text-2xl font-bold text-white">{formatNumber(metrics.system.totalActivities)}</p>
+              <p className="text-secondary text-sm">Total Activities</p>
+              <p className="text-2xl font-bold text-primary">{formatNumber(metrics.system.totalActivities)}</p>
             </div>
             <div className="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,11 +157,11 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+        <div className="bg-surface-elevated rounded-lg border border-app p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Today's Activities</p>
-              <p className="text-2xl font-bold text-white">{formatNumber(metrics.system.todayActivities)}</p>
+              <p className="text-secondary text-sm">Today's Activities</p>
+              <p className="text-2xl font-bold text-primary">{formatNumber(metrics.system.todayActivities)}</p>
             </div>
             <div className="w-12 h-12 bg-indigo-500/20 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,11 +172,11 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
         </div>
 
         {/* Website Metrics */}
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+        <div className="bg-surface-elevated rounded-lg border border-app p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Total Websites</p>
-              <p className="text-2xl font-bold text-white">{formatNumber(metrics.websites.total)}</p>
+              <p className="text-secondary text-sm">Total Websites</p>
+              <p className="text-2xl font-bold text-primary">{formatNumber(metrics.websites.total)}</p>
             </div>
             <div className="w-12 h-12 bg-pink-500/20 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,11 +186,11 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+        <div className="bg-surface-elevated rounded-lg border border-app p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Published</p>
-              <p className="text-2xl font-bold text-white">{formatNumber(metrics.websites.published)}</p>
+              <p className="text-secondary text-sm">Published</p>
+              <p className="text-2xl font-bold text-primary">{formatNumber(metrics.websites.published)}</p>
             </div>
             <div className="w-12 h-12 bg-emerald-500/20 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -200,11 +200,11 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+        <div className="bg-surface-elevated rounded-lg border border-app p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">New This Month</p>
-              <p className="text-2xl font-bold text-white">{formatNumber(metrics.websites.newThisMonth)}</p>
+              <p className="text-secondary text-sm">New This Month</p>
+              <p className="text-2xl font-bold text-primary">{formatNumber(metrics.websites.newThisMonth)}</p>
             </div>
             <div className="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -218,8 +218,8 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* User Registration Trend */}
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">User Registration Trend</h3>
+        <div className="bg-surface-elevated rounded-lg border border-app p-6">
+          <h3 className="text-lg font-semibold text-primary mb-4">User Registration Trend</h3>
           <AnalyticsCharts
             data={metrics.trends.userRegistration}
             type="line"
@@ -230,8 +230,8 @@ export default function AnalyticsDashboard({ className = '' }: AnalyticsDashboar
         </div>
 
         {/* Website Creation Trend */}
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Website Creation Trend</h3>
+        <div className="bg-surface-elevated rounded-lg border border-app p-6">
+          <h3 className="text-lg font-semibold text-primary mb-4">Website Creation Trend</h3>
           <AnalyticsCharts
             data={metrics.trends.websiteCreation}
             type="bar"

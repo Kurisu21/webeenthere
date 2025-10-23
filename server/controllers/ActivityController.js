@@ -299,6 +299,117 @@ class ActivityController {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
+
+  /**
+   * Get activity logs for current user only
+   */
+  async getCurrentUserActivityLogs(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 50,
+        action = null,
+        startDate = null,
+        endDate = null,
+        search = null
+      } = req.query;
+
+      // Convert string parameters to appropriate types
+      const filters = {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        userId: req.user.id, // Only current user's activities
+        action: action || null,
+        startDate: startDate || null,
+        endDate: endDate || null,
+        search: search || null
+      };
+
+      // Validate pagination parameters
+      if (filters.page < 1) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Page must be greater than 0' 
+        });
+      }
+
+      if (filters.limit < 1 || filters.limit > 1000) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Limit must be between 1 and 1000' 
+        });
+      }
+
+      const result = await this.activityLogger.getActivityLogs(filters);
+
+      res.json({ 
+        success: true, 
+        data: result.logs,
+        pagination: result.pagination
+      });
+    } catch (error) {
+      console.error('Get current user activity logs error:', error);
+      res.status(500).json({ success: false, error: 'Failed to retrieve activity logs' });
+    }
+  }
+
+  /**
+   * Get activity statistics for current user only
+   */
+  async getCurrentUserActivityStats(req, res) {
+    try {
+      const stats = await this.activityLogger.getUserActivityStats(req.user.id);
+      res.json({ success: true, stats });
+    } catch (error) {
+      console.error('Get current user activity stats error:', error);
+      res.status(500).json({ success: false, error: 'Failed to retrieve activity statistics' });
+    }
+  }
+
+  /**
+   * Export activity logs for current user only
+   */
+  async exportCurrentUserActivityLogs(req, res) {
+    try {
+      const {
+        format = 'csv',
+        action = null,
+        startDate = null,
+        endDate = null,
+        search = null
+      } = req.query;
+
+      const filters = {
+        userId: req.user.id, // Only current user's activities
+        action: action || null,
+        startDate: startDate || null,
+        endDate: endDate || null,
+        search: search || null
+      };
+
+      if (format === 'csv') {
+        const csvData = await this.activityLogger.exportLogsToCSV(filters);
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="my-activity-logs.csv"');
+        res.send(csvData);
+      } else if (format === 'json') {
+        const result = await this.activityLogger.getActivityLogs({ ...filters, limit: 10000 });
+        
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', 'attachment; filename="my-activity-logs.json"');
+        res.json(result.logs);
+      } else {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Invalid format. Supported formats: csv, json' 
+        });
+      }
+    } catch (error) {
+      console.error('Export current user activity logs error:', error);
+      res.status(500).json({ success: false, error: 'Failed to export activity logs' });
+    }
+  }
 }
 
 module.exports = ActivityController;

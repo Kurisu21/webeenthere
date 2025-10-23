@@ -52,18 +52,25 @@ const Icons = {
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
-  )
+  ),
+  pages: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  ),
 };
 
 const navItems = [
   { id: 'main', label: 'Main', icon: Icons.main, href: '/user/main' },
   { id: 'profile', label: 'User Details', icon: Icons.profile, href: '/user/profile' },
   { id: 'create', label: '+ Create', icon: Icons.create, href: '/user/create' },
+  { id: 'pages', label: 'My Pages', icon: Icons.pages, href: '/user/pages' },
   { id: 'host', label: 'Host', icon: Icons.host, href: '/user/host' },
   { id: 'extensions', label: 'Extensions', icon: Icons.extensions, href: '/user/extensions' },
   { id: 'share', label: 'Share', icon: Icons.share, href: '/user/share' },
   { id: 'images', label: 'Added Images', icon: Icons.images, href: '/user/images' },
   { id: 'goals', label: 'Problems & Goals', icon: Icons.goals, href: '/user/goals' },
+  { id: 'history', label: 'History', icon: Icons.history, href: '/user/history' },
   { id: 'changelog', label: 'Changelog', icon: Icons.changelog, href: '/user/changelog' },
 ];
 
@@ -80,7 +87,7 @@ const DashboardSidebar = memo(() => {
 
   return (
     <aside className={`
-      fixed left-0 top-0 z-20 bg-gray-900 text-white flex flex-col py-4 md:py-8 px-4 md:min-h-screen border-r-0 md:border-r-4 border-gray-700 shadow-2xl transition-all duration-300 ease-in-out
+      fixed left-0 top-0 z-20 bg-surface text-primary flex flex-col py-4 md:py-8 px-4 md:min-h-screen border-r-0 md:border-r-4 border-app shadow-2xl transition-all duration-300 ease-in-out
       ${isCollapsed 
         ? 'w-16 md:w-16' 
         : 'w-full md:w-64'
@@ -92,7 +99,7 @@ const DashboardSidebar = memo(() => {
         <div className="flex justify-end mb-4">
           <button
             onClick={toggleSidebar}
-            className="p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200 flex-shrink-0"
+            className="p-2 rounded-lg hover:bg-surface-elevated transition-colors duration-200 flex-shrink-0"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <svg 
@@ -128,7 +135,7 @@ const DashboardSidebar = memo(() => {
                 flex-shrink-0 md:w-full flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg transition-all duration-300 transform hover:scale-105 md:hover:translate-x-2 group
                 ${isActive
                   ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/50'
-                  : 'hover:bg-gray-800 text-gray-300 hover:text-white'
+                  : 'hover:bg-surface-elevated text-secondary hover:text-primary'
                 }
                 ${isCollapsed ? 'justify-center' : ''}
               `}
@@ -154,8 +161,8 @@ const DashboardSidebar = memo(() => {
       
       {/* Bottom User Profile */}
       {!isCollapsed && (
-        <div className="mt-auto pt-4 border-t border-gray-700 hidden md:block">
-          <div className="bg-gray-800 border border-gray-700 rounded-xl p-3 shadow-lg">
+        <div className="mt-auto pt-4 border-t border-app hidden md:block">
+          <div className="bg-surface-elevated border border-app rounded-xl p-3 shadow-lg">
             <div className="flex items-center space-x-3">
               {/* Avatar */}
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
@@ -166,10 +173,10 @@ const DashboardSidebar = memo(() => {
               
               {/* User Info */}
               <div className="flex-1 min-w-0">
-                <h3 className="text-white font-semibold text-sm truncate">
+                <h3 className="text-primary font-semibold text-sm truncate">
                   {currentUser.name}
                 </h3>
-                <p className="text-gray-400 text-xs truncate">
+                <p className="text-secondary text-xs truncate">
                   {currentUser.email}
                 </p>
               </div>

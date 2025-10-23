@@ -41,30 +41,30 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   subtitle,
 }) => {
   return (
-    <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-6 border border-gray-700 hover:border-gray-600 transition-all duration-300 shadow-lg hover:shadow-xl">
+    <div className="bg-surface-elevated rounded-xl p-6 border border-app hover:border-app/70 transition-all duration-300 shadow-lg hover:shadow-xl">
       <div className="flex items-start justify-between mb-4">
         <div className={`p-3 rounded-xl ${iconBgClasses[color]}`}>
           {icon}
         </div>
         <div className="text-right">
-          <p className="text-gray-400 text-sm font-medium">{title}</p>
+          <p className="text-secondary text-sm font-medium">{title}</p>
         </div>
       </div>
       
       <div className="mb-4">
-        <p className="text-5xl font-bold text-white mb-2">{value}</p>
+        <p className="text-5xl font-bold text-primary mb-2">{value}</p>
         {subtitle && (
-          <p className="text-gray-500 text-sm">{subtitle}</p>
+          <p className="text-secondary text-sm">{subtitle}</p>
         )}
       </div>
 
       {/* Progress Bar */}
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-xs text-gray-400">Progress</span>
-          <span className="text-xs text-gray-300">85%</span>
+          <span className="text-xs text-secondary">Progress</span>
+          <span className="text-xs text-primary">85%</span>
         </div>
-        <div className="w-full bg-gray-700 rounded-full h-2">
+        <div className="w-full bg-surface rounded-full h-2">
           <div className={`h-2 rounded-full ${colorClasses[color]} transition-all duration-500`} style={{width: '85%'}}></div>
         </div>
       </div>

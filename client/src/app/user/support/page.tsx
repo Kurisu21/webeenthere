@@ -105,7 +105,7 @@ export default function SupportPage() {
       case 'assigned': return 'bg-blue-500/20 text-blue-400';
       case 'in_progress': return 'bg-purple-500/20 text-purple-400';
       case 'closed': return 'bg-green-500/20 text-green-400';
-      default: return 'bg-gray-500/20 text-gray-400';
+      default: return 'bg-gray-500/20 text-secondary';
     }
   };
 
@@ -114,7 +114,7 @@ export default function SupportPage() {
       case 'high': return 'bg-red-500/20 text-red-400';
       case 'medium': return 'bg-yellow-500/20 text-yellow-400';
       case 'low': return 'bg-green-500/20 text-green-400';
-      default: return 'bg-gray-500/20 text-gray-400';
+      default: return 'bg-gray-500/20 text-secondary';
     }
   };
 
@@ -129,20 +129,20 @@ export default function SupportPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className="min-h-screen bg-surface">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-4">Support Center</h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          <h1 className="text-4xl font-bold text-primary mb-4">Support Center</h1>
+          <p className="text-secondary text-lg max-w-2xl mx-auto">
             Need help? Create a support ticket and our team will assist you with any questions or issues.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Create Ticket Form */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-8">
-            <h2 className="text-2xl font-semibold text-white mb-6">Create Support Ticket</h2>
+          <div className="bg-surface rounded-lg border border-app p-8">
+            <h2 className="text-2xl font-semibold text-primary mb-6">Create Support Ticket</h2>
             
             {error && (
               <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 mb-6">
@@ -165,7 +165,7 @@ export default function SupportPage() {
                   type="text"
                   value={formData.subject}
                   onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-surface-elevated border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="Brief description of your issue"
                   required
                 />
@@ -178,7 +178,7 @@ export default function SupportPage() {
                 <select
                   value={formData.priority}
                   onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as any }))}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-surface-elevated border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="low">Low - General question</option>
                   <option value="medium">Medium - Minor issue</option>
@@ -194,7 +194,7 @@ export default function SupportPage() {
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   rows={8}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
+                  className="w-full px-4 py-3 bg-surface-elevated border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
                   placeholder="Please provide detailed information about your issue. Include steps to reproduce, error messages, and any other relevant details..."
                   required
                 />
@@ -203,7 +203,7 @@ export default function SupportPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Creating Ticket...' : 'Create Support Ticket'}
               </button>
@@ -222,24 +222,24 @@ export default function SupportPage() {
           </div>
 
           {/* Ticket History */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-8">
-            <h2 className="text-2xl font-semibold text-white mb-6">My Support Tickets</h2>
+          <div className="bg-surface rounded-lg border border-app p-8">
+            <h2 className="text-2xl font-semibold text-primary mb-6">My Support Tickets</h2>
             
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                  <p className="text-white">Loading tickets...</p>
+                  <p className="text-primary">Loading tickets...</p>
                 </div>
               </div>
             ) : myTickets.length === 0 ? (
               <div className="text-center py-12">
                 <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                 </div>
-                <p className="text-gray-400">No support tickets yet</p>
+                <p className="text-secondary">No support tickets yet</p>
                 <p className="text-gray-500 text-sm mt-2">Your support tickets will appear here</p>
               </div>
             ) : (
@@ -254,7 +254,7 @@ export default function SupportPage() {
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-white font-medium">{ticket.ticketNumber}</span>
+                        <span className="text-primary font-medium">{ticket.ticketNumber}</span>
                         <span className={`px-2 py-1 rounded text-xs ${getPriorityColor(ticket.priority)}`}>
                           {ticket.priority}
                         </span>
@@ -262,12 +262,12 @@ export default function SupportPage() {
                           {ticket.status}
                         </span>
                       </div>
-                      <span className="text-gray-400 text-xs">
+                      <span className="text-secondary text-xs">
                         {formatDate(ticket.createdAt)}
                       </span>
                     </div>
                     
-                    <h3 className="text-white font-medium mb-2">{ticket.subject}</h3>
+                    <h3 className="text-primary font-medium mb-2">{ticket.subject}</h3>
                     <p className="text-gray-300 text-sm">
                       {ticket.description.substring(0, 100)}...
                     </p>
@@ -280,9 +280,9 @@ export default function SupportPage() {
 
         {/* Message Interface */}
         {selectedTicket && (
-          <div className="mt-8 bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-8">
+          <div className="mt-8 bg-surface rounded-lg border border-app p-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold text-white">
+              <h2 className="text-2xl font-semibold text-primary">
                 Conversation - {selectedTicket.ticketNumber}
               </h2>
               <div className="flex items-center gap-2">
@@ -309,7 +309,7 @@ export default function SupportPage() {
                       <div
                         className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                           isUserMessage
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-blue-600 text-primary'
                             : 'bg-gray-700 text-gray-300'
                         }`}
                       >
@@ -333,14 +333,14 @@ export default function SupportPage() {
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  className="flex-1 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="flex-1 px-4 py-3 bg-surface-elevated border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="Type your message..."
                   disabled={isSendingMessage}
                 />
                 <button
                   type="submit"
                   disabled={isSendingMessage || !newMessage.trim()}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSendingMessage ? 'Sending...' : 'Send'}
                 </button>
@@ -349,7 +349,7 @@ export default function SupportPage() {
 
             {selectedTicket.status === 'closed' && (
               <div className="text-center py-4">
-                <p className="text-gray-400">This ticket has been closed. You can create a new ticket if you need further assistance.</p>
+                <p className="text-secondary">This ticket has been closed. You can create a new ticket if you need further assistance.</p>
               </div>
             )}
           </div>
@@ -357,15 +357,15 @@ export default function SupportPage() {
 
         {/* Additional Information */}
         <div className="mt-12 text-center">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-8">
-            <h3 className="text-2xl font-semibold text-white mb-4">Other Ways to Get Help</h3>
-            <p className="text-gray-400 mb-6">
+          <div className="bg-surface rounded-lg border border-app p-8">
+            <h3 className="text-2xl font-semibold text-primary mb-4">Other Ways to Get Help</h3>
+            <p className="text-secondary mb-6">
               Check out our help resources or join the community discussion.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="/help"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary rounded-lg transition-all duration-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -374,7 +374,7 @@ export default function SupportPage() {
               </a>
               <a
                 href="/forum"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all duration-200"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-surface text-primary rounded-lg transition-all duration-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />

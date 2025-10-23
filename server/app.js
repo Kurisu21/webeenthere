@@ -34,6 +34,7 @@ app.use(cors({
 const userRoutes = require('./routes/userRoutes');
 const templateRoutes = require('./routes/templateRoutes');
 const websiteRoutes = require('./routes/websiteRoutes');
+const adminWebsiteRoutes = require('./routes/adminWebsiteRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
@@ -46,6 +47,7 @@ const supportRoutes = require('./routes/supportRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const performanceRoutes = require('./routes/performanceRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const userActivityRoutes = require('./routes/userActivityRoutes');
 
 // Database connection
 const { getDatabaseConnection } = require('./database/database');
@@ -54,6 +56,7 @@ const { getDatabaseConnection } = require('./database/database');
 app.use('/api/users', userRoutes);
 app.use('/api/templates', templateRoutes(getDatabaseConnection()));
 app.use('/api/websites', websiteRoutes(getDatabaseConnection()));
+app.use('/api/admin/websites', adminWebsiteRoutes(getDatabaseConnection()));
 app.use('/api/ai', aiRoutes(getDatabaseConnection()));
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/settings', settingsRoutes);
@@ -66,6 +69,7 @@ app.use('/api/support', supportRoutes);
 app.use('/api/admin/analytics', analyticsRoutes);
 app.use('/api/admin/performance', performanceRoutes);
 app.use('/api/admin/reports', reportRoutes);
+app.use('/api/user/activity', userActivityRoutes);
 
 // Health check route
 app.get('/', (req, res) => {

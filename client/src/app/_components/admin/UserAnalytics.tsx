@@ -34,15 +34,15 @@ export default function UserAnalytics({ className = '' }: UserAnalyticsProps) {
 
   if (isLoading) {
     return (
-      <div className={`bg-gray-800 rounded-lg border border-gray-700 p-6 ${className}`}>
+      <div className={`bg-surface-elevated rounded-lg border border-app p-6 ${className}`}>
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-700 rounded w-1/4 mb-6"></div>
+          <div className="h-6 bg-surface rounded w-1/4 mb-6"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-20 bg-gray-700 rounded"></div>
+              <div key={i} className="h-20 bg-surface rounded"></div>
             ))}
           </div>
-          <div className="h-64 bg-gray-700 rounded"></div>
+          <div className="h-64 bg-surface rounded"></div>
         </div>
       </div>
     );
@@ -50,7 +50,7 @@ export default function UserAnalytics({ className = '' }: UserAnalyticsProps) {
 
   if (error) {
     return (
-      <div className={`bg-gray-800 rounded-lg border border-gray-700 p-6 ${className}`}>
+      <div className={`bg-surface-elevated rounded-lg border border-app p-6 ${className}`}>
         <div className="text-center">
           <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,7 +58,7 @@ export default function UserAnalytics({ className = '' }: UserAnalyticsProps) {
             </svg>
           </div>
           <p className="text-red-400 text-lg font-medium mb-2">Error Loading User Analytics</p>
-          <p className="text-gray-400">{error}</p>
+          <p className="text-secondary">{error}</p>
         </div>
       </div>
     );
@@ -69,19 +69,19 @@ export default function UserAnalytics({ className = '' }: UserAnalyticsProps) {
   }
 
   return (
-    <div className={`bg-gray-800 rounded-lg border border-gray-700 p-6 ${className}`}>
+    <div className={`bg-surface-elevated rounded-lg border border-app p-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-white">User Analytics</h2>
-        <div className="flex space-x-1 bg-gray-700 rounded-lg p-1">
+        <h2 className="text-xl font-semibold text-primary">User Analytics</h2>
+        <div className="flex space-x-1 bg-surface rounded-lg p-1">
           {(['overview', 'retention', 'growth', 'segments'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setSelectedTab(tab)}
               className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
                 selectedTab === tab
-                  ? 'bg-purple-600 text-white'
-                  : 'text-gray-300 hover:text-white'
+                  ? 'bg-purple-600 text-primary'
+                  : 'text-secondary hover:text-primary'
               }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -95,13 +95,13 @@ export default function UserAnalytics({ className = '' }: UserAnalyticsProps) {
         <div className="space-y-6">
           {/* User Engagement Distribution */}
           <div>
-            <h3 className="text-lg font-semibold text-white mb-4">User Engagement Distribution</h3>
+            <h3 className="text-lg font-semibold text-primary mb-4">User Engagement Distribution</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {analytics.comparison.engagementDistribution.map((item, index) => (
                 <div key={index} className="bg-gray-700/50 rounded-lg p-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-white">{formatNumber(item.user_count)}</p>
-                    <p className="text-sm text-gray-400">{item.engagement_level}</p>
+                    <p className="text-2xl font-bold text-primary">{formatNumber(item.user_count)}</p>
+                    <p className="text-sm text-secondary">{item.engagement_level}</p>
                   </div>
                 </div>
               ))}
@@ -111,37 +111,37 @@ export default function UserAnalytics({ className = '' }: UserAnalyticsProps) {
           {/* Average Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-md font-semibold text-white mb-3">Activity Metrics</h4>
+              <h4 className="text-md font-semibold text-primary mb-3">Activity Metrics</h4>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Avg Activities/User:</span>
-                  <span className="text-white font-medium">{analytics.comparison.activityMetrics.avg_activities_per_user.toFixed(1)}</span>
+                  <span className="text-secondary">Avg Activities/User:</span>
+                  <span className="text-primary font-medium">{analytics.comparison.activityMetrics.avg_activities_per_user.toFixed(1)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Max Activities:</span>
-                  <span className="text-white font-medium">{formatNumber(analytics.comparison.activityMetrics.max_activities)}</span>
+                  <span className="text-secondary">Max Activities:</span>
+                  <span className="text-primary font-medium">{formatNumber(analytics.comparison.activityMetrics.max_activities)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Min Activities:</span>
-                  <span className="text-white font-medium">{formatNumber(analytics.comparison.activityMetrics.min_activities)}</span>
+                  <span className="text-secondary">Min Activities:</span>
+                  <span className="text-primary font-medium">{formatNumber(analytics.comparison.activityMetrics.min_activities)}</span>
                 </div>
               </div>
             </div>
 
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-md font-semibold text-white mb-3">Website Metrics</h4>
+              <h4 className="text-md font-semibold text-primary mb-3">Website Metrics</h4>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Avg Websites/User:</span>
-                  <span className="text-white font-medium">{analytics.comparison.websiteMetrics.avg_websites_per_user.toFixed(1)}</span>
+                  <span className="text-secondary">Avg Websites/User:</span>
+                  <span className="text-primary font-medium">{analytics.comparison.websiteMetrics.avg_websites_per_user.toFixed(1)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Max Websites:</span>
-                  <span className="text-white font-medium">{formatNumber(analytics.comparison.websiteMetrics.max_websites)}</span>
+                  <span className="text-secondary">Max Websites:</span>
+                  <span className="text-primary font-medium">{formatNumber(analytics.comparison.websiteMetrics.max_websites)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Min Websites:</span>
-                  <span className="text-white font-medium">{formatNumber(analytics.comparison.websiteMetrics.min_websites)}</span>
+                  <span className="text-secondary">Min Websites:</span>
+                  <span className="text-primary font-medium">{formatNumber(analytics.comparison.websiteMetrics.min_websites)}</span>
                 </div>
               </div>
             </div>
@@ -151,7 +151,7 @@ export default function UserAnalytics({ className = '' }: UserAnalyticsProps) {
 
       {selectedTab === 'retention' && analytics.retention && (
         <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-white">User Retention Rates</h3>
+          <h3 className="text-lg font-semibold text-primary">User Retention Rates</h3>
           <div className="bg-gray-700/30 rounded-lg p-4">
             <AnalyticsCharts
               data={analytics.retention}
@@ -167,8 +167,8 @@ export default function UserAnalytics({ className = '' }: UserAnalyticsProps) {
             {analytics.retention.slice(-4).map((month, index) => (
               <div key={index} className="bg-gray-700/50 rounded-lg p-4">
                 <div className="text-center">
-                  <p className="text-lg font-bold text-white">{month.firstMonthRetention}%</p>
-                  <p className="text-sm text-gray-400">1st Month Retention</p>
+                  <p className="text-lg font-bold text-primary">{month.firstMonthRetention}%</p>
+                  <p className="text-sm text-secondary">1st Month Retention</p>
                   <p className="text-xs text-gray-500">{month.month}</p>
                 </div>
               </div>
@@ -179,11 +179,11 @@ export default function UserAnalytics({ className = '' }: UserAnalyticsProps) {
 
       {selectedTab === 'growth' && analytics.growth && (
         <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-white">User Growth</h3>
+          <h3 className="text-lg font-semibold text-primary">User Growth</h3>
           
           {/* Monthly Growth Chart */}
           <div className="bg-gray-700/30 rounded-lg p-4">
-            <h4 className="text-md font-semibold text-white mb-3">Monthly User Growth</h4>
+            <h4 className="text-md font-semibold text-primary mb-3">Monthly User Growth</h4>
             <AnalyticsCharts
               data={analytics.growth.monthly}
               type="bar"
@@ -198,20 +198,20 @@ export default function UserAnalytics({ className = '' }: UserAnalyticsProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-gray-700/50 rounded-lg p-4">
               <div className="text-center">
-                <p className="text-2xl font-bold text-white">{formatNumber(analytics.growth.monthly[analytics.growth.monthly.length - 1]?.cumulative_users || 0)}</p>
-                <p className="text-sm text-gray-400">Total Users</p>
+                <p className="text-2xl font-bold text-primary">{formatNumber(analytics.growth.monthly[analytics.growth.monthly.length - 1]?.cumulative_users || 0)}</p>
+                <p className="text-sm text-secondary">Total Users</p>
               </div>
             </div>
             <div className="bg-gray-700/50 rounded-lg p-4">
               <div className="text-center">
-                <p className="text-2xl font-bold text-white">{formatNumber(analytics.growth.monthly[analytics.growth.monthly.length - 1]?.new_users || 0)}</p>
-                <p className="text-sm text-gray-400">New This Month</p>
+                <p className="text-2xl font-bold text-primary">{formatNumber(analytics.growth.monthly[analytics.growth.monthly.length - 1]?.new_users || 0)}</p>
+                <p className="text-sm text-secondary">New This Month</p>
               </div>
             </div>
             <div className="bg-gray-700/50 rounded-lg p-4">
               <div className="text-center">
-                <p className="text-2xl font-bold text-white">{formatNumber(analytics.growth.weekly[analytics.growth.weekly.length - 1]?.new_users || 0)}</p>
-                <p className="text-sm text-gray-400">New This Week</p>
+                <p className="text-2xl font-bold text-primary">{formatNumber(analytics.growth.weekly[analytics.growth.weekly.length - 1]?.new_users || 0)}</p>
+                <p className="text-sm text-secondary">New This Week</p>
               </div>
             </div>
           </div>
@@ -220,39 +220,39 @@ export default function UserAnalytics({ className = '' }: UserAnalyticsProps) {
 
       {selectedTab === 'segments' && analytics.segments && (
         <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-white">User Segments</h3>
+          <h3 className="text-lg font-semibold text-primary">User Segments</h3>
           
           {/* Segment Summary */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-gray-700/50 rounded-lg p-4">
               <div className="text-center">
-                <p className="text-2xl font-bold text-white">{analytics.segments.summary.powerUsersCount}</p>
-                <p className="text-sm text-gray-400">Power Users</p>
+                <p className="text-2xl font-bold text-primary">{analytics.segments.summary.powerUsersCount}</p>
+                <p className="text-sm text-secondary">Power Users</p>
               </div>
             </div>
             <div className="bg-gray-700/50 rounded-lg p-4">
               <div className="text-center">
-                <p className="text-2xl font-bold text-white">{analytics.segments.summary.newUsersCount}</p>
-                <p className="text-sm text-gray-400">New Users</p>
+                <p className="text-2xl font-bold text-primary">{analytics.segments.summary.newUsersCount}</p>
+                <p className="text-sm text-secondary">New Users</p>
               </div>
             </div>
             <div className="bg-gray-700/50 rounded-lg p-4">
               <div className="text-center">
-                <p className="text-2xl font-bold text-white">{analytics.segments.summary.inactiveUsersCount}</p>
-                <p className="text-sm text-gray-400">Inactive Users</p>
+                <p className="text-2xl font-bold text-primary">{analytics.segments.summary.inactiveUsersCount}</p>
+                <p className="text-sm text-secondary">Inactive Users</p>
               </div>
             </div>
             <div className="bg-gray-700/50 rounded-lg p-4">
               <div className="text-center">
-                <p className="text-2xl font-bold text-white">{analytics.segments.summary.publishersCount}</p>
-                <p className="text-sm text-gray-400">Publishers</p>
+                <p className="text-2xl font-bold text-primary">{analytics.segments.summary.publishersCount}</p>
+                <p className="text-sm text-secondary">Publishers</p>
               </div>
             </div>
           </div>
 
           {/* Power Users */}
           <div>
-            <h4 className="text-md font-semibold text-white mb-3">Top Power Users</h4>
+            <h4 className="text-md font-semibold text-primary mb-3">Top Power Users</h4>
             <div className="space-y-2">
               {analytics.segments.powerUsers.slice(0, 5).map((user, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
@@ -261,13 +261,13 @@ export default function UserAnalytics({ className = '' }: UserAnalyticsProps) {
                       <span className="text-xs text-purple-400 font-medium">{index + 1}</span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-white">{user.username}</p>
-                      <p className="text-xs text-gray-400">{user.email}</p>
+                      <p className="text-sm font-medium text-primary">{user.username}</p>
+                      <p className="text-xs text-secondary">{user.email}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-white">{formatNumber(user.activity_count)} activities</p>
-                    <p className="text-xs text-gray-400">{formatNumber(user.website_count)} websites</p>
+                    <p className="text-sm font-medium text-primary">{formatNumber(user.activity_count)} activities</p>
+                    <p className="text-xs text-secondary">{formatNumber(user.website_count)} websites</p>
                   </div>
                 </div>
               ))}

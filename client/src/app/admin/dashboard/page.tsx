@@ -38,7 +38,7 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className="min-h-screen bg-surface">
       <DashboardHeader />
       <div className="flex flex-col md:flex-row">
         <AdminSidebar />
@@ -47,7 +47,7 @@ export default function AdminDashboardPage() {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                <p className="text-white">Loading dashboard...</p>
+                <p className="text-primary">Loading dashboard...</p>
               </div>
             </div>
           ) : error ? (
@@ -58,8 +58,8 @@ export default function AdminDashboardPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
                 </div>
-                <p className="text-white text-lg font-medium mb-2">Error Loading Dashboard</p>
-                <p className="text-gray-400">{error}</p>
+                <p className="text-primary text-lg font-medium mb-2">Error Loading Dashboard</p>
+                <p className="text-secondary">{error}</p>
               </div>
             </div>
           ) : (
@@ -67,10 +67,10 @@ export default function AdminDashboardPage() {
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
+                <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-400">Last updated:</span>
-                  <span className="text-sm text-gray-300">{new Date().toLocaleTimeString()}</span>
+                  <span className="text-sm text-secondary">Last updated:</span>
+                  <span className="text-sm text-primary">{new Date().toLocaleTimeString()}</span>
                 </div>
               </div>
             </div>
@@ -127,30 +127,30 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Recent Users */}
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700">
-              <div className="p-6 border-b border-gray-700">
-                <h2 className="text-xl font-semibold text-white">Recent User Registrations</h2>
-                <p className="text-gray-400 text-sm">Latest 5 user registrations</p>
+            <div className="bg-surface-elevated rounded-lg border border-app">
+              <div className="p-6 border-b border-app">
+                <h2 className="text-xl font-semibold text-primary">Recent User Registrations</h2>
+                <p className="text-secondary text-sm">Latest 5 user registrations</p>
               </div>
               
               <div className="p-6">
                 {stats?.recentUsers && stats.recentUsers.length > 0 ? (
                   <div className="space-y-4">
                     {stats.recentUsers.map((user) => (
-                      <div key={user.id} className="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg hover:bg-gray-700/70 transition-colors">
+                      <div key={user.id} className="flex items-center justify-between p-4 bg-surface/50 rounded-lg hover:bg-surface/70 transition-colors">
                         <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-gray-700 border border-gray-600 rounded-full flex items-center justify-center">
-                            <svg className="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                          <div className="w-10 h-10 bg-surface border border-app rounded-full flex items-center justify-center">
+                            <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                             </svg>
                           </div>
                           <div>
-                            <h3 className="text-white font-medium">{user.username}</h3>
-                            <p className="text-gray-400 text-sm">{user.email}</p>
+                            <h3 className="text-primary font-medium">{user.username}</h3>
+                            <p className="text-secondary text-sm">{user.email}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-gray-300 text-sm">{formatDate(user.created_at)}</p>
+                          <p className="text-primary text-sm">{formatDate(user.created_at)}</p>
                           <div className="flex items-center space-x-2 mt-1">
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                               user.is_active 
@@ -173,12 +173,12 @@ export default function AdminDashboardPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                       </svg>
                     </div>
-                    <p className="text-gray-400">No recent users found</p>
+                    <p className="text-secondary">No recent users found</p>
                   </div>
                 )}
               </div>
@@ -186,7 +186,7 @@ export default function AdminDashboardPage() {
 
             {/* Quick Actions */}
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-gray-700 p-6 hover:border-blue-500/50 transition-all duration-300 shadow-lg hover:shadow-xl group cursor-pointer">
+              <div className="bg-surface-elevated rounded-xl border border-app p-6 hover:border-blue-500/50 transition-all duration-300 shadow-lg hover:shadow-xl group cursor-pointer">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
                     <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,13 +194,13 @@ export default function AdminDashboardPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-white font-medium group-hover:text-blue-400 transition-colors">Manage Users</h3>
-                    <p className="text-gray-400 text-sm">View and edit user accounts</p>
+                    <h3 className="text-primary font-medium group-hover:text-blue-400 transition-colors">Manage Users</h3>
+                    <p className="text-secondary text-sm">View and edit user accounts</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-gray-700 p-6 hover:border-purple-500/50 transition-all duration-300 shadow-lg hover:shadow-xl group cursor-pointer">
+              <div className="bg-surface-elevated rounded-xl border border-app p-6 hover:border-purple-500/50 transition-all duration-300 shadow-lg hover:shadow-xl group cursor-pointer">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
                     <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,13 +208,13 @@ export default function AdminDashboardPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-white font-medium group-hover:text-purple-400 transition-colors">Role Management</h3>
-                    <p className="text-gray-400 text-sm">Assign and manage user roles</p>
+                    <h3 className="text-primary font-medium group-hover:text-purple-400 transition-colors">Role Management</h3>
+                    <p className="text-secondary text-sm">Assign and manage user roles</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-gray-700 p-6 hover:border-green-500/50 transition-all duration-300 shadow-lg hover:shadow-xl group cursor-pointer">
+              <div className="bg-surface-elevated rounded-xl border border-app p-6 hover:border-green-500/50 transition-all duration-300 shadow-lg hover:shadow-xl group cursor-pointer">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
                     <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -222,8 +222,8 @@ export default function AdminDashboardPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-white font-medium group-hover:text-green-400 transition-colors">View Analytics</h3>
-                    <p className="text-gray-400 text-sm">System performance metrics</p>
+                    <h3 className="text-primary font-medium group-hover:text-green-400 transition-colors">View Analytics</h3>
+                    <p className="text-secondary text-sm">System performance metrics</p>
                   </div>
                 </div>
               </div>

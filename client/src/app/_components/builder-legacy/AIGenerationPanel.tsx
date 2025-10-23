@@ -41,16 +41,17 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
     "Transform your vision into reality"
   ];
 
-  // Professional theme configuration
+  // Professional theme configuration - now theme-aware with enhanced visuals
   const professionalTheme = {
     name: 'Professional',
     primary: 'from-blue-600 to-indigo-700',
     secondary: 'from-blue-500 to-purple-600',
     accent: 'blue-500',
-    text: 'text-blue-100',
-    bg: 'bg-gradient-to-br from-gray-800 via-blue-900/20 to-gray-900',
-    border: 'border-blue-500/30',
-    shadow: 'shadow-blue-500/20'
+    text: 'text-primary',
+    bg: 'bg-gradient-to-br from-surface via-surface-elevated/50 to-surface',
+    border: 'border-app',
+    shadow: 'shadow-2xl shadow-blue-500/20',
+    glow: 'shadow-blue-500/30'
   };
 
   useEffect(() => {
@@ -77,13 +78,16 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
   };
 
   return (
-    <div className={`${professionalTheme.bg} border ${professionalTheme.border} rounded-xl p-8 mb-8 shadow-2xl ${professionalTheme.shadow}`}>
+    <div className={`${professionalTheme.bg} border ${professionalTheme.border} rounded-xl p-8 mb-8 ${professionalTheme.shadow} backdrop-blur-sm relative overflow-hidden`}>
+      {/* Subtle animated background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-indigo-500/5 animate-pulse"></div>
+      <div className="relative z-10">
       {/* Header */}
       <div className="text-center mb-8">
         <h2 className={`text-3xl font-bold ${professionalTheme.text} mb-3`}>
           Transform Ideas Into Stunning Templates
         </h2>
-        <p className="text-gray-300 text-lg mb-2">AI-powered design with instant customization</p>
+        <p className="text-secondary text-lg mb-2">AI-powered design with instant customization</p>
         <p className={`${professionalTheme.text} font-medium`}>
           {taglines[currentTagline]}
         </p>
@@ -93,7 +97,7 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
       <div className="max-w-5xl md:max-w-6xl mx-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Large input container */}
-          <div className={`bg-gray-700/50 backdrop-blur-sm border ${professionalTheme.border} rounded-xl p-4 md:p-6`}>
+          <div className={`bg-surface/80 backdrop-blur-sm border ${professionalTheme.border} rounded-xl p-4 md:p-6 shadow-lg ${professionalTheme.glow} hover:shadow-xl hover:${professionalTheme.glow} transition-all duration-300`}>
             <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
               {/* Main input */}
               <div className="flex-1 w-full">
@@ -115,7 +119,7 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
                       }
                     }}
                     placeholder={placeholders[currentPlaceholder]}
-                    className={`w-full min-h-[48px] max-h-[200px] px-3 md:px-4 py-3 bg-transparent text-white placeholder-gray-400 focus:outline-none resize-none text-base md:text-lg focus:ring-2 focus:ring-blue-500 overflow-hidden`}
+                    className={`w-full min-h-[48px] max-h-[200px] px-3 md:px-4 py-3 bg-transparent text-primary placeholder-[color:var(--muted)] focus:outline-none resize-none text-base md:text-lg focus:ring-2 focus:ring-[var(--ring)] overflow-hidden`}
                     rows={1}
                   />
               </div>
@@ -124,7 +128,7 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
               <button
                 type="submit"
                 disabled={isGenerating || !prompt.trim()}
-                className={`p-3 bg-gradient-to-r ${professionalTheme.primary} hover:opacity-90 disabled:bg-gray-600 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg ${professionalTheme.shadow} flex-shrink-0`}
+                className={`p-3 bg-gradient-to-r ${professionalTheme.primary} hover:opacity-90 disabled:bg-surface-elevated rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg ${professionalTheme.shadow} flex-shrink-0 hover:shadow-xl hover:shadow-blue-500/30`}
               >
                 {isGenerating ? (
                   <div className="animate-spin rounded-full h-5 w-5 md:h-6 md:w-6 border-b-2 border-white"></div>
@@ -145,13 +149,13 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
                 <select
                   value={websiteType}
                   onChange={(e) => setWebsiteType(e.target.value)}
-                  className={`px-3 md:px-4 py-2 bg-gradient-to-r from-gray-700/80 to-gray-800/80 backdrop-blur-sm border ${professionalTheme.border} rounded-xl text-white text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 hover:from-gray-600/80 hover:to-gray-700/80 cursor-pointer appearance-none pr-6 md:pr-8`}
+                  className={`px-3 md:px-4 py-2 bg-surface-elevated/80 backdrop-blur-sm border ${professionalTheme.border} rounded-xl text-primary text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--ring)] transition-all duration-300 hover:bg-surface cursor-pointer appearance-none pr-6 md:pr-8 hover:shadow-md hover:shadow-blue-500/20`}
                 >
-                  <option value="general" className="bg-gray-800 text-white">General</option>
-                  <option value="portfolio" className="bg-gray-800 text-white">Portfolio</option>
-                  <option value="business" className="bg-gray-800 text-white">Business</option>
-                  <option value="ecommerce" className="bg-gray-800 text-white">E-commerce</option>
-                  <option value="blog" className="bg-gray-800 text-white">Blog</option>
+                  <option value="general" className="bg-surface text-primary">General</option>
+                  <option value="portfolio" className="bg-surface text-primary">Portfolio</option>
+                  <option value="business" className="bg-surface text-primary">Business</option>
+                  <option value="ecommerce" className="bg-surface text-primary">E-commerce</option>
+                  <option value="blog" className="bg-surface text-primary">Blog</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 md:pr-3 pointer-events-none">
                   <svg className="w-3 h-3 md:w-4 md:h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,12 +171,12 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
                 <select
                   value={style}
                   onChange={(e) => setStyle(e.target.value)}
-                  className={`px-3 md:px-4 py-2 bg-gradient-to-r from-gray-700/80 to-gray-800/80 backdrop-blur-sm border ${professionalTheme.border} rounded-xl text-white text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 hover:from-gray-600/80 hover:to-gray-700/80 cursor-pointer appearance-none pr-6 md:pr-8`}
+                  className={`px-3 md:px-4 py-2 bg-surface-elevated/80 backdrop-blur-sm border ${professionalTheme.border} rounded-xl text-primary text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--ring)] transition-all duration-300 hover:bg-surface cursor-pointer appearance-none pr-6 md:pr-8 hover:shadow-md hover:shadow-blue-500/20`}
                 >
-                  <option value="modern" className="bg-gray-800 text-white">Modern</option>
-                  <option value="minimal" className="bg-gray-800 text-white">Minimal</option>
-                  <option value="classic" className="bg-gray-800 text-white">Classic</option>
-                  <option value="creative" className="bg-gray-800 text-white">Creative</option>
+                  <option value="modern" className="bg-surface text-primary">Modern</option>
+                  <option value="minimal" className="bg-surface text-primary">Minimal</option>
+                  <option value="classic" className="bg-surface text-primary">Classic</option>
+                  <option value="creative" className="bg-surface text-primary">Creative</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 md:pr-3 pointer-events-none">
                   <svg className="w-3 h-3 md:w-4 md:h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,13 +192,13 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
                 <select
                   value={colorScheme}
                   onChange={(e) => setColorScheme(e.target.value)}
-                  className={`px-3 md:px-4 py-2 bg-gradient-to-r from-gray-700/80 to-gray-800/80 backdrop-blur-sm border ${professionalTheme.border} rounded-xl text-white text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 hover:from-gray-600/80 hover:to-gray-700/80 cursor-pointer appearance-none pr-6 md:pr-8`}
+                  className={`px-3 md:px-4 py-2 bg-surface-elevated/80 backdrop-blur-sm border ${professionalTheme.border} rounded-xl text-primary text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--ring)] transition-all duration-300 hover:bg-surface cursor-pointer appearance-none pr-6 md:pr-8 hover:shadow-md hover:shadow-blue-500/20`}
                 >
-                  <option value="blue" className="bg-gray-800 text-white">Blue</option>
-                  <option value="purple" className="bg-gray-800 text-white">Purple</option>
-                  <option value="green" className="bg-gray-800 text-white">Green</option>
-                  <option value="red" className="bg-gray-800 text-white">Red</option>
-                  <option value="dark" className="bg-gray-800 text-white">Dark</option>
+                  <option value="blue" className="bg-surface text-primary">Blue</option>
+                  <option value="purple" className="bg-surface text-primary">Purple</option>
+                  <option value="green" className="bg-surface text-primary">Green</option>
+                  <option value="red" className="bg-surface text-primary">Red</option>
+                  <option value="dark" className="bg-surface text-primary">Dark</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 md:pr-3 pointer-events-none">
                   <svg className="w-3 h-3 md:w-4 md:h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,7 +212,7 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
 
         {/* Loading state */}
         {isGenerating && (
-          <div className={`mt-6 p-4 bg-gray-700/50 backdrop-blur-sm border ${professionalTheme.border} rounded-xl text-center`}>
+          <div className={`mt-6 p-4 bg-surface/80 backdrop-blur-sm border ${professionalTheme.border} rounded-xl text-center shadow-lg ${professionalTheme.glow} animate-pulse`}>
             <div className="flex items-center justify-center">
               <div className={`animate-spin rounded-full h-5 w-5 border-b-2 border-${professionalTheme.accent} mr-3`}></div>
               <p className={`${professionalTheme.text} text-sm font-medium`}>
@@ -217,6 +221,7 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

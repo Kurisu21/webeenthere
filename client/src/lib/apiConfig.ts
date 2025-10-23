@@ -35,6 +35,9 @@ export const API_ENDPOINTS = {
   
   // Website endpoints
   WEBSITES: `${API_BASE_URL}/api/websites`,
+  
+  // Admin website endpoints
+  ADMIN_WEBSITES: `${API_BASE_URL}/api/admin/websites`,
 } as const;
 
 // Helper function to get authentication token
@@ -207,6 +210,49 @@ export const apiPut = async (
     const response = await apiCall(endpoint, {
       method: 'PUT',
       body: JSON.stringify(data),
+    });
+    
+    return response.json();
+  } catch (error: any) {
+    // If error has a response, parse the error message
+    if (error.response) {
+      try {
+        const errorData = await error.response.json();
+        
+        // Handle express-validator errors array
+        let errorMessage = error.message;
+        if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+          errorMessage = errorData.errors[0].msg || errorData.errors[0].message || error.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+        
+        // Return a rejected promise instead of throwing an Error to avoid Next.js overlay
+        return Promise.reject({
+          message: errorMessage,
+          status: error.status,
+          data: errorData
+        });
+      } catch (e: any) {
+        // If e is the error we just threw, rethrow it
+        if (e.status && e.data) {
+          throw e;
+        }
+        // If JSON parsing failed, throw original error
+        throw error;
+      }
+    }
+    throw error;
+  }
+};
+
+// Helper function for DELETE requests
+export const apiDelete = async (endpoint: string): Promise<any> => {
+  try {
+    const response = await apiCall(endpoint, {
+      method: 'DELETE',
     });
     
     return response.json();
