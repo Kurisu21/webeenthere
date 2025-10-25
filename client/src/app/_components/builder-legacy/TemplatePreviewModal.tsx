@@ -1,12 +1,12 @@
 // components/builder/TemplatePreviewModal.tsx
 import React, { useState } from 'react';
-import { EnhancedTemplate } from '../../_data/enhanced-templates';
+import { Template } from '../../../lib/templateApi';
 
 interface TemplatePreviewModalProps {
-  template: EnhancedTemplate | null;
+  template: Template | null;
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (template: EnhancedTemplate) => void;
+  onSelect: (template: Template) => void;
 }
 
 const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
@@ -19,27 +19,21 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
 
   if (!isOpen || !template) return null;
 
-  const renderElementPreview = (element: any) => {
-    const elementStyle = {
-      position: 'absolute',
-      left: `${element.position.x}px`,
-      top: `${element.position.y}px`,
-      width: `${element.size.width}px`,
-      height: `${element.size.height}px`,
-      ...element.styles,
-      transform: 'scale(0.3)', // Scale down for preview
-      transformOrigin: 'top left'
-    };
-
-    return (
-      <div
-        key={element.id}
-        style={elementStyle}
-        className="template-element-preview"
-      >
-        {element.content}
-      </div>
-    );
+  const getTemplateBackground = (category: string) => {
+    switch (category) {
+      case 'portfolio':
+        return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      case 'business':
+        return 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)';
+      case 'landing':
+        return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      case 'personal':
+        return 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)';
+      case 'creative':
+        return 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)';
+      default:
+        return 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+    }
   };
 
   return (
@@ -48,10 +42,17 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-4">
-            <div className="text-4xl">{template.image}</div>
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">{template.name}</h2>
               <p className="text-gray-600">{template.description}</p>
+              {template.is_community && template.creator_username && (
+                <p className="text-sm text-blue-600">by {template.creator_username}</p>
+              )}
             </div>
           </div>
           <button
@@ -82,7 +83,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Elements ({template.elements.length})
+            Details
           </button>
         </div>
 
@@ -108,8 +109,17 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
                       }}
                     />
                     
-                    {/* Render elements */}
-                    {template.elements.map(renderElementPreview)}
+                    {/* Template content preview */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center text-white">
+                        <div className="text-6xl mb-4">📄</div>
+                        <h3 className="text-2xl font-bold">{template.name}</h3>
+                        <p className="text-lg opacity-90 mt-2">{template.description}</p>
+                        {template.is_community && template.creator_username && (
+                          <p className="text-sm opacity-75 mt-2">by {template.creator_username}</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -117,68 +127,75 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
               {/* Template Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Template Details</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Template Details</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Category:</span>
                       <span className="font-medium capitalize">{template.category}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Elements:</span>
-                      <span className="font-medium">{template.elements.length}</span>
+                      <span className="text-gray-600">Type:</span>
+                      <span className="font-medium">{template.is_community ? 'Community' : 'Official'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Featured:</span>
                       <span className="font-medium">{template.is_featured ? 'Yes' : 'No'}</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Status:</span>
+                      <span className="font-medium">{template.is_active ? 'Active' : 'Inactive'}</span>
+                    </div>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Tags</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {template.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Content</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">HTML:</span>
+                      <span className="font-medium">{template.html_base ? `${template.html_base.length} chars` : 'None'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">CSS:</span>
+                      <span className="font-medium">{template.css_base ? `${template.css_base.length} chars` : 'None'}</span>
+                    </div>
+                    {template.is_community && template.creator_username && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Creator:</span>
+                        <span className="font-medium text-blue-600">{template.creator_username}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Template Elements</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {template.elements.map((element, index) => (
-                  <div
-                    key={element.id}
-                    className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-sm text-gray-700">
-                        {element.type}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        #{index + 1}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600 mb-2">
-                      {element.content.length > 50 
-                        ? `${element.content.substring(0, 50)}...` 
-                        : element.content
-                      }
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Position: ({element.position.x}, {element.position.y}) | 
-                      Size: {element.size.width}×{element.size.height}
-                    </div>
-                  </div>
-                ))}
+              <h3 className="text-lg font-semibold text-gray-900">Template Information</h3>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-2">Description</h4>
+                <p className="text-gray-700">{template.description}</p>
               </div>
+              
+              {template.html_base && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">HTML Content</h4>
+                  <pre className="text-sm text-gray-700 bg-white p-3 rounded border overflow-x-auto">
+                    {template.html_base.substring(0, 500)}
+                    {template.html_base.length > 500 && '...'}
+                  </pre>
+                </div>
+              )}
+              
+              {template.css_base && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">CSS Content</h4>
+                  <pre className="text-sm text-gray-700 bg-white p-3 rounded border overflow-x-auto">
+                    {template.css_base.substring(0, 500)}
+                    {template.css_base.length > 500 && '...'}
+                  </pre>
+                </div>
+              )}
             </div>
           )}
         </div>

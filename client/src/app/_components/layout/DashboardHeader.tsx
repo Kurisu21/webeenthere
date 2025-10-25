@@ -1,13 +1,37 @@
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { useSidebar } from './SidebarContext';
 import { useAuth } from '../auth/AuthContext';
 import ThemeToggle from '../theme/ThemeToggle';
+import SubscriptionBadge from '../subscription/SubscriptionBadge';
+import { subscriptionApi, Subscription } from '../../../lib/subscriptionApi';
 
 const DashboardHeader = memo(() => {
   const { isCollapsed } = useSidebar();
   const { user, logout } = useAuth();
+  const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      loadCurrentSubscription();
+    }
+  }, [user]);
+
+  const loadCurrentSubscription = async () => {
+    try {
+      setIsLoadingSubscription(true);
+      const response = await subscriptionApi.getCurrentSubscription();
+      if (response.success) {
+        setCurrentSubscription(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load current subscription:', error);
+    } finally {
+      setIsLoadingSubscription(false);
+    }
+  };
   return (
     <header className={`bg-surface-elevated/80 backdrop-blur-sm border-b border-app px-4 md:px-8 py-3 md:py-4 relative z-10 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
       <div className="flex justify-center items-center relative">
@@ -64,6 +88,17 @@ const DashboardHeader = memo(() => {
           <div className="hidden md:flex items-center space-x-3">
             {/* Theme Toggle */}
             <ThemeToggle />
+            
+            {/* Subscription Badge */}
+            {user && !isLoadingSubscription && currentSubscription && (
+              <div className="flex items-center">
+                <SubscriptionBadge 
+                  planType={currentSubscription.plan_type} 
+                  size="sm"
+                  className="cursor-pointer hover:opacity-80 transition-opacity"
+                />
+              </div>
+            )}
             
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gray-700 border border-gray-600 rounded-full flex items-center justify-center">

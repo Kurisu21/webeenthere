@@ -2,12 +2,14 @@
 const Website = require('../models/Website');
 const Template = require('../models/Template');
 const databaseActivityLogger = require('../services/DatabaseActivityLogger');
+const SubscriptionService = require('../services/SubscriptionService');
 
 class WebsiteController {
   constructor(db) {
     this.db = db;
     this.websiteModel = new Website(db);
     this.templateModel = new Template(db);
+    this.subscriptionService = new SubscriptionService(db);
   }
 
   // Get all websites for a user
@@ -74,6 +76,18 @@ class WebsiteController {
         return res.status(400).json({
           success: false,
           message: 'Website title is required'
+        });
+      }
+
+      // Check subscription limits
+      const websiteLimits = await this.subscriptionService.checkWebsiteLimit(userId);
+      if (!websiteLimits.canCreate) {
+        return res.status(403).json({
+          success: false,
+          message: `Website creation limit reached. You have used ${websiteLimits.used || 0} of ${websiteLimits.limit} websites allowed.`,
+          error: 'SUBSCRIPTION_LIMIT_REACHED',
+          upgradeRequired: true,
+          currentUsage: websiteLimits
         });
       }
 
@@ -395,6 +409,30 @@ class WebsiteController {
       res.status(500).json({
         success: false,
         message: 'Error fetching website'
+      });
+    }
+  }
+
+  // Get all public websites (for testing visitor tracking)
+  async getAllPublicWebsites(req, res) {
+    try {
+      const websites = await this.websiteModel.findPublicWebsites();
+      
+      res.json({
+        success: true,
+        data: websites.map(website => ({
+          id: website.id,
+          title: website.title,
+          slug: website.slug,
+          is_published: website.is_published,
+          created_at: website.created_at
+        }))
+      });
+    } catch (error) {
+      console.error('Error fetching public websites:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error fetching websites'
       });
     }
   }

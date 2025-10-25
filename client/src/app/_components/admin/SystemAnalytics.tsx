@@ -12,7 +12,7 @@ export default function SystemAnalytics({ className = '' }: SystemAnalyticsProps
   const [analytics, setAnalytics] = useState<SystemAnalyticsType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedTab, setSelectedTab] = useState<'performance' | 'uptime' | 'resources' | 'alerts'>('performance');
+  const [selectedTab, setSelectedTab] = useState<'performance' | 'uptime'>('performance');
 
   useEffect(() => {
     fetchAnalytics();
@@ -78,7 +78,7 @@ export default function SystemAnalytics({ className = '' }: SystemAnalyticsProps
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-primary">System Analytics</h2>
         <div className="flex space-x-1 bg-surface rounded-lg p-1">
-          {(['performance', 'uptime', 'resources', 'alerts'] as const).map((tab) => (
+          {(['performance', 'uptime'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setSelectedTab(tab)}
@@ -109,23 +109,17 @@ export default function SystemAnalytics({ className = '' }: SystemAnalyticsProps
           </div>
 
           {/* Performance Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-700/50 rounded-lg p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-primary">{analytics.performance.averages.cpuLoad}</p>
-                <p className="text-sm text-secondary">Avg CPU Load</p>
-              </div>
-            </div>
-            <div className="bg-gray-700/50 rounded-lg p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-primary">{analytics.performance.averages.memoryUsage}%</p>
-                <p className="text-sm text-secondary">Avg Memory Usage</p>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-gray-700/50 rounded-lg p-4">
               <div className="text-center">
                 <p className="text-2xl font-bold text-primary">{analytics.performance.averages.dbResponseTime}ms</p>
                 <p className="text-sm text-secondary">Avg DB Response</p>
+              </div>
+            </div>
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-primary">{analytics.performance.averages.apiResponseTime}ms</p>
+                <p className="text-sm text-secondary">Avg API Response</p>
               </div>
             </div>
           </div>
@@ -194,105 +188,6 @@ export default function SystemAnalytics({ className = '' }: SystemAnalyticsProps
         </div>
       )}
 
-      {selectedTab === 'resources' && analytics.resources && (
-        <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-primary">Resource Usage</h3>
-          
-          {/* Database Table Sizes */}
-          <div className="bg-gray-700/30 rounded-lg p-4">
-            <h4 className="text-md font-semibold text-primary mb-3">Database Table Sizes</h4>
-            <div className="space-y-2">
-              {analytics.resources.database.tableSizes.slice(0, 5).map((table, index) => (
-                <div key={index} className="flex items-center justify-between p-2 bg-gray-600/30 rounded">
-                  <span className="text-primary font-medium">{table.table_name}</span>
-                  <div className="text-right">
-                    <span className="text-primary">{table['Size (MB)']} MB</span>
-                    <span className="text-secondary text-sm ml-2">({formatNumber(table.table_rows)} rows)</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Connection Pool Status */}
-          {analytics.resources.database.poolStatus && (
-            <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-md font-semibold text-primary mb-3">Database Connection Pool</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">{analytics.resources.database.poolStatus.totalConnections}</p>
-                  <p className="text-sm text-secondary">Total Connections</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">{analytics.resources.database.poolStatus.freeConnections}</p>
-                  <p className="text-sm text-secondary">Free Connections</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">{analytics.resources.database.poolStatus.acquiringConnections}</p>
-                  <p className="text-sm text-secondary">Acquiring</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* System Resources */}
-          <div className="bg-gray-700/30 rounded-lg p-4">
-            <h4 className="text-md font-semibold text-primary mb-3">System Resources</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-secondary">Load Average (1m): <span className="text-primary">{analytics.resources.system.loadAverage[0].toFixed(2)}</span></p>
-                <p className="text-sm text-secondary">Load Average (5m): <span className="text-primary">{analytics.resources.system.loadAverage[1].toFixed(2)}</span></p>
-                <p className="text-sm text-secondary">Load Average (15m): <span className="text-primary">{analytics.resources.system.loadAverage[2].toFixed(2)}</span></p>
-              </div>
-              <div>
-                <p className="text-sm text-secondary">Memory Total: <span className="text-primary">{formatBytes(analytics.resources.system.memoryUsage.total)}</span></p>
-                <p className="text-sm text-secondary">Memory Used: <span className="text-primary">{formatBytes(analytics.resources.system.memoryUsage.used)}</span></p>
-                <p className="text-sm text-secondary">Memory Free: <span className="text-primary">{formatBytes(analytics.resources.system.memoryUsage.free)}</span></p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {selectedTab === 'alerts' && analytics.alerts && (
-        <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-primary">System Alerts</h3>
-          
-          {analytics.alerts.length > 0 ? (
-            <div className="space-y-3">
-              {analytics.alerts.map((alert, index) => (
-                <div key={index} className={`p-4 rounded-lg border-l-4 ${
-                  alert.type === 'error' ? 'bg-red-500/10 border-red-500' :
-                  alert.type === 'warning' ? 'bg-yellow-500/10 border-yellow-500' :
-                  'bg-blue-500/10 border-blue-500'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-primary">{alert.message}</p>
-                      <p className="text-sm text-secondary">Category: {alert.category}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-secondary">Value: {alert.value}</p>
-                      <p className="text-sm text-secondary">Threshold: {alert.threshold}</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    {new Date(alert.timestamp).toLocaleString()}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <svg className="w-12 h-12 text-green-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-secondary">No active alerts</p>
-              <p className="text-sm text-gray-500">All systems are operating normally</p>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

@@ -3,13 +3,15 @@ import React from 'react';
 
 interface TemplatePreviewProps {
   template: {
-    id: string;
+    id: number;
     name: string;
     description: string;
     category: string;
-    image: string;
-    css_base: string;
+    html_base?: string;
+    css_base?: string;
     is_featured: boolean;
+    is_community?: boolean;
+    creator_username?: string;
   };
   onClick: () => void;
 }

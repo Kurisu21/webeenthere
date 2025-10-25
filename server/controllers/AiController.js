@@ -1,11 +1,14 @@
 // controllers/AiController.js
 const AiService = require('../services/AiService');
 const AiPrompt = require('../models/AiPrompt');
+const SubscriptionService = require('../services/SubscriptionService');
 
 class AiController {
   constructor(db) {
+    this.db = db;
     this.aiService = new AiService();
     this.aiPromptModel = new AiPrompt(db);
+    this.subscriptionService = new SubscriptionService(db);
   }
 
   async generateTemplate(req, res) {
@@ -33,6 +36,21 @@ class AiController {
           success: false,
           error: 'Website description is required'
         });
+      }
+
+      // Check AI chat limits if userId is provided
+      if (userId) {
+        const aiChatLimits = await this.subscriptionService.checkAiChatLimit(userId);
+        if (!aiChatLimits.canUse) {
+          console.log('ERROR: AI chat limit reached for user:', userId);
+          return res.status(403).json({
+            success: false,
+            error: `AI chat limit reached. You have used ${aiChatLimits.used || 0} of ${aiChatLimits.limit} AI messages allowed.`,
+            errorCode: 'AI_CHAT_LIMIT_REACHED',
+            upgradeRequired: true,
+            currentUsage: aiChatLimits
+          });
+        }
       }
 
       console.log('Generating template for:', { description, userId, websiteType, style, colorScheme });
@@ -67,6 +85,12 @@ class AiController {
         reasoning: templateResult.reasoning,
         suggestions: templateResult.suggestions || []
       };
+      
+      // Increment AI chat usage if userId is provided and generation was successful
+      if (userId && templateResult.success) {
+        await this.subscriptionService.incrementAiChatUsage(userId);
+        console.log('Incremented AI chat usage for user:', userId);
+      }
       
       console.log('Sending response:', response);
       res.json(response);

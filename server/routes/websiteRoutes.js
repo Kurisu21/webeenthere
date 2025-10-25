@@ -9,6 +9,7 @@ module.exports = (db) => {
 
 // Public routes (no authentication required)
 router.get('/public/:slug', websiteController.getPublicWebsite.bind(websiteController));
+router.get('/public/all', websiteController.getAllPublicWebsites.bind(websiteController));
 
 // Protected routes (authentication required)
 router.get('/', authMiddleware, websiteController.getUserWebsites.bind(websiteController));

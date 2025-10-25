@@ -27,6 +27,11 @@ class Website {
     return rows[0];
   }
 
+  async findPublicWebsites() {
+    const [rows] = await this.db.execute('SELECT * FROM websites WHERE is_published = 1 ORDER BY created_at DESC');
+    return rows;
+  }
+
   async update(id, data) {
     const fields = [];
     const values = [];

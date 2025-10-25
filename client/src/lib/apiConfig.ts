@@ -38,6 +38,10 @@ export const API_ENDPOINTS = {
   
   // Admin website endpoints
   ADMIN_WEBSITES: `${API_BASE_URL}/api/admin/websites`,
+  
+  // Subscription endpoints
+  SUBSCRIPTIONS: `${API_BASE_URL}/api/subscriptions`,
+  ADMIN_SUBSCRIPTIONS: `${API_BASE_URL}/api/admin/subscriptions`,
 } as const;
 
 // Helper function to get authentication token

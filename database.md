@@ -42,6 +42,8 @@ CREATE TABLE users (
     theme_mode ENUM('light', 'dark') DEFAULT 'light',
     is_verified BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
+    ai_chat_usage INT DEFAULT 0, -- (adjusted to module implementation) - Track AI usage per user for plan limits
+    ai_chat_reset_date DATETIME DEFAULT CURRENT_TIMESTAMP, -- (adjusted to module implementation) - Reset AI usage counter periodically
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -55,9 +57,21 @@ CREATE TABLE templates (
     css_base LONGTEXT,
     is_featured BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
+    -- NEW: Community Template Fields (adjusted to module implementation) - Enable users to share their websites as templates
+    is_community BOOLEAN DEFAULT FALSE, -- Distinguishes community vs official templates
+    creator_user_id INT NULL, -- Links to user who created/shared the template
+    source_website_id INT NULL, -- Reference to original website
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (creator_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    -- Note: source_website_id foreign key is added after websites table creation to avoid circular dependency
+    INDEX idx_is_community (is_community),
+    INDEX idx_creator_user_id (creator_user_id),
+    INDEX idx_is_active (is_active)
 );
+
+-- Foreign key constraint for source_website_id is added after websites table creation:
+-- ALTER TABLE templates ADD CONSTRAINT fk_templates_source_website FOREIGN KEY (source_website_id) REFERENCES websites(id) ON DELETE SET NULL;
 
 CREATE TABLE websites (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -103,9 +117,14 @@ CREATE TABLE website_analytics (
     website_id INT NOT NULL,
     visit_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     visitor_ip VARCHAR(45),
+    visitor_id VARCHAR(50),  -- (adjusted to module implementation) - Unique visitor identifier for better tracking
+    session_id VARCHAR(50), -- (adjusted to module implementation) - Session identifier for session-based analytics
     user_agent TEXT,
     referrer TEXT,
-    FOREIGN KEY (website_id) REFERENCES websites(id)
+    FOREIGN KEY (website_id) REFERENCES websites(id),
+    INDEX idx_visitor_id (visitor_id),    -- (adjusted to module implementation) - Index for visitor tracking queries
+    INDEX idx_session_id (session_id),   -- (adjusted to module implementation) - Index for session tracking queries
+    INDEX idx_visit_time (visit_time)    -- (adjusted to module implementation) - Index for time-based analytics queries
 );
 
 CREATE TABLE custom_blocks (
@@ -122,8 +141,11 @@ CREATE TABLE custom_blocks (
 CREATE TABLE plans (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
+    type ENUM('free', 'monthly', 'yearly') NOT NULL, -- (adjusted to module implementation) - Support different billing cycles for subscription plans
     price DECIMAL(10,2) NOT NULL,
     features TEXT,
+    website_limit INT DEFAULT NULL,  -- NULL means unlimited (adjusted to module implementation) - Control number of websites per plan
+    ai_chat_limit INT DEFAULT NULL, -- NULL means unlimited (adjusted to module implementation) - Control AI usage per plan
     is_active BOOLEAN DEFAULT TRUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -141,7 +163,40 @@ CREATE TABLE user_plan (
     FOREIGN KEY (plan_id) REFERENCES plans(id)
 );
 
--- NEW: Community Features - Feedback System
+-- NEW: Subscription Logs Table (adjusted to module implementation) - Track subscription changes for audit trail and billing history
+CREATE TABLE subscription_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    plan_id INT NOT NULL,
+    action ENUM('created', 'upgraded', 'downgraded', 'cancelled', 'renewed') NOT NULL,
+    payment_status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
+    amount DECIMAL(10,2) DEFAULT 0,
+    payment_reference VARCHAR(100),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (plan_id) REFERENCES plans(id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_action (action),
+    INDEX idx_created_at (created_at)
+);
+
+-- NEW: Payment Transactions Table (adjusted to module implementation) - Handle payment processing and transaction records for subscription billing
+CREATE TABLE payment_transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    plan_id INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
+    transaction_reference VARCHAR(100) UNIQUE NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (plan_id) REFERENCES plans(id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_status (status),
+    INDEX idx_transaction_reference (transaction_reference)
+);
+
+-- NEW: Community Features - Feedback System (adjusted to module implementation) - Enable users to submit feedback, bug reports, and feature requests
 CREATE TABLE feedback (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -160,7 +215,7 @@ CREATE TABLE feedback (
     INDEX idx_priority (priority)
 );
 
--- NEW: Community Features - Feedback Responses
+-- NEW: Community Features - Feedback Responses (adjusted to module implementation) - Allow admins to respond to user feedback and track communication
 CREATE TABLE feedback_responses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     feedback_id INT NOT NULL,
@@ -172,7 +227,7 @@ CREATE TABLE feedback_responses (
     INDEX idx_feedback_id (feedback_id)
 );
 
--- NEW: Community Features - Forum Categories
+-- NEW: Community Features - Forum Categories (adjusted to module implementation) - Organize forum discussions into categories for better user experience
 CREATE TABLE forum_categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -187,7 +242,7 @@ CREATE TABLE forum_categories (
     INDEX idx_is_active (is_active)
 );
 
--- NEW: Community Features - Forum Threads
+-- NEW: Community Features - Forum Threads (adjusted to module implementation) - Enable community discussions and knowledge sharing among users
 CREATE TABLE forum_threads (
     id INT AUTO_INCREMENT PRIMARY KEY,
     category_id INT NOT NULL,
@@ -210,7 +265,7 @@ CREATE TABLE forum_threads (
     INDEX idx_created_at (created_at)
 );
 
--- NEW: Community Features - Forum Replies
+-- NEW: Community Features - Forum Replies (adjusted to module implementation) - Allow users to participate in forum discussions and provide answers
 CREATE TABLE forum_replies (
     id INT AUTO_INCREMENT PRIMARY KEY,
     thread_id INT NOT NULL,
@@ -227,7 +282,7 @@ CREATE TABLE forum_replies (
     INDEX idx_is_deleted (is_deleted)
 );
 
--- NEW: - Help Center Categories
+-- NEW: Help Center Categories (adjusted to module implementation) - Organize help articles into categories for easy navigation and user support
 CREATE TABLE help_categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -237,7 +292,7 @@ CREATE TABLE help_categories (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- NEW: - Help Center Articles
+-- NEW: Help Center Articles (adjusted to module implementation) - Store comprehensive help documentation and tutorials for users
 CREATE TABLE help_articles (
     id INT AUTO_INCREMENT PRIMARY KEY,
     category_id INT NOT NULL,
@@ -256,7 +311,7 @@ CREATE TABLE help_articles (
     INDEX idx_is_published (is_published)
 );
 
--- NEW: - Support Tickets
+-- NEW: Support Tickets (adjusted to module implementation) - Handle user support requests and technical issues systematically
 CREATE TABLE support_tickets (
     id INT AUTO_INCREMENT PRIMARY KEY,
     ticket_number VARCHAR(20) UNIQUE NOT NULL,
@@ -278,7 +333,7 @@ CREATE TABLE support_tickets (
     INDEX idx_ticket_number (ticket_number)
 );
 
--- NEW: Community Features - Support Messages
+-- NEW: Community Features - Support Messages (adjusted to module implementation) - Enable communication between users and support staff for ticket resolution
 CREATE TABLE support_messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     ticket_id INT NOT NULL,
@@ -293,7 +348,7 @@ CREATE TABLE support_messages (
     INDEX idx_sender_id (sender_id)
 );
 
--- NEW: System - Activity Logs
+-- NEW: System - Activity Logs (adjusted to module implementation) - Track user actions and system events for security, analytics, and debugging
 CREATE TABLE activity_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NULL,
@@ -311,7 +366,7 @@ CREATE TABLE activity_logs (
     INDEX idx_entity (entity_type, entity_id)
 );
 
--- NEW: System - Settings
+-- NEW: System - Settings (adjusted to module implementation) - Store application configuration and system-wide settings for dynamic configuration management
 CREATE TABLE system_settings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     setting_key VARCHAR(100) UNIQUE NOT NULL,
@@ -321,3 +376,56 @@ CREATE TABLE system_settings (
     FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_setting_key (setting_key)
 );
+
+-- ========================================
+-- ANALYTICS TRACKING IMPROVEMENTS
+-- ========================================
+-- Date: 2025-10-24
+-- Purpose: Enhanced unique visitor tracking to fix duplicate counting issues
+
+-- PROBLEM IDENTIFIED:
+-- The original analytics system was generating random IP addresses in development mode,
+-- causing the same user to be counted as multiple unique visitors when visiting from
+-- different browsers or sessions. This inflated unique visitor counts and provided
+-- inaccurate analytics data.
+
+-- CHANGES MADE TO website_analytics TABLE:
+-- 1. Added visitor_id VARCHAR(50) - Unique identifier for each visitor (persistent across sessions)
+--    REASON: Provides consistent visitor identification regardless of IP changes
+-- 2. Added session_id VARCHAR(50) - Session identifier (resets when browser closes)
+--    REASON: Enables session-based analytics and user journey tracking
+-- 3. Added performance indexes for better query performance
+--    REASON: Optimize analytics queries for large datasets
+
+-- MIGRATION SCRIPT: server/scripts/migrate-analytics-table.js
+-- - Automatically adds new columns to existing database
+-- - Generates visitor_id for existing records using MD5 hash of user_agent + visitor_ip
+-- - Adds necessary indexes for performance
+-- REASON: Ensures backward compatibility and smooth transition from old to new system
+
+-- CLIENT-SIDE IMPLEMENTATION:
+-- - Uses localStorage for persistent visitor_id (survives browser restarts)
+-- - Uses sessionStorage for session_id (resets when browser closes)
+-- - Generates unique IDs using timestamp + random string
+-- REASON: Provides reliable visitor identification across browser sessions
+
+-- BACKEND IMPLEMENTATION:
+-- - Updated analytics queries to use visitor_id instead of visitor_ip for unique visitor counting
+-- - Added visitor fingerprinting using MD5 hash of user_agent + IP
+-- - Implemented returning visitor detection (same visitor_id within 30 days)
+-- - Removed random IP generation in development mode
+-- REASON: Ensures accurate analytics data and proper visitor behavior tracking
+
+-- BUSINESS JUSTIFICATION FOR PANELISTS:
+-- 1. ACCURATE METRICS: Provides reliable analytics data for business decisions
+-- 2. USER EXPERIENCE: Enables proper returning visitor detection and personalization
+-- 3. PERFORMANCE: Optimized queries handle large-scale analytics efficiently
+-- 4. SCALABILITY: System can handle growing user base without performance degradation
+-- 5. COMPLIANCE: Better data accuracy for reporting and analytics requirements
+
+-- BENEFITS:
+-- - Accurate unique visitor counting (same user won't be counted multiple times)
+-- - Proper returning visitor detection for user engagement metrics
+-- - Session-based analytics tracking for user behavior analysis
+-- - Backward compatibility with existing data (no data loss)
+-- - Performance optimized with proper indexes for fast queries

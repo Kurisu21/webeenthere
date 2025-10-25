@@ -81,7 +81,7 @@ class WebsiteAnalyticsService {
            w.slug,
            u.username as owner,
            COUNT(wa.id) as page_views,
-           COUNT(DISTINCT wa.visitor_ip) as unique_visitors,
+           COUNT(DISTINCT wa.visitor_id) as unique_visitors,
            MAX(wa.visit_time) as last_visit
          FROM websites w
          LEFT JOIN website_analytics wa ON w.id = wa.website_id 
@@ -260,7 +260,7 @@ class WebsiteAnalyticsService {
 
       // Unique visitors
       const [uniqueVisitors] = await connection.execute(
-        'SELECT COUNT(DISTINCT visitor_ip) as count FROM website_analytics WHERE visit_time >= DATE_SUB(NOW(), INTERVAL ? DAY)',
+        'SELECT COUNT(DISTINCT visitor_id) as count FROM website_analytics WHERE visit_time >= DATE_SUB(NOW(), INTERVAL ? DAY) AND visitor_id IS NOT NULL',
         [period]
       );
 
@@ -272,7 +272,7 @@ class WebsiteAnalyticsService {
            w.slug,
            u.username as owner,
            COUNT(wa.id) as page_views,
-           COUNT(DISTINCT wa.visitor_ip) as unique_visitors
+           COUNT(DISTINCT wa.visitor_id) as unique_visitors
          FROM websites w
          LEFT JOIN website_analytics wa ON w.id = wa.website_id 
            AND wa.visit_time >= DATE_SUB(NOW(), INTERVAL ? DAY)
@@ -411,6 +411,119 @@ class WebsiteAnalyticsService {
       return geoDistribution;
     } catch (error) {
       console.error('Error getting geographic distribution:', error);
+      throw error;
+    }
+  }
+  /**
+   * Get user's website performance metrics
+   */
+  async getUserWebsitePerformance(userId, websiteId = null) {
+    const connection = await this.getConnection();
+    
+    try {
+      // Get user's websites with basic stats
+      const [userWebsites] = await connection.execute(
+        `SELECT 
+           w.id,
+           w.title,
+           w.slug,
+           w.is_published,
+           COALESCE(COUNT(wa.id), 0) as total_views,
+           COALESCE(COUNT(DISTINCT wa.visitor_id), 0) as unique_visitors,
+           MAX(wa.visit_time) as last_visit
+         FROM websites w
+         LEFT JOIN website_analytics wa ON w.id = wa.website_id 
+           AND wa.visit_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+         WHERE w.user_id = ?
+         GROUP BY w.id, w.title, w.slug, w.is_published
+         ORDER BY total_views DESC`,
+        [userId]
+      );
+
+      // Get aggregated performance metrics for user's websites
+      let avgVisitsPerDay = { avg_visits_per_day: 0, max_daily_visits: 0, min_daily_visits: 0 };
+      let bounceRate = { total_visitors: 0, bounced_visitors: 0, bounce_rate: 0 };
+      let returnVisitorRate = { total_unique_visitors: 0, return_visitors: 0, return_rate: 0 };
+
+      try {
+        const [avgVisitsResult] = await connection.execute(
+          `SELECT 
+             COALESCE(AVG(daily_visits), 0) as avg_visits_per_day,
+             COALESCE(MAX(daily_visits), 0) as max_daily_visits,
+             COALESCE(MIN(daily_visits), 0) as min_daily_visits
+           FROM (
+             SELECT DATE(wa.visit_time) as date, COUNT(*) as daily_visits
+             FROM website_analytics wa
+             JOIN websites w ON wa.website_id = w.id
+             WHERE w.user_id = ?
+             AND wa.visit_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+             GROUP BY DATE(wa.visit_time)
+           ) daily_stats`,
+          [userId]
+        );
+        avgVisitsPerDay = avgVisitsResult[0] || avgVisitsPerDay;
+      } catch (error) {
+        console.log('No analytics data for avg visits:', error.message);
+      }
+
+      try {
+        const [bounceRateResult] = await connection.execute(
+          `SELECT 
+             COALESCE(COUNT(*), 0) as total_visitors,
+             COALESCE(SUM(CASE WHEN page_views = 1 THEN 1 ELSE 0 END), 0) as bounced_visitors,
+             CASE 
+               WHEN COUNT(*) > 0 THEN COALESCE(SUM(CASE WHEN page_views = 1 THEN 1 ELSE 0 END), 0) / COUNT(*) * 100 
+               ELSE 0 
+             END as bounce_rate
+           FROM (
+             SELECT wa.visitor_ip, COUNT(*) as page_views
+             FROM website_analytics wa
+             JOIN websites w ON wa.website_id = w.id
+             WHERE w.user_id = ?
+             AND wa.visit_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+             GROUP BY wa.visitor_ip
+           ) visitor_stats`,
+          [userId]
+        );
+        bounceRate = bounceRateResult[0] || bounceRate;
+      } catch (error) {
+        console.log('No analytics data for bounce rate:', error.message);
+      }
+
+      try {
+        const [returnVisitorResult] = await connection.execute(
+          `SELECT 
+             COALESCE(COUNT(DISTINCT wa.visitor_id), 0) as total_unique_visitors,
+             COALESCE(COUNT(DISTINCT CASE WHEN visitor_count > 1 THEN wa.visitor_ip END), 0) as return_visitors,
+             CASE 
+               WHEN COUNT(DISTINCT wa.visitor_id) > 0 THEN COALESCE(COUNT(DISTINCT CASE WHEN visitor_count > 1 THEN wa.visitor_ip END), 0) / COUNT(DISTINCT wa.visitor_id) * 100 
+               ELSE 0 
+             END as return_rate
+           FROM (
+             SELECT wa.visitor_ip, COUNT(*) as visitor_count
+             FROM website_analytics wa
+             JOIN websites w ON wa.website_id = w.id
+             WHERE w.user_id = ?
+             AND wa.visit_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+             GROUP BY wa.visitor_ip
+           ) visitor_stats`,
+          [userId]
+        );
+        returnVisitorRate = returnVisitorResult[0] || returnVisitorRate;
+      } catch (error) {
+        console.log('No analytics data for return visitors:', error.message);
+      }
+
+      return {
+        websites: userWebsites,
+        performance: {
+          avgVisitsPerDay: avgVisitsPerDay,
+          bounceRate: bounceRate,
+          returnVisitorRate: returnVisitorRate
+        }
+      };
+    } catch (error) {
+      console.error('Error getting user website performance:', error);
       throw error;
     }
   }

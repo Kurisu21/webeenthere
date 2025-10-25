@@ -9,10 +9,11 @@ import TemplateSelector from '../../_components/builder-legacy/TemplateSelector'
 import AIGenerationPanel from '../../_components/builder-legacy/AIGenerationPanel';
 import GeneratedTemplateModal from '../../_components/builder-legacy/GeneratedTemplateModal';
 import { API_ENDPOINTS, apiPost } from '../../../lib/apiConfig';
+import { Template } from '../../../lib/templateApi';
 
 export default function CreateWebsitePage() {
   const router = useRouter();
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedTemplate, setGeneratedTemplate] = useState(null);
   const [showGeneratedTemplate, setShowGeneratedTemplate] = useState(false);
@@ -20,7 +21,7 @@ export default function CreateWebsitePage() {
   const [templateSuggestions, setTemplateSuggestions] = useState([]);
   const [showTemplateSection, setShowTemplateSection] = useState(false);
 
-  const handleTemplateSelect = async (template: any) => {
+  const handleTemplateSelect = async (template: Template) => {
     setSelectedTemplate(template);
     
     try {

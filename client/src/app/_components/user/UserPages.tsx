@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { WebsiteCard } from '../shared/WebsiteCard';
 import { ConfirmDialog } from '../shared/ConfirmDialog';
 import { UrlEditModal } from './UrlEditModal';
+import ShareTemplateModal from './ShareTemplateModal';
+import UserWebsitePerformance from './UserWebsitePerformance';
 import { API_ENDPOINTS, apiGet, apiPost, apiPut, apiDelete } from '../../../lib/apiConfig';
 import { exportWebsite } from '../../../lib/websiteExportApi';
 
@@ -34,6 +36,11 @@ export default function UserPages() {
     website: Website | null;
   }>({ isOpen: false, website: null });
 
+  const [shareTemplateModal, setShareTemplateModal] = useState<{
+    isOpen: boolean;
+    website: Website | null;
+  }>({ isOpen: false, website: null });
+
   useEffect(() => {
     loadWebsites();
   }, []);
@@ -56,7 +63,7 @@ export default function UserPages() {
 
   const handleViewWebsite = (website: Website) => {
     if (website.is_published) {
-      window.open(`/view/${website.slug}`, '_blank');
+      window.open(`/sites/${website.slug}`, '_blank');
     } else {
       setError('Website must be published to view');
     }
@@ -125,6 +132,10 @@ export default function UserPages() {
 
   const handleDeleteWebsite = (website: Website) => {
     setDeleteConfirm({ isOpen: true, website });
+  };
+
+  const handleShareAsTemplate = (website: Website) => {
+    setShareTemplateModal({ isOpen: true, website });
   };
 
   const confirmDeleteWebsite = async () => {
@@ -237,12 +248,18 @@ export default function UserPages() {
                 onUnpublish: website.is_published ? () => handleUnpublishWebsite(website) : undefined,
                 onEditUrl: () => handleEditUrl(website),
                 onExport: (format) => handleExportWebsite(website, format),
-                onDelete: () => handleDeleteWebsite(website)
+                onDelete: () => handleDeleteWebsite(website),
+                onShareAsTemplate: () => handleShareAsTemplate(website)
               }}
             />
           ))}
         </div>
       )}
+
+      {/* Website Performance Section */}
+      <div className="mt-8">
+        <UserWebsitePerformance />
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
@@ -264,6 +281,19 @@ export default function UserPages() {
           websiteTitle={urlEditModal.website.title}
           onSave={handleSaveUrl}
           onCancel={() => setUrlEditModal({ isOpen: false, website: null })}
+        />
+      )}
+
+      {/* Share Template Modal */}
+      {shareTemplateModal.website && (
+        <ShareTemplateModal
+          isOpen={shareTemplateModal.isOpen}
+          website={shareTemplateModal.website}
+          onClose={() => setShareTemplateModal({ isOpen: false, website: null })}
+          onSuccess={() => {
+            // Optionally refresh data or show success message
+            console.log('Template shared successfully');
+          }}
         />
       )}
     </div>

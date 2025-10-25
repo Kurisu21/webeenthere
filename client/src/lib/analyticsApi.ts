@@ -560,6 +560,39 @@ export const getStatusColor = (status: string): string => {
   }
 };
 
+// User Website Analytics interfaces
+export interface UserWebsitePerformance {
+  websites: Array<{
+    id: number;
+    title: string;
+    slug: string;
+    is_published: boolean;
+    total_views: number;
+    unique_visitors: number;
+    last_visit: string | null;
+  }>;
+  performance: {
+    totalViews: number;
+    uniqueVisitors: number;
+    avgViewsPerDay: number;
+  };
+}
+
+// User Website Analytics API functions
+export const getUserWebsiteAnalytics = async (websiteId?: number): Promise<UserWebsitePerformance> => {
+  const url = websiteId 
+    ? `/api/user/analytics/websites/${websiteId}`
+    : '/api/user/analytics/websites';
+  
+  const response = await apiCall(url);
+  const data = await response.json();
+  
+  if (data.success && data.data) {
+    return data.data;
+  }
+  throw new Error(data.message || 'Failed to fetch user website analytics');
+};
+
 export const getStatusBgColor = (status: string): string => {
   switch (status.toLowerCase()) {
     case 'healthy':

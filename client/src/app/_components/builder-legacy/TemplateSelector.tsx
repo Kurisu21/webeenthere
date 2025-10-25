@@ -1,20 +1,57 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, memo } from 'react';
-import { enhancedTemplates, categories, getTemplatesByCategory, getFeaturedTemplates, EnhancedTemplate } from '../../_data/enhanced-templates';
+import React, { useState, useCallback, useMemo, memo, useEffect } from 'react';
+import { 
+  getCommunityTemplates, 
+  getOfficialTemplates, 
+  getActiveTemplatesWithCreator,
+  Template,
+  TEMPLATE_CATEGORIES 
+} from '../../../lib/templateApi';
 import TemplatePreview from './TemplatePreview';
 import TemplatePreviewModal from './TemplatePreviewModal';
 
 interface TemplateSelectorProps {
-  onTemplateSelect: (template: EnhancedTemplate) => void;
+  onTemplateSelect: (template: Template) => void;
   onStartFromScratch: () => void;
 }
 
 const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: TemplateSelectorProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTemplate, setSelectedTemplate] = useState<EnhancedTemplate | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'official' | 'community'>('official');
+  
+  // Template data
+  const [officialTemplates, setOfficialTemplates] = useState<Template[]>([]);
+  const [communityTemplates, setCommunityTemplates] = useState<Template[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load templates on component mount
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
+  const loadTemplates = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [official, community] = await Promise.all([
+        getOfficialTemplates(),
+        getCommunityTemplates()
+      ]);
+      
+      setOfficialTemplates(official);
+      setCommunityTemplates(community);
+    } catch (error: any) {
+      setError(error.message || 'Failed to load templates');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCategoryChange = useCallback((category: string) => {
     setSelectedCategory(category);
@@ -24,12 +61,12 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
     setSearchQuery(e.target.value);
   }, []);
 
-  const handleTemplatePreview = useCallback((template: EnhancedTemplate) => {
+  const handleTemplatePreview = useCallback((template: Template) => {
     setSelectedTemplate(template);
     setIsModalOpen(true);
   }, []);
 
-  const handleTemplateSelect = useCallback((template: EnhancedTemplate) => {
+  const handleTemplateSelect = useCallback((template: Template) => {
     setIsModalOpen(false);
     onTemplateSelect(template);
   }, [onTemplateSelect]);
@@ -39,27 +76,74 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
     setSelectedTemplate(null);
   }, []);
 
+  const getCurrentTemplates = () => {
+    return activeTab === 'official' ? officialTemplates : communityTemplates;
+  };
+
   const filteredTemplates = useMemo(() => {
-    let filtered = enhancedTemplates;
+    let filtered = getCurrentTemplates();
 
     // Filter by category
     if (selectedCategory !== 'all') {
-      filtered = getTemplatesByCategory(selectedCategory);
+      filtered = filtered.filter(template => template.category === selectedCategory);
     }
 
     // Filter by search query
     if (searchQuery.trim()) {
       filtered = filtered.filter(template =>
         template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        template.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        template.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+        template.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     return filtered;
-  }, [selectedCategory, searchQuery]);
+  }, [activeTab, selectedCategory, searchQuery, officialTemplates, communityTemplates]);
 
-  const featuredTemplates = useMemo(() => getFeaturedTemplates(), []);
+  const featuredTemplates = useMemo(() => {
+    return getCurrentTemplates().filter(template => template.is_featured);
+  }, [activeTab, officialTemplates, communityTemplates]);
+
+  if (loading) {
+    return (
+      <div className="p-4 md:p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-primary">Loading templates...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 md:p-6">
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+            <div className="ml-auto pl-3">
+              <button
+                onClick={loadTemplates}
+                className="text-red-400 hover:text-red-600"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-6">
@@ -67,6 +151,32 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-primary mb-2">Choose Your Template</h1>
         <p className="text-secondary text-sm md:text-base">Select a template to get started or build from scratch</p>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="mb-6">
+        <div className="flex space-x-1 bg-surface-elevated p-1 rounded-lg">
+          <button
+            onClick={() => setActiveTab('official')}
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+              activeTab === 'official'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg'
+                : 'text-secondary hover:text-primary hover:bg-surface-elevated'
+            }`}
+          >
+            Official Templates
+          </button>
+          <button
+            onClick={() => setActiveTab('community')}
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+              activeTab === 'community'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg'
+                : 'text-secondary hover:text-primary hover:bg-surface-elevated'
+            }`}
+          >
+            Community Templates
+          </button>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -100,7 +210,7 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
           >
             All Templates
           </button>
-          {categories.map((category) => (
+          {TEMPLATE_CATEGORIES.map((category) => (
             <button
               key={category.id}
               onClick={() => handleCategoryChange(category.id)}
@@ -117,7 +227,7 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
       </div>
 
       {/* Featured Templates */}
-      {selectedCategory === 'all' && !searchQuery && (
+      {selectedCategory === 'all' && !searchQuery && featuredTemplates.length > 0 && (
         <div className="mb-6 md:mb-8">
           <div className="flex items-center mb-4">
             <h2 className="text-lg md:text-xl font-semibold text-white">Featured Templates</h2>
@@ -143,7 +253,7 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
       <div className="mb-6 md:mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg md:text-xl font-semibold text-white">
-            {selectedCategory === 'all' ? 'All Templates' : `${categories.find(c => c.id === selectedCategory)?.name} Templates`}
+            {selectedCategory === 'all' ? 'All Templates' : `${TEMPLATE_CATEGORIES.find(c => c.id === selectedCategory)?.name} Templates`}
           </h2>
           <span className="text-blue-400 text-sm font-medium bg-blue-500/10 px-3 py-1 rounded-full">
             {filteredTemplates.length} templates
@@ -198,7 +308,7 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
 });
 
 interface TemplateCardProps {
-  template: EnhancedTemplate;
+  template: Template;
   onSelect: () => void;
   onPreview: () => void;
   isFeatured: boolean;
@@ -240,7 +350,7 @@ const TemplateCard = memo(({ template, onSelect, onPreview, isFeatured }: Templa
               </span>
             )}
             <span className="text-xs text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full font-medium">
-              {categories.find(c => c.id === template.category)?.name}
+              {TEMPLATE_CATEGORIES.find(c => c.id === template.category)?.name || template.category}
             </span>
           </div>
         </div>
@@ -250,15 +360,15 @@ const TemplateCard = memo(({ template, onSelect, onPreview, isFeatured }: Templa
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span className="text-xs text-blue-400 font-medium">{template.elements.length} elements</span>
+            <span className="text-xs text-blue-400 font-medium">
+              {template.is_community ? 'Community' : 'Official'}
+            </span>
           </div>
-          <div className="flex space-x-1">
-            {template.tags.slice(0, 2).map((tag, index) => (
-              <span key={index} className="bg-gray-700/50 backdrop-blur-sm text-gray-300 px-2 py-1 rounded text-xs font-medium">
-                {tag}
-              </span>
-            ))}
-          </div>
+          {template.is_community && template.creator_username && (
+            <div className="text-xs text-gray-400">
+              by {template.creator_username}
+            </div>
+          )}
         </div>
       </div>
     </div>

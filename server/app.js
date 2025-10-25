@@ -48,6 +48,11 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 const performanceRoutes = require('./routes/performanceRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const userActivityRoutes = require('./routes/userActivityRoutes');
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
+const adminSubscriptionRoutes = require('./routes/adminSubscriptionRoutes');
+const userAnalyticsRoutes = require('./routes/userAnalyticsRoutes');
+const testAnalyticsRoutes = require('./routes/testAnalyticsRoutes');
+const analyticsTrackingRoutes = require('./routes/analyticsTrackingRoutes');
 
 // Database connection
 const { getDatabaseConnection } = require('./database/database');
@@ -70,6 +75,11 @@ app.use('/api/admin/analytics', analyticsRoutes);
 app.use('/api/admin/performance', performanceRoutes);
 app.use('/api/admin/reports', reportRoutes);
 app.use('/api/user/activity', userActivityRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/admin/subscriptions', adminSubscriptionRoutes);
+app.use('/api/user/analytics', userAnalyticsRoutes);
+app.use('/api/user/analytics/test', testAnalyticsRoutes);
+app.use('/api/analytics', analyticsTrackingRoutes);
 
 // Health check route
 app.get('/', (req, res) => {

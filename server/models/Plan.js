@@ -22,8 +22,31 @@ class Plan {
     return rows;
   }
 
+  async findActiveByType(type) {
+    const [rows] = await this.db.execute('SELECT * FROM plans WHERE type = ? AND is_active = TRUE', [type]);
+    return rows[0];
+  }
+
   async update(id, data) {
-    // TODO: Implement update logic
+    const fields = [];
+    const values = [];
+
+    Object.keys(data).forEach(key => {
+      if (data[key] !== undefined) {
+        fields.push(`${key} = ?`);
+        values.push(data[key]);
+      }
+    });
+
+    if (fields.length === 0) {
+      throw new Error('No fields to update');
+    }
+
+    values.push(id);
+    await this.db.execute(
+      `UPDATE plans SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
   }
 
   async delete(id) {

@@ -97,6 +97,8 @@ class DatabaseORM {
           theme_mode ENUM('light', 'dark') DEFAULT 'light',
           is_verified BOOLEAN DEFAULT FALSE,
           is_active BOOLEAN DEFAULT TRUE,
+          ai_chat_usage INT DEFAULT 0,
+          ai_chat_reset_date DATETIME DEFAULT CURRENT_TIMESTAMP,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
@@ -111,8 +113,16 @@ class DatabaseORM {
           css_base LONGTEXT,
           is_featured BOOLEAN DEFAULT FALSE,
           is_active BOOLEAN DEFAULT TRUE,
+          -- NEW: Community Template Fields - Enable users to share their websites as templates
+          is_community BOOLEAN DEFAULT FALSE,
+          creator_user_id INT NULL,
+          source_website_id INT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (creator_user_id) REFERENCES users(id) ON DELETE SET NULL,
+          INDEX idx_is_community (is_community),
+          INDEX idx_creator_user_id (creator_user_id),
+          INDEX idx_is_active (is_active)
         )
       `,
       websites: `
@@ -163,9 +173,14 @@ class DatabaseORM {
           website_id INT NOT NULL,
           visit_time DATETIME DEFAULT CURRENT_TIMESTAMP,
           visitor_ip VARCHAR(45),
+          visitor_id VARCHAR(50),
+          session_id VARCHAR(50),
           user_agent TEXT,
           referrer TEXT,
-          FOREIGN KEY (website_id) REFERENCES websites(id)
+          FOREIGN KEY (website_id) REFERENCES websites(id),
+          INDEX idx_visitor_id (visitor_id),
+          INDEX idx_session_id (session_id),
+          INDEX idx_visit_time (visit_time)
         )
       `,
       custom_blocks: `
@@ -184,8 +199,11 @@ class DatabaseORM {
         CREATE TABLE IF NOT EXISTS plans (
           id INT AUTO_INCREMENT PRIMARY KEY,
           name VARCHAR(50) NOT NULL,
+          type ENUM('free', 'monthly', 'yearly') NOT NULL,
           price DECIMAL(10,2) NOT NULL,
           features TEXT,
+          website_limit INT DEFAULT NULL,
+          ai_chat_limit INT DEFAULT NULL,
           is_active BOOLEAN DEFAULT TRUE,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
@@ -202,6 +220,39 @@ class DatabaseORM {
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id),
           FOREIGN KEY (plan_id) REFERENCES plans(id)
+        )
+      `,
+      subscription_logs: `
+        CREATE TABLE IF NOT EXISTS subscription_logs (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          plan_id INT NOT NULL,
+          action ENUM('created', 'upgraded', 'downgraded', 'cancelled', 'renewed') NOT NULL,
+          payment_status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
+          amount DECIMAL(10,2) DEFAULT 0,
+          payment_reference VARCHAR(100),
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (plan_id) REFERENCES plans(id),
+          INDEX idx_user_id (user_id),
+          INDEX idx_action (action),
+          INDEX idx_created_at (created_at)
+        )
+      `,
+      payment_transactions: `
+        CREATE TABLE IF NOT EXISTS payment_transactions (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          plan_id INT NOT NULL,
+          amount DECIMAL(10,2) NOT NULL,
+          status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
+          transaction_reference VARCHAR(100) UNIQUE NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (plan_id) REFERENCES plans(id),
+          INDEX idx_user_id (user_id),
+          INDEX idx_status (status),
+          INDEX idx_transaction_reference (transaction_reference)
         )
       `,
       feedback: `
@@ -397,8 +448,40 @@ class DatabaseORM {
           console.log(`ℹ️  Table '${tableName}' already exists`);
         }
       }
+      
+      // Add foreign key constraint for templates.source_website_id after websites table is created
+      await this.addTemplateWebsiteForeignKey(connection);
     } finally {
       connection.end();
+    }
+  }
+
+  // Add foreign key constraint for templates.source_website_id
+  async addTemplateWebsiteForeignKey(connection) {
+    try {
+      // Check if the foreign key constraint already exists
+      const [constraints] = await connection.promise().execute(`
+        SELECT CONSTRAINT_NAME 
+        FROM information_schema.KEY_COLUMN_USAGE 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'templates' 
+        AND COLUMN_NAME = 'source_website_id' 
+        AND REFERENCED_TABLE_NAME = 'websites'
+      `);
+
+      if (constraints.length === 0) {
+        // Add the foreign key constraint
+        await connection.promise().execute(`
+          ALTER TABLE templates 
+          ADD CONSTRAINT fk_templates_source_website 
+          FOREIGN KEY (source_website_id) REFERENCES websites(id) ON DELETE SET NULL
+        `);
+        console.log(`✅ Foreign key constraint added for templates.source_website_id`);
+      } else {
+        console.log(`ℹ️  Foreign key constraint for templates.source_website_id already exists`);
+      }
+    } catch (error) {
+      console.log(`⚠️  Could not add foreign key constraint for templates.source_website_id: ${error.message}`);
     }
   }
 
@@ -986,30 +1069,94 @@ class DatabaseORM {
         const plans = [
           {
             name: 'Free',
+            type: 'free',
             price: 0.00,
-            features: '1 website, Basic templates, 100MB storage'
+            features: '3 websites max, 200 AI chat messages',
+            website_limit: 3,
+            ai_chat_limit: 200
           },
           {
-            name: 'Pro',
+            name: 'Monthly',
+            type: 'monthly',
             price: 9.99,
-            features: '5 websites, All templates, 1GB storage, Custom domain'
+            features: 'Unlimited websites, Unlimited AI chat',
+            website_limit: null,
+            ai_chat_limit: null
           },
           {
-            name: 'Business',
-            price: 19.99,
-            features: 'Unlimited websites, Premium templates, 10GB storage, Custom domain, Analytics'
+            name: 'Yearly',
+            type: 'yearly',
+            price: 99.00,
+            features: 'Unlimited websites, Unlimited AI chat, Premium features',
+            website_limit: null,
+            ai_chat_limit: null
           }
         ];
 
         for (const plan of plans) {
           await connection.promise().execute(
-            `INSERT INTO plans (name, price, features) VALUES (?, ?, ?)`,
-            [plan.name, plan.price, plan.features]
+            `INSERT INTO plans (name, type, price, features, website_limit, ai_chat_limit) VALUES (?, ?, ?, ?, ?, ?)`,
+            [plan.name, plan.type, plan.price, plan.features, plan.website_limit, plan.ai_chat_limit]
           );
         }
         console.log(`✅ Seeded ${plans.length} plans`);
       } else {
         console.log(`ℹ️  Plans table already has data, skipping`);
+      }
+
+      // Seed subscription logs
+      if (!(await this.tableHasData('subscription_logs'))) {
+        const subscriptionLogs = [
+          {
+            user_id: 1,
+            plan_id: 1,
+            action: 'created',
+            payment_status: 'completed',
+            amount: 0.00,
+            payment_reference: 'FREE_PLAN_ASSIGNED'
+          },
+          {
+            user_id: 2,
+            plan_id: 2,
+            action: 'created',
+            payment_status: 'completed',
+            amount: 9.99,
+            payment_reference: 'TXN_MONTHLY_001'
+          }
+        ];
+
+        for (const log of subscriptionLogs) {
+          await connection.promise().execute(
+            `INSERT INTO subscription_logs (user_id, plan_id, action, payment_status, amount, payment_reference) VALUES (?, ?, ?, ?, ?, ?)`,
+            [log.user_id, log.plan_id, log.action, log.payment_status, log.amount, log.payment_reference]
+          );
+        }
+        console.log(`✅ Seeded ${subscriptionLogs.length} subscription logs`);
+      } else {
+        console.log(`ℹ️  Subscription logs table already has data, skipping`);
+      }
+
+      // Seed payment transactions
+      if (!(await this.tableHasData('payment_transactions'))) {
+        const transactions = [
+          {
+            user_id: 2,
+            plan_id: 2,
+            amount: 9.99,
+            status: 'completed',
+            transaction_reference: 'TXN_MONTHLY_001'
+          }
+        ];
+
+        for (const transaction of transactions) {
+          await connection.promise().execute(
+            `INSERT INTO payment_transactions (user_id, plan_id, amount, status, transaction_reference) VALUES (?, ?, ?, ?, ?)`,
+            [transaction.user_id, transaction.plan_id, transaction.amount, transaction.status, transaction.transaction_reference]
+          );
+        }
+        console.log(`✅ Seeded ${transactions.length} payment transactions`);
+      } else {
+        console.log(`ℹ️  Payment transactions table already has data, skipping`);
       }
 
       // Seed feedback

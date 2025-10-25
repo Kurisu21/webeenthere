@@ -1,66 +1,6 @@
 import { apiCall } from './apiConfig';
 
 // Performance API interfaces
-export interface CPUMetrics {
-  usage: number;
-  cores: number;
-  physicalCores: number;
-  processors: number;
-  speed: number;
-  temperature?: number;
-  timestamp: string;
-}
-
-export interface MemoryMetrics {
-  total: number;
-  used: number;
-  free: number;
-  available: number;
-  usage: number;
-  swap: {
-    total: number;
-    used: number;
-    free: number;
-  };
-  layout: any[];
-  timestamp: string;
-}
-
-export interface DiskMetrics {
-  disks: Array<{
-    fs: string;
-    type: string;
-    size: number;
-    used: number;
-    available: number;
-    usage: number;
-    mount: string;
-  }>;
-  io: any;
-  timestamp: string;
-}
-
-export interface NetworkMetrics {
-  interfaces: Array<{
-    iface: string;
-    type: string;
-    ip4: string;
-    ip6: string;
-    mac: string;
-    speed: number;
-    internal: boolean;
-  }>;
-  stats: Array<{
-    iface: string;
-    rx_bytes: number;
-    tx_bytes: number;
-    rx_sec: number;
-    tx_sec: number;
-    ms: number;
-  }>;
-  timestamp: string;
-}
-
 export interface APIMetrics {
   endpoints: Array<{
     action: string;
@@ -131,10 +71,6 @@ export interface UptimeInfo {
 }
 
 export interface PerformanceMetrics {
-  cpu: CPUMetrics;
-  memory: MemoryMetrics;
-  disk: DiskMetrics;
-  network: NetworkMetrics;
   api: APIMetrics;
   database: DatabaseMetrics;
   system: SystemInfo;
@@ -144,9 +80,6 @@ export interface PerformanceMetrics {
 }
 
 export interface PerformanceThresholds {
-  cpu: number;
-  memory: number;
-  disk: number;
   responseTime: number;
   dbConnections: number;
 }
@@ -314,42 +247,6 @@ export const performanceApi = {
     throw new Error(data.error || 'Failed to generate performance report');
   },
 
-  // Get individual metrics
-  getCPUMetrics: async (): Promise<CPUMetrics> => {
-    const response = await apiCall('/api/admin/performance/cpu');
-    const data = await response.json();
-    if (data.success && data.cpu) {
-      return data.cpu;
-    }
-    throw new Error(data.error || 'Failed to fetch CPU metrics');
-  },
-
-  getMemoryMetrics: async (): Promise<MemoryMetrics> => {
-    const response = await apiCall('/api/admin/performance/memory');
-    const data = await response.json();
-    if (data.success && data.memory) {
-      return data.memory;
-    }
-    throw new Error(data.error || 'Failed to fetch memory metrics');
-  },
-
-  getDiskMetrics: async (): Promise<DiskMetrics> => {
-    const response = await apiCall('/api/admin/performance/disk');
-    const data = await response.json();
-    if (data.success && data.disk) {
-      return data.disk;
-    }
-    throw new Error(data.error || 'Failed to fetch disk metrics');
-  },
-
-  getNetworkMetrics: async (): Promise<NetworkMetrics> => {
-    const response = await apiCall('/api/admin/performance/network');
-    const data = await response.json();
-    if (data.success && data.network) {
-      return data.network;
-    }
-    throw new Error(data.error || 'Failed to fetch network metrics');
-  },
 
   getUptime: async (): Promise<UptimeInfo> => {
     const response = await apiCall('/api/admin/performance/uptime');

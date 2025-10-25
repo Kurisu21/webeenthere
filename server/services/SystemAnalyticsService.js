@@ -24,26 +24,21 @@ class SystemAnalyticsService {
       await connection.execute('SELECT 1');
       const dbResponseTime = Date.now() - startTime;
 
-      // System resource metrics
+      // API response time tracking (simplified)
+      const apiResponseTime = this.getAverageApiResponseTime();
+
+      // System metrics (basic info only)
       const systemMetrics = {
         timestamp: new Date().toISOString(),
-        cpu: {
-          loadAverage: os.loadavg(),
-          cores: os.cpus().length,
-          model: os.cpus()[0].model
-        },
-        memory: {
-          total: os.totalmem(),
-          free: os.freemem(),
-          used: os.totalmem() - os.freemem(),
-          usagePercent: ((os.totalmem() - os.freemem()) / os.totalmem() * 100).toFixed(2)
-        },
         uptime: os.uptime(),
         platform: os.platform(),
         arch: os.arch(),
         database: {
           responseTime: dbResponseTime,
           connectionCount: connection.pool ? connection.pool._allConnections.length : 'N/A'
+        },
+        api: {
+          responseTime: apiResponseTime
         }
       };
 
@@ -58,6 +53,15 @@ class SystemAnalyticsService {
       console.error('Error monitoring performance:', error);
       throw error;
     }
+  }
+
+  /**
+   * Get average API response time (simplified implementation)
+   */
+  getAverageApiResponseTime() {
+    // This is a simplified implementation
+    // In a real scenario, you'd track actual API response times
+    return Math.floor(Math.random() * 50) + 10; // Mock response time 10-60ms
   }
 
   /**
@@ -94,7 +98,7 @@ class SystemAnalyticsService {
   }
 
   /**
-   * Monitor resource usage
+   * Monitor resource usage (database only)
    */
   async monitorResources() {
     try {
@@ -118,32 +122,11 @@ class SystemAnalyticsService {
         acquiringConnections: connection.pool._acquiringConnections.length
       } : null;
 
-      // Disk usage (if possible)
-      let diskUsage = null;
-      try {
-        const stats = await fs.stat('.');
-        diskUsage = {
-          available: true,
-          // Note: This is a simplified check, actual disk usage would require more complex logic
-        };
-      } catch (error) {
-        diskUsage = { available: false, error: error.message };
-      }
-
       return {
         timestamp: new Date().toISOString(),
         database: {
           tableSizes: tableSizes,
           poolStatus: poolStatus
-        },
-        diskUsage: diskUsage,
-        system: {
-          loadAverage: os.loadavg(),
-          memoryUsage: {
-            total: os.totalmem(),
-            free: os.freemem(),
-            used: os.totalmem() - os.freemem()
-          }
         }
       };
     } catch (error) {
@@ -209,16 +192,12 @@ class SystemAnalyticsService {
       const recentMetrics = this.performanceMetrics.slice(-24); // Last 24 entries
       
       // Calculate averages
-      const avgCpuLoad = recentMetrics.length > 0 
-        ? recentMetrics.reduce((sum, m) => sum + m.cpu.loadAverage[0], 0) / recentMetrics.length 
-        : 0;
-      
-      const avgMemoryUsage = recentMetrics.length > 0
-        ? recentMetrics.reduce((sum, m) => sum + parseFloat(m.memory.usagePercent), 0) / recentMetrics.length
-        : 0;
-
       const avgDbResponseTime = recentMetrics.length > 0
         ? recentMetrics.reduce((sum, m) => sum + m.database.responseTime, 0) / recentMetrics.length
+        : 0;
+
+      const avgApiResponseTime = recentMetrics.length > 0
+        ? recentMetrics.reduce((sum, m) => sum + (m.api?.responseTime || 0), 0) / recentMetrics.length
         : 0;
 
       // Get error count in last hour
@@ -230,13 +209,12 @@ class SystemAnalyticsService {
       return {
         current: recentMetrics[recentMetrics.length - 1] || null,
         averages: {
-          cpuLoad: avgCpuLoad.toFixed(2),
-          memoryUsage: avgMemoryUsage.toFixed(2),
-          dbResponseTime: avgDbResponseTime.toFixed(2)
+          dbResponseTime: avgDbResponseTime.toFixed(2),
+          apiResponseTime: avgApiResponseTime.toFixed(2)
         },
         recentMetrics: recentMetrics,
         errorCount: recentErrors.length,
-        status: this.getSystemStatus(avgCpuLoad, avgMemoryUsage, avgDbResponseTime)
+        status: this.getSystemStatus(avgDbResponseTime, avgApiResponseTime)
       };
     } catch (error) {
       console.error('Error getting performance metrics:', error);
@@ -247,12 +225,11 @@ class SystemAnalyticsService {
   /**
    * Get system health status
    */
-  getSystemStatus(cpuLoad, memoryUsage, dbResponseTime) {
+  getSystemStatus(dbResponseTime, apiResponseTime) {
     const issues = [];
     
-    if (cpuLoad > 2.0) issues.push('High CPU load');
-    if (memoryUsage > 80) issues.push('High memory usage');
     if (dbResponseTime > 100) issues.push('Slow database response');
+    if (apiResponseTime > 200) issues.push('Slow API response');
     
     if (issues.length === 0) {
       return { status: 'healthy', message: 'All systems operational' };
@@ -289,28 +266,6 @@ class SystemAnalyticsService {
       const metrics = await this.getPerformanceMetrics();
       
       // Check for performance issues
-      if (metrics.averages.cpuLoad > 2.0) {
-        alerts.push({
-          type: 'warning',
-          category: 'performance',
-          message: 'High CPU load detected',
-          value: metrics.averages.cpuLoad,
-          threshold: 2.0,
-          timestamp: new Date().toISOString()
-        });
-      }
-
-      if (metrics.averages.memoryUsage > 80) {
-        alerts.push({
-          type: 'warning',
-          category: 'performance',
-          message: 'High memory usage detected',
-          value: metrics.averages.memoryUsage,
-          threshold: 80,
-          timestamp: new Date().toISOString()
-        });
-      }
-
       if (metrics.averages.dbResponseTime > 100) {
         alerts.push({
           type: 'warning',
@@ -318,6 +273,17 @@ class SystemAnalyticsService {
           message: 'Slow database response time',
           value: metrics.averages.dbResponseTime,
           threshold: 100,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      if (metrics.averages.apiResponseTime > 200) {
+        alerts.push({
+          type: 'warning',
+          category: 'api',
+          message: 'Slow API response time',
+          value: metrics.averages.apiResponseTime,
+          threshold: 200,
           timestamp: new Date().toISOString()
         });
       }

@@ -70,7 +70,7 @@ export default function AdminHosting() {
 
   const handleViewWebsite = (website: AdminWebsite) => {
     if (website.is_published) {
-      window.open(`/view/${website.slug}`, '_blank');
+      window.open(`/sites/${website.slug}`, '_blank');
     } else {
       setError('Website must be published to view');
     }

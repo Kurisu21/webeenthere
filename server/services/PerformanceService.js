@@ -7,150 +7,14 @@ class PerformanceService {
     this.metricsHistory = [];
     this.maxHistorySize = 1000;
     this.thresholds = {
-      cpu: 80, // CPU usage percentage
-      memory: 85, // Memory usage percentage
-      disk: 90, // Disk usage percentage
       responseTime: 2000, // Response time in milliseconds
       dbConnections: 80 // Database connection percentage
     };
   }
 
-  /**
-   * Monitor CPU usage
-   */
-  async monitorCPUUsage() {
-    try {
-      const cpuData = await si.currentLoad();
-      const cpuInfo = await si.cpu();
-      
-      const cpuMetrics = {
-        usage: Math.round(cpuData.currentLoad),
-        cores: cpuInfo.cores,
-        physicalCores: cpuInfo.physicalCores,
-        processors: cpuInfo.processors,
-        speed: cpuInfo.speed,
-        temperature: await this.getCPUTemperature(),
-        timestamp: new Date().toISOString()
-      };
 
-      // Store in history
-      this.addToHistory('cpu', cpuMetrics);
-      
-      return cpuMetrics;
-    } catch (error) {
-      console.error('Error monitoring CPU usage:', error);
-      return null;
-    }
-  }
 
-  /**
-   * Monitor memory usage
-   */
-  async monitorMemoryUsage() {
-    try {
-      const memData = await si.mem();
-      const memLayout = await si.memLayout();
-      
-      const totalMemory = memData.total;
-      const usedMemory = memData.used;
-      const freeMemory = memData.free;
-      const availableMemory = memData.available;
-      
-      const memoryMetrics = {
-        total: totalMemory,
-        used: usedMemory,
-        free: freeMemory,
-        available: availableMemory,
-        usage: Math.round((usedMemory / totalMemory) * 100),
-        swap: {
-          total: memData.swaptotal,
-          used: memData.swapused,
-          free: memData.swapfree
-        },
-        layout: memLayout,
-        timestamp: new Date().toISOString()
-      };
 
-      // Store in history
-      this.addToHistory('memory', memoryMetrics);
-      
-      return memoryMetrics;
-    } catch (error) {
-      console.error('Error monitoring memory usage:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Monitor disk usage
-   */
-  async monitorDiskUsage() {
-    try {
-      const diskData = await si.fsSize();
-      const diskIO = await si.disksIO();
-      
-      const diskMetrics = {
-        disks: diskData.map(disk => ({
-          fs: disk.fs,
-          type: disk.type,
-          size: disk.size,
-          used: disk.used,
-          available: disk.available,
-          usage: Math.round((disk.used / disk.size) * 100),
-          mount: disk.mount
-        })),
-        io: diskIO,
-        timestamp: new Date().toISOString()
-      };
-
-      // Store in history
-      this.addToHistory('disk', diskMetrics);
-      
-      return diskMetrics;
-    } catch (error) {
-      console.error('Error monitoring disk usage:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Monitor network usage
-   */
-  async monitorNetworkUsage() {
-    try {
-      const networkStats = await si.networkStats();
-      const networkInterfaces = await si.networkInterfaces();
-      
-      const networkMetrics = {
-        interfaces: networkInterfaces.map(iface => ({
-          iface: iface.iface,
-          type: iface.type,
-          ip4: iface.ip4,
-          ip6: iface.ip6,
-          mac: iface.mac,
-          speed: iface.speed,
-          internal: iface.internal
-        })),
-        stats: networkStats.map(stat => ({
-          iface: stat.iface,
-          rx_bytes: stat.rx_bytes,
-          tx_bytes: stat.tx_bytes,
-          rx_sec: stat.rx_sec,
-          tx_sec: stat.tx_sec,
-          ms: stat.ms
-        })),
-        timestamp: new Date().toISOString()
-      };
-
-      // Store in history
-      this.addToHistory('network', networkMetrics);
-      
-      return networkMetrics;
-    } catch (error) {
-      console.error('Error monitoring network usage:', error);
-      return null;
-    }
-  }
 
   /**
    * Track API response times
@@ -260,26 +124,14 @@ class PerformanceService {
   async getPerformanceMetrics() {
     try {
       const [
-        cpuMetrics,
-        memoryMetrics,
-        diskMetrics,
-        networkMetrics,
         apiMetrics,
         dbMetrics
       ] = await Promise.all([
-        this.monitorCPUUsage(),
-        this.monitorMemoryUsage(),
-        this.monitorDiskUsage(),
-        this.monitorNetworkUsage(),
         this.trackResponseTimes(),
         this.monitorDatabasePerformance()
       ]);
 
       const overallMetrics = {
-        cpu: cpuMetrics,
-        memory: memoryMetrics,
-        disk: diskMetrics,
-        network: networkMetrics,
         api: apiMetrics,
         database: dbMetrics,
         system: await this.getSystemInfo(),
@@ -354,17 +206,6 @@ class PerformanceService {
     }
   }
 
-  /**
-   * Get CPU temperature (if available)
-   */
-  async getCPUTemperature() {
-    try {
-      const temp = await si.cpuTemperature();
-      return temp.main || null;
-    } catch (error) {
-      return null;
-    }
-  }
 
   /**
    * Calculate overall system health score
@@ -372,27 +213,17 @@ class PerformanceService {
   calculateHealthScore(metrics) {
     let score = 100;
     
-    // CPU usage penalty
-    if (metrics.cpu && metrics.cpu.usage > this.thresholds.cpu) {
-      score -= Math.min(20, (metrics.cpu.usage - this.thresholds.cpu) * 0.5);
-    }
-    
-    // Memory usage penalty
-    if (metrics.memory && metrics.memory.usage > this.thresholds.memory) {
-      score -= Math.min(20, (metrics.memory.usage - this.thresholds.memory) * 0.5);
-    }
-    
-    // Disk usage penalty
-    if (metrics.disk && metrics.disk.disks.length > 0) {
-      const maxDiskUsage = Math.max(...metrics.disk.disks.map(d => d.usage));
-      if (maxDiskUsage > this.thresholds.disk) {
-        score -= Math.min(15, (maxDiskUsage - this.thresholds.disk) * 0.3);
-      }
-    }
-    
     // Database performance penalty
     if (metrics.database && metrics.database.slowQueries > 5) {
       score -= Math.min(10, metrics.database.slowQueries * 2);
+    }
+    
+    // API performance penalty
+    if (metrics.api && metrics.api.endpoints.length > 0) {
+      const avgResponseTime = metrics.api.endpoints.reduce((sum, ep) => sum + ep.avgResponseTimeMs, 0) / metrics.api.endpoints.length;
+      if (avgResponseTime > this.thresholds.responseTime) {
+        score -= Math.min(15, (avgResponseTime - this.thresholds.responseTime) / 100);
+      }
     }
     
     return Math.max(0, Math.round(score));
@@ -407,47 +238,6 @@ class PerformanceService {
     
     if (!metrics) return alerts;
     
-    // CPU alerts
-    if (metrics.cpu && metrics.cpu.usage > this.thresholds.cpu) {
-      alerts.push({
-        type: 'cpu',
-        severity: metrics.cpu.usage > 95 ? 'critical' : 'warning',
-        message: `High CPU usage: ${metrics.cpu.usage}%`,
-        value: metrics.cpu.usage,
-        threshold: this.thresholds.cpu,
-        timestamp: new Date().toISOString()
-      });
-    }
-    
-    // Memory alerts
-    if (metrics.memory && metrics.memory.usage > this.thresholds.memory) {
-      alerts.push({
-        type: 'memory',
-        severity: metrics.memory.usage > 95 ? 'critical' : 'warning',
-        message: `High memory usage: ${metrics.memory.usage}%`,
-        value: metrics.memory.usage,
-        threshold: this.thresholds.memory,
-        timestamp: new Date().toISOString()
-      });
-    }
-    
-    // Disk alerts
-    if (metrics.disk && metrics.disk.disks.length > 0) {
-      metrics.disk.disks.forEach(disk => {
-        if (disk.usage > this.thresholds.disk) {
-          alerts.push({
-            type: 'disk',
-            severity: disk.usage > 95 ? 'critical' : 'warning',
-            message: `High disk usage on ${disk.mount}: ${disk.usage}%`,
-            value: disk.usage,
-            threshold: this.thresholds.disk,
-            mount: disk.mount,
-            timestamp: new Date().toISOString()
-          });
-        }
-      });
-    }
-    
     // Database alerts
     if (metrics.database && metrics.database.slowQueries > 5) {
       alerts.push({
@@ -457,6 +247,23 @@ class PerformanceService {
         value: metrics.database.slowQueries,
         threshold: 5,
         timestamp: new Date().toISOString()
+      });
+    }
+    
+    // API response time alerts
+    if (metrics.api && metrics.api.endpoints.length > 0) {
+      metrics.api.endpoints.forEach(endpoint => {
+        if (endpoint.avgResponseTimeMs > this.thresholds.responseTime) {
+          alerts.push({
+            type: 'api',
+            severity: endpoint.avgResponseTimeMs > 5000 ? 'critical' : 'warning',
+            message: `Slow API response for ${endpoint.action}: ${endpoint.avgResponseTimeMs}ms`,
+            value: endpoint.avgResponseTimeMs,
+            threshold: this.thresholds.responseTime,
+            endpoint: endpoint.action,
+            timestamp: new Date().toISOString()
+          });
+        }
       });
     }
     
