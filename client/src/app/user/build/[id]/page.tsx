@@ -7,7 +7,7 @@ import { API_ENDPOINTS, apiGet, apiPut } from '../../../../lib/apiConfig';
 
 // Dynamically import the new builder to avoid SSR issues
 const BuilderLayout = dynamic(
-  () => import('../../../_components/builder-v2/BuilderLayout'),
+  () => import('../../../_components/builder/BuilderLayout'),
   {
     ssr: false,
     loading: () => (

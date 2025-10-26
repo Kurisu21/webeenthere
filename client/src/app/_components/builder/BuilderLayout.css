@@ -1,0 +1,492 @@
+/* GrapesJS Custom Styling with Theme Support */
+
+/* Theme-aware GrapesJS styling */
+.gjs-editor-parent {
+  height: 100%;
+  width: 100%;
+}
+
+/* GrapesJS Canvas Styling */
+.gjs-cv-canvas {
+  background-color: var(--surface);
+  border: none !important;
+}
+
+.gjs-frame {
+  background-color: var(--surface) !important;
+}
+
+/* GrapesJS Block Manager Styling */
+.gjs-blocks-c {
+  background-color: var(--surface-elevated) !important;
+  border: none !important;
+}
+
+.gjs-block {
+  background-color: var(--surface) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  padding: 8px 12px !important;
+  margin: 4px !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+.gjs-block:hover {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+  border-color: var(--accent) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* GrapesJS Style Manager Styling */
+.gjs-sm-label {
+  color: var(--text-secondary) !important;
+  font-weight: 600 !important;
+}
+
+.gjs-sm-sector {
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  margin-bottom: 12px !important;
+  padding: 8px !important;
+}
+
+.gjs-sm-properties {
+  background-color: var(--surface-elevated) !important;
+}
+
+.gjs-field {
+  background-color: var(--input) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.gjs-field:focus {
+  border-color: var(--ring) !important;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring) !important;
+}
+
+/* GrapesJS Layer Manager Styling */
+.gjs-layer {
+  background-color: var(--surface) !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  padding: 8px !important;
+  margin: 2px 0 !important;
+  border-radius: 4px !important;
+}
+
+.gjs-layer:hover {
+  background-color: var(--surface-elevated) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Fix for dark mode - ensure hover uses theme variables */
+.gjs-layer-item {
+  color: var(--text-primary) !important;
+}
+
+.gjs-layer-item:hover {
+  background-color: var(--surface-elevated) !important;
+  color: var(--text-primary) !important;
+}
+
+.gjs-layer-selected {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+
+/* GrapesJS Toolbar Styling */
+.gjs-pn-btn {
+  background-color: transparent !important;
+  color: var(--text-secondary) !important;
+  border: none !important;
+}
+
+.gjs-pn-btn:hover {
+  background-color: var(--surface-elevated) !important;
+  color: var(--text-primary) !important;
+}
+
+/* GrapesJS Panels Styling */
+.gjs-pn-panels {
+  background-color: var(--surface) !important;
+  border-right: 1px solid var(--border) !important;
+}
+
+.gjs-pn-panel {
+  background-color: var(--surface) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+/* GrapesJS Selected Component Styling */
+.gjs-selected {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: -2px !important;
+}
+
+/* GrapesJS Trait Manager Styling */
+.gjs-trt-traits {
+  background-color: var(--surface-elevated) !important;
+}
+
+.gjs-trt-trait {
+  background-color: var(--surface) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  padding: 8px !important;
+  margin: 4px 0 !important;
+  border-radius: 4px !important;
+}
+
+/* GrapesJS Device Buttons */
+.gjs-pn-commands {
+  background-color: var(--surface-elevated) !important;
+  border-top: 1px solid var(--border) !important;
+}
+
+.gjs-pn-devices {
+  background-color: transparent !important;
+}
+
+.gjs-pn-btn-device {
+  color: var(--text-secondary) !important;
+}
+
+.gjs-pn-btn-device:hover,
+.gjs-pn-btn-device.active {
+  color: var(--accent) !important;
+  background-color: var(--surface-elevated) !important;
+}
+
+/* GrapesJS RTE (Rich Text Editor) Styling */
+.gjs-rte-toolbar {
+  background-color: var(--surface-elevated) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 4px !important;
+}
+
+.gjs-rte-actionbar {
+  background-color: var(--surface-elevated) !important;
+}
+
+.gjs-rte-toolbar select,
+.gjs-rte-toolbar input {
+  background-color: var(--input) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* GrapesJS Modal Styling */
+.gjs-mdl-dialog {
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.gjs-mdl-header {
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+}
+
+.gjs-mdl-footer {
+  border-top: 1px solid var(--border) !important;
+}
+
+.gjs-mdl-btn-primary {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+  border: none !important;
+  padding: 8px 16px !important;
+  border-radius: 6px !important;
+}
+
+.gjs-mdl-btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .gjs-editor-parent {
+    overflow-x: auto;
+  }
+}
+
+/* COMPREHENSIVE THEME SUPPORT FOR ALL GRAPESJS ELEMENTS */
+
+/* All GrapesJS Panels */
+.gjs-pn-panels {
+  background-color: var(--surface) !important;
+}
+
+.gjs-pn-panel {
+  background-color: var(--surface) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.gjs-pn-commands {
+  background-color: var(--surface-elevated) !important;
+  border-top: 1px solid var(--border) !important;
+}
+
+/* Block Manager Categories */
+.gjs-blocks-c .gjs-title {
+  color: var(--text-primary) !important;
+}
+
+.gjs-blocks-c .gjs-blocks-title {
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+/* Style Manager - All Input Types */
+.gjs-field-color,
+.gjs-field-select,
+.gjs-field-number,
+.gjs-field-text,
+.gjs-field-composite input,
+input.gjs-field {
+  background-color: var(--input) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.gjs-field-color:focus,
+.gjs-field-select:focus,
+.gjs-field-number:focus,
+.gjs-field-text:focus {
+  border-color: var(--ring) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--ring) !important;
+}
+
+/* Trait Manager */
+.gjs-trt-traits {
+  background-color: var(--surface-elevated) !important;
+}
+
+.gjs-trt-trait select,
+.gjs-trt-trait input {
+  background-color: var(--input) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.gjs-trt-trait label {
+  color: var(--text-secondary) !important;
+}
+
+/* Component Badge & Info */
+.gjs-comp-selected {
+  outline: 2px solid var(--accent) !important;
+}
+
+.gjs-badge {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+
+/* Canvas Frame */
+.gjs-cv-canvas__frames {
+  background-color: var(--surface) !important;
+}
+
+.gjs-cv-cv {
+  background-color: var(--surface-elevated) !important;
+}
+
+/* GrapesJS Modal & Dialogs */
+.gjs-mdl {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.gjs-mdl-dialog {
+  background-color: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+.gjs-mdl-header {
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+}
+
+.gjs-mdl-content,
+.gjs-mdl-body {
+  color: var(--text-primary) !important;
+}
+
+.gjs-mdl-footer {
+  border-top: 1px solid var(--border) !important;
+  background-color: var(--surface-elevated) !important;
+}
+
+.gjs-mdl-btn-close {
+  color: var(--text-primary) !important;
+}
+
+.gjs-mdl-btn-close:hover {
+  background-color: var(--surface-elevated) !important;
+  color: var(--accent) !important;
+}
+
+/* GrapesJS SVGs (icons) */
+.gjs-sm-v-unit {
+  color: var(--text-secondary) !important;
+}
+
+/* Dropdown Selects */
+select.gjs-field,
+.gjs-trt-trait select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
+  background-color: var(--input) !important;
+}
+
+/* Color Picker */
+.gjs-field-color,
+input[type="color"].gjs-field {
+  width: 100% !important;
+  height: 40px !important;
+  background-color: var(--input) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+}
+
+.gjs-field-color:hover,
+input[type="color"].gjs-field:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.gjs-clm-color {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Ensure color picker displays for all components */
+.gjs-sm-sector .gjs-field-color,
+.gjs-sm-sector input[type="color"] {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Color picker wrapper */
+.gjs-clm-tags {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.gjs-clm-tag {
+  background-color: var(--surface-elevated) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+}
+
+/* Ensure color input is not hidden */
+.gjs-property {
+  opacity: 1 !important;
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+}
+
+/* GrapesJS Tabs */
+.gjs-tab,
+.gjs-tab-active {
+  color: var(--text-primary) !important;
+}
+
+.gjs-tab-active {
+  background-color: var(--surface-elevated) !important;
+  border-bottom: 2px solid var(--accent) !important;
+}
+
+/* GrapesJS Component Settings */
+.gjs-cmp-settings {
+  background-color: var(--surface) !important;
+}
+
+.gjs-cmp-settings .fa,
+.gjs-cmp-settings svg {
+  color: var(--text-primary) !important;
+}
+
+/* Scrollbars */
+.gjs-blocks-c,
+.gjs-sm-properties,
+.gjs-layer-v {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.gjs-blocks-c::-webkit-scrollbar,
+.gjs-sm-properties::-webkit-scrollbar,
+.gjs-layer-v::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.gjs-blocks-c::-webkit-scrollbar-track,
+.gjs-sm-properties::-webkit-scrollbar-track,
+.gjs-layer-v::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+.gjs-blocks-c::-webkit-scrollbar-thumb,
+.gjs-sm-properties::-webkit-scrollbar-thumb,
+.gjs-layer-v::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+.gjs-blocks-c::-webkit-scrollbar-thumb:hover,
+.gjs-sm-properties::-webkit-scrollbar-thumb:hover,
+.gjs-layer-v::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Layer Children & Grouping */
+.gjs-layer-children {
+  background-color: var(--surface-elevated) !important;
+}
+
+.gjs-layer-title {
+  color: var(--text-primary) !important;
+}
+
+.gjs-open-layer .gjs-layer-title::before {
+  color: var(--text-primary) !important;
+}
+
+/* Button Focus States */
+.gjs-pn-btn:focus,
+.gjs-trt-trait button:focus {
+  outline: 2px solid var(--ring) !important;
+  outline-offset: 2px !important;
+}
+
+/* All Selects and Dropdowns */
+.gjs-sm-properties select,
+.gjs-trt-trait select {
+  background-color: var(--input) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* Units display */
+.gjs-sm-unit,
+.gjs-trt-unit {
+  color: var(--text-secondary) !important;
+}

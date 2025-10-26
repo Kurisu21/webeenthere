@@ -132,10 +132,56 @@ export default function PublicWebsiteViewer() {
     );
   }
 
+  // Handle both formats: separate css_content OR inline styles in html_content
+  const cssContent = website.css_content || '';
+  const htmlContent = website.html_content || '';
+  
+  // Debug logging
+  console.log('Website data:', { 
+    title: website.title,
+    slug: website.slug,
+    hasCssContent: !!cssContent,
+    hasHtmlContent: !!htmlContent,
+    cssContent: cssContent?.substring(0, 200), 
+    htmlContent: htmlContent?.substring(0, 200),
+    cssLength: cssContent?.length,
+    htmlLength: htmlContent?.length
+  });
+  
+  // Check if html_content is JSON (GrapesJS format)
+  let extractedCss = cssContent;
+  let extractedHtml = htmlContent;
+  
+  try {
+    const parsed = JSON.parse(htmlContent);
+    if (parsed.html && parsed.css) {
+      // GrapesJS format: { html: '...', css: '...' }
+      extractedCss = parsed.css || cssContent;
+      extractedHtml = parsed.html;
+      
+      // Remove <body> wrapper if present
+      extractedHtml = extractedHtml.replace(/<body[^>]*>|<\/body>/gi, '');
+      
+      console.log('Parsed as GrapesJS JSON format');
+    }
+  } catch (e) {
+    // Not JSON, use as-is
+    console.log('Not JSON format');
+  }
+  
+  // Check if HTML contains style tags
+  if (extractedHtml && extractedHtml.includes('<style>')) {
+    const styleMatch = extractedHtml.match(/<style[^>]*>(.*?)<\/style>/s);
+    if (styleMatch) {
+      extractedCss = styleMatch[1] + (extractedCss ? '\n' + extractedCss : '');
+      extractedHtml = extractedHtml.replace(/<style[^>]*>.*?<\/style>/s, '');
+    }
+  }
+  
   return (
-    <div className="min-h-screen bg-white">
-      <style dangerouslySetInnerHTML={{ __html: website.css_content }} />
-      <div dangerouslySetInnerHTML={{ __html: website.html_content }} />
+    <div className="min-h-screen bg-white" style={{ margin: 0, padding: 0 }}>
+      {extractedCss && <style dangerouslySetInnerHTML={{ __html: extractedCss }} />}
+      <div dangerouslySetInnerHTML={{ __html: extractedHtml }} style={{ margin: 0, padding: 0 }} />
     </div>
   );
 }

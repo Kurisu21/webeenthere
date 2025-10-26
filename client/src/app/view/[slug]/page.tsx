@@ -65,10 +65,14 @@ export default function PublicWebsiteViewer() {
     );
   }
 
+  // Handle both formats: separate css_content OR inline styles in html_content
+  const cssContent = website.css_content || '';
+  const htmlContent = website.html_content || '';
+  
   return (
     <div className="min-h-screen bg-white">
-      <style dangerouslySetInnerHTML={{ __html: website.css_content }} />
-      <div dangerouslySetInnerHTML={{ __html: website.html_content }} />
+      {cssContent && <style dangerouslySetInnerHTML={{ __html: cssContent }} />}
+      <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
     </div>
   );
 }
