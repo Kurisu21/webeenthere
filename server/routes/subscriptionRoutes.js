@@ -17,5 +17,6 @@ router.post('/subscribe', authMiddleware, subscriptionController.subscribe.bind(
 router.put('/cancel', authMiddleware, subscriptionController.cancelSubscription.bind(subscriptionController));
 router.get('/history', authMiddleware, subscriptionController.getSubscriptionHistory.bind(subscriptionController));
 router.get('/limits', authMiddleware, subscriptionController.checkLimits.bind(subscriptionController));
+router.get('/usage', authMiddleware, subscriptionController.getUsage.bind(subscriptionController));
 
 module.exports = router;

@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
   // AI endpoints
   GENERATE_TEMPLATE: `${API_BASE_URL}/api/ai/generate-template`,
   GENERATE_SECTION: `${API_BASE_URL}/api/ai/generate-section`,
+  IMPROVE_CANVAS: `${API_BASE_URL}/api/ai/improve-canvas`,
   
   // User endpoints
   USERS: `${API_BASE_URL}/api/users`,
@@ -41,6 +42,7 @@ export const API_ENDPOINTS = {
   
   // Subscription endpoints
   SUBSCRIPTIONS: `${API_BASE_URL}/api/subscriptions`,
+  SUBSCRIPTION_USAGE: `${API_BASE_URL}/api/subscriptions/usage`,
   ADMIN_SUBSCRIPTIONS: `${API_BASE_URL}/api/admin/subscriptions`,
 } as const;
 

@@ -56,47 +56,33 @@ export const useAIServices = () => {
     }
   }, [aiPrompt]);
 
-  const handleAiImprove = useCallback(async (editor: Editor | null) => {
+  const handleAiImprove = useCallback(async (editor: Editor | null, intent: 'content' | 'layout' | 'style' | 'all' = 'all') => {
     if (!editor) {
-      alert('Please select an element to improve');
-      return;
-    }
-
-    const selected = editor.getSelected();
-    if (!selected) {
-      alert('Please select an element to improve');
+      alert('Editor not ready');
       return;
     }
 
     setIsAiLoading(true);
     try {
-      // Log API configuration for debugging
       logApiConfig();
-      
-      const selectedHtml = selected.toHTML();
       const currentHtml = editor.getHtml();
-      
-      const data = await apiPost(API_ENDPOINTS.GENERATE_SECTION, {
-        prompt: `Improve this element: ${aiPrompt || 'Improve this element'}`,
-        selectedContent: selectedHtml,
-        currentContent: currentHtml,
-        userId: 1 // TODO: Get from auth context
+      const currentCss = editor.getCss();
+
+      const data = await apiPost(API_ENDPOINTS.IMPROVE_CANVAS, {
+        html: currentHtml,
+        css: currentCss,
+        intent,
       });
-      
-      if (data.success && data.generatedHtml) {
-        // Replace the selected element with improved version
-        selected.replaceWith(data.generatedHtml);
-        
-        setAiSuggestions(data.improvements || []);
+
+      if (data.success && (data.html || data.css)) {
+        if (data.html) {
+          editor.setComponents(data.html);
+        }
+        if (typeof data.css === 'string') {
+          editor.setStyle(data.css);
+        }
+        setAiSuggestions(data.suggestions || []);
         setAiPrompt('');
-        
-        // Store AI context and reasoning for display
-        if (data.context) {
-          setAiContext(data.context);
-        }
-        if (data.reasoning) {
-          setAiReasoning(data.reasoning);
-        }
       } else {
         alert('AI improvement failed: ' + (data.error || 'Unknown error'));
       }

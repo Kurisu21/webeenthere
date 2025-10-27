@@ -40,21 +40,21 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 p-4 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl bg-white dark:bg-gray-900">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-blue-600/10 to-purple-600/10 dark:from-blue-400/10 dark:to-purple-400/10">
+          <div className="min-w-0">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
               {template.name || 'Generated Template'}
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 truncate">
               {template.description || 'AI-generated website template'}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -71,16 +71,16 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
                 Template Preview
               </h3>
               
-              <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mb-4">
-                <div className="bg-white dark:bg-gray-800 rounded border shadow-sm min-h-[300px] relative overflow-hidden">
+              <div className="rounded-lg p-4 mb-4 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-800">
+                <div className="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm min-h-[300px] relative overflow-hidden bg-white dark:bg-gray-900">
                   {/* Real HTML preview with CSS */}
                   <div className="w-full h-full">
-                    <style dangerouslySetInnerHTML={{ __html: template.css_base || '' }} />
+                    <style dangerouslySetInnerHTML={{ __html: (template.css || template.css_base || '') }} />
                     <div className="template-preview" style={{ 
                       width: '100%', 
                       height: '100%', 
                       overflow: 'auto',
-                      fontSize: '12px' // Scale down for preview
+                      fontSize: '12px'
                     }}>
                       {template.elements?.map((element: any, index: number) => (
                         <div
@@ -109,24 +109,24 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
               {/* Template Info */}
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Elements:</span>
+                  <span className="text-gray-600 dark:text-gray-300">Elements:</span>
                   <span className="text-gray-900 dark:text-white">
                     {template.elements?.length || 0}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Category:</span>
+                  <span className="text-gray-600 dark:text-gray-300">Category:</span>
                   <span className="text-gray-900 dark:text-white capitalize">
                     {template.category || 'ai-generated'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Tags:</span>
+                  <span className="text-gray-600 dark:text-gray-300">Tags:</span>
                   <div className="flex flex-wrap gap-1">
                     {template.tags?.map((tag: string, index: number) => (
                       <span
                         key={index}
-                        className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded"
+                        className="px-2 py-1 rounded text-xs bg-blue-100/80 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200"
                       >
                         {tag}
                       </span>
@@ -147,8 +147,8 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Design Reasoning
                   </h4>
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                  <div className="rounded-lg p-4 border bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-200">
+                    <p className="text-sm whitespace-pre-wrap">
                       {reasoning}
                     </p>
                   </div>
@@ -164,9 +164,9 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
                     {suggestions.map((suggestion, index) => (
                       <div
                         key={index}
-                        className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3"
+                        className="rounded-lg p-3 border bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-200"
                       >
-                        <p className="text-sm text-green-800 dark:text-green-200">
+                        <p className="text-sm">
                           {suggestion}
                         </p>
                       </div>
@@ -179,7 +179,7 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
               <div className="space-y-3">
                 <button
                   onClick={handleUseTemplate}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-md transition-all duration-200 flex items-center justify-center"
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-md transition-all duration-200 flex items-center justify-center shadow-md"
                 >
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -189,7 +189,7 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
 
                 <button
                   onClick={onClose}
-                  className="w-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium py-3 px-4 rounded-md transition-all duration-200"
+                  className="w-full font-medium py-3 px-4 rounded-md transition-all duration-200 bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
                 >
                   Generate Another
                 </button>

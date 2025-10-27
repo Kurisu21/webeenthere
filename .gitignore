@@ -17,6 +17,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 /server/.env
+/client/.env
+/client/.env.*
+/server/.env.*
 
 # Logs
 logs
@@ -116,6 +119,11 @@ Thumbs.db
 # Database backup files - exclude all SQL backup files
 /server/backups/
 *.sql
+
+# Sensitive data (server data, tokens)
+/server/data/*.json
+!/server/data/settings/
+!/server/data/settings/*.json
 
 # JSON data files - exclude logs but keep settings templates
 /server/data/logs/*.json

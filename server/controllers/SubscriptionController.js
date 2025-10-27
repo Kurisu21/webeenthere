@@ -165,6 +165,18 @@ class SubscriptionController {
       });
     }
   }
+
+  // GET /api/subscriptions/usage
+  async getUsage(req, res) {
+    try {
+      const userId = req.user.id;
+      const usage = await this.subscriptionService.getWebsiteUsage(userId);
+      return res.json({ success: true, ...usage });
+    } catch (error) {
+      console.error('Error getting usage:', error);
+      return res.status(500).json({ success: false, error: 'Failed to get usage' });
+    }
+  }
 }
 
 module.exports = SubscriptionController;

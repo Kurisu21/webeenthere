@@ -144,7 +144,7 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
   }, [handleAiGenerate, editor]);
 
   const handleAiImproveClick = useCallback(async () => {
-    await handleAiImprove(editor);
+    await handleAiImprove(editor, 'all');
   }, [handleAiImprove, editor]);
 
   const handleDeviceChange = useCallback((device: string) => {

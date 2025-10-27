@@ -69,7 +69,7 @@ class WebsiteController {
   async createWebsite(req, res) {
     try {
       const userId = req.user.id;
-      const { title, slug, template_id, html_content, css_content } = req.body;
+      const { title, slug, template_id, html_content, css_content, ai_prompt_id } = req.body;
 
       // Validate required fields
       if (!title) {
@@ -133,7 +133,8 @@ class WebsiteController {
         css_content: cssContent,
         template_id: validTemplateId,
         is_published: false,
-        is_active: true
+        is_active: true,
+        ai_prompt_id: ai_prompt_id || null
       };
 
       const websiteId = await this.websiteModel.create(websiteData);

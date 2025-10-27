@@ -109,6 +109,11 @@ class SubscriptionService {
     };
   }
 
+  async getWebsiteUsage(userId) {
+    const limits = await this.checkWebsiteLimit(userId);
+    return { used: limits.used ?? (limits.limit - limits.remaining), limit: limits.limit, canCreate: limits.canCreate };
+  }
+
   async checkAiChatLimit(userId) {
     const subscription = await this.userPlanModel.findByUserId(userId);
     if (!subscription) {

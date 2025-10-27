@@ -1,7 +1,15 @@
 import { useState, useCallback, useEffect } from 'react';
-import type Editor from 'grapesjs';
 
-export function useGrapesJS(editor: Editor | null) {
+type GrapesEditorLike = {
+  trigger: (event: string) => void;
+  setComponents: (components: any) => void;
+  setStyle: (style: any) => void;
+  getHtml: () => string;
+  getCss: () => string;
+  getComponents: () => { toJSON: () => any };
+};
+
+export function useGrapesJS(editor: GrapesEditorLike | null) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -69,6 +77,17 @@ export function useGrapesJS(editor: Editor | null) {
     return `<style>${css}</style>${html}`;
   }, [editor]);
 
+  const applyHtmlCss = useCallback((payload: { html?: string; css?: string }) => {
+    if (!editor || !payload) return;
+    const { html, css } = payload;
+    if (typeof html === 'string' && html.length > 0) {
+      editor.setComponents(html);
+    }
+    if (typeof css === 'string') {
+      editor.setStyle(css);
+    }
+  }, [editor]);
+
   return {
     editor,
     isReady,
@@ -78,5 +97,6 @@ export function useGrapesJS(editor: Editor | null) {
     getCss,
     getJson,
     exportAsHtml,
+    applyHtmlCss,
   };
 }

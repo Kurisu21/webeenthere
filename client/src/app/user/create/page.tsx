@@ -8,7 +8,7 @@ import MainContentWrapper from '../../_components/layout/MainContentWrapper';
 import TemplateSelector from '../../_components/builder-legacy/TemplateSelector';
 import AIGenerationPanel from '../../_components/builder-legacy/AIGenerationPanel';
 import GeneratedTemplateModal from '../../_components/builder-legacy/GeneratedTemplateModal';
-import { API_ENDPOINTS, apiPost } from '../../../lib/apiConfig';
+import { API_ENDPOINTS, apiPost, apiGet } from '../../../lib/apiConfig';
 import { Template } from '../../../lib/templateApi';
 
 export default function CreateWebsitePage() {
@@ -20,6 +20,43 @@ export default function CreateWebsitePage() {
   const [templateReasoning, setTemplateReasoning] = useState('');
   const [templateSuggestions, setTemplateSuggestions] = useState([]);
   const [showTemplateSection, setShowTemplateSection] = useState(false);
+  const [usage, setUsage] = useState<{ used: number; limit: number; canCreate: boolean } | null>(null);
+  const [loadingUsage, setLoadingUsage] = useState(false);
+  const [aiPromptId, setAiPromptId] = useState<string | number | null>(null);
+  const [limitNotice, setLimitNotice] = useState<string | null>(null);
+
+  // Fetch subscription usage to gate UI
+  React.useEffect(() => {
+    let mounted = true;
+    const fetchUsage = async () => {
+      try {
+        setLoadingUsage(true);
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token) return;
+        const data = await apiGet(API_ENDPOINTS.SUBSCRIPTION_USAGE);
+        if (mounted && data?.success !== false) {
+          setUsage({ used: data.used ?? 0, limit: data.limit ?? 0, canCreate: !!data.canCreate });
+        }
+      } catch (e) {
+        // ignore
+      } finally {
+        setLoadingUsage(false);
+      }
+    };
+    fetchUsage();
+    return () => { mounted = false; };
+  }, []);
+
+  const ensureCanCreate = () => {
+    if (usage && !usage.canCreate) {
+      const msg = `You have reached your website limit (${usage.used}/${usage.limit}). Please upgrade to create more.`;
+      setLimitNotice(msg);
+      // Auto-hide after a short delay
+      setTimeout(() => setLimitNotice(null), 5000);
+      return false;
+    }
+    return true;
+  };
 
   const handleTemplateSelect = async (template: Template) => {
     setSelectedTemplate(template);
@@ -32,6 +69,9 @@ export default function CreateWebsitePage() {
         window.location.href = '/login';
         return;
       }
+
+      // Enforce plan limit before attempting creation
+      if (!ensureCanCreate()) return;
 
       // Create website in database immediately
       const websiteData = {
@@ -75,7 +115,6 @@ export default function CreateWebsitePage() {
         websiteType: options.websiteType,
         style: options.style,
         colorScheme: options.colorScheme,
-        userId: 'current-user'
       });
       console.log('API response data:', data);
 
@@ -86,6 +125,7 @@ export default function CreateWebsitePage() {
         setTemplateReasoning(data.reasoning || '');
         setTemplateSuggestions(data.suggestions || []);
         setShowGeneratedTemplate(true);
+        if (data.aiPromptId) setAiPromptId(data.aiPromptId);
       } else {
         console.error('Template generation failed:', data.error);
         alert('Template generation failed: ' + (data.error || 'Unknown error'));
@@ -112,14 +152,18 @@ export default function CreateWebsitePage() {
         return;
       }
 
-      // Create website in database immediately with AI-generated template
+      if (!ensureCanCreate()) return;
+
+      // Create website in database immediately with AI-generated template (store normalized html/css JSON)
+      const normalizedHtmlCss = JSON.stringify({ html: (template.html || ''), css: (template.css || template.css_base || '') });
       const websiteData = {
         title: `${template.name || 'AI Generated'} Website`,
         slug: `ai-generated-${Date.now()}`,
         template_id: 'ai_generated',
-        html_content: '',
-        css_content: '',
-        is_published: false
+        html_content: normalizedHtmlCss,
+        css_content: (template.css || template.css_base || ''),
+        is_published: false,
+        ai_prompt_id: aiPromptId ?? undefined
       };
 
       const response = await apiPost(API_ENDPOINTS.WEBSITES, websiteData);
@@ -149,6 +193,9 @@ export default function CreateWebsitePage() {
         window.location.href = '/login';
         return;
       }
+
+      // Enforce plan limit before attempting creation
+      if (!ensureCanCreate()) return;
 
       // Create blank website in database immediately
       const websiteData = {
@@ -180,6 +227,14 @@ export default function CreateWebsitePage() {
 
   return (
         <div className="min-h-screen bg-surface relative overflow-hidden">
+          {/* Limit toast - shown only after an action is blocked */}
+          {limitNotice && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+              <div className="bg-red-50 border border-red-200 text-red-800 dark:bg-red-900/30 dark:border-red-800 dark:text-red-100 rounded-lg px-4 py-3 shadow-lg">
+                {limitNotice}
+              </div>
+            </div>
+          )}
           {/* Moving Templates Background - Hidden on mobile for performance */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
             {/* Template 1 - Moving from left to right */}
