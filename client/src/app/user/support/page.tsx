@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supportApi, SupportTicket, SupportMessage } from '../../../lib/supportApi';
+import DashboardHeader from '../../_components/layout/DashboardHeader';
+import DashboardSidebar from '../../_components/layout/DashboardSidebar';
+import MainContentWrapper from '../../_components/layout/MainContentWrapper';
 
 export default function SupportPage() {
   const router = useRouter();
@@ -130,6 +133,10 @@ export default function SupportPage() {
 
   return (
     <div className="min-h-screen bg-surface">
+      <DashboardHeader />
+      <div className="flex flex-col md:flex-row">
+        <DashboardSidebar />
+        <MainContentWrapper>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -234,7 +241,7 @@ export default function SupportPage() {
               </div>
             ) : myTickets.length === 0 ? (
               <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-surface-elevated rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
@@ -247,8 +254,8 @@ export default function SupportPage() {
                 {myTickets.map(ticket => (
                   <div 
                     key={ticket.id} 
-                    className={`bg-gray-700/50 rounded-lg p-4 border border-gray-600 cursor-pointer transition-colors ${
-                      selectedTicket?.id === ticket.id ? 'border-purple-500' : 'hover:border-gray-500'
+                    className={`bg-surface rounded-lg p-4 border border-app cursor-pointer transition-colors ${
+                      selectedTicket?.id === ticket.id ? 'border-purple-500' : 'hover:border-app'
                     }`}
                     onClick={() => setSelectedTicket(ticket)}
                   >
@@ -296,7 +303,7 @@ export default function SupportPage() {
             </div>
 
             {/* Messages */}
-            <div className="bg-gray-800 rounded-lg p-6 mb-6 max-h-96 overflow-y-auto">
+            <div className="bg-surface-elevated rounded-lg p-6 mb-6 max-h-96 overflow-y-auto">
               <div className="space-y-4">
                 {messages.map((message) => {
                   // For user view: user messages on right, admin messages on left
@@ -310,12 +317,12 @@ export default function SupportPage() {
                         className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                           isUserMessage
                             ? 'bg-blue-600 text-primary'
-                            : 'bg-gray-700 text-gray-300'
+                            : 'bg-surface-elevated text-secondary'
                         }`}
                       >
                         <div className="text-sm whitespace-pre-wrap">{message.message}</div>
                         <div className={`text-xs mt-1 ${
-                          isUserMessage ? 'text-blue-200' : 'text-gray-500'
+                          isUserMessage ? 'text-blue-200' : 'text-secondary'
                         }`}>
                           {formatDate(message.createdAt)}
                         </div>
@@ -364,7 +371,7 @@ export default function SupportPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="/help"
+                href="/user/help"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary rounded-lg transition-all duration-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -373,8 +380,8 @@ export default function SupportPage() {
                 Help Center
               </a>
               <a
-                href="/forum"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-surface text-primary rounded-lg transition-all duration-200"
+                href="/user/forum"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-surface-elevated hover:bg-surface text-primary rounded-lg transition-all duration-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
@@ -384,6 +391,8 @@ export default function SupportPage() {
             </div>
           </div>
         </div>
+      </div>
+        </MainContentWrapper>
       </div>
     </div>
   );

@@ -4,7 +4,9 @@ const cors = require('cors');
 const app = express();
 
 // Middleware
-app.use(express.json());
+// Increase body size limits to support saving HTML/CSS with embedded images (base64)
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
 // CORS configuration for both local development and production
 const allowedOrigins = [
@@ -29,6 +31,17 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Graceful handling for payload too large
+app.use((err, req, res, next) => {
+  if (err && err.type === 'entity.too.large') {
+    return res.status(413).json({
+      success: false,
+      message: 'Payload too large. Try using smaller images or compressing assets.'
+    });
+  }
+  return next(err);
+});
 
 // Import routes
 const userRoutes = require('./routes/userRoutes');

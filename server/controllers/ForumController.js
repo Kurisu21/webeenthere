@@ -196,9 +196,21 @@ class ForumController {
         }
       }
 
+      // Build simple pagination metadata (best-effort)
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const total = Array.isArray(threads) ? threads.length : 0;
+      const totalPages = total > 0 ? Math.max(1, Math.ceil(total / limitNum)) : 1;
+
       res.json({
         success: true,
-        data: threads
+        data: {
+          threads,
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages
+        }
       });
     } catch (error) {
       console.error('Error getting threads:', error);
@@ -386,7 +398,7 @@ class ForumController {
       res.json({
         success: true,
         message: 'Thread moderated successfully',
-        data: moderation
+        data: thread
       });
     } catch (error) {
       console.error('Error moderating thread:', error);

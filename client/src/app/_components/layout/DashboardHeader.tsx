@@ -101,12 +101,12 @@ const DashboardHeader = memo(() => {
             )}
             
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gray-700 border border-gray-600 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+              <div className="w-8 h-8 bg-surface-elevated border border-app rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                 </svg>
               </div>
-              <span className="text-white text-sm font-medium">
+              <span className="text-primary text-sm font-medium">
                 {user ? user.username : 'User'}
               </span>
             </div>
@@ -121,8 +121,8 @@ const DashboardHeader = memo(() => {
           {/* Mobile user avatar and theme toggle */}
           <div className="md:hidden flex items-center space-x-2">
             <ThemeToggle />
-            <div className="w-8 h-8 bg-gray-700 border border-gray-600 rounded-full flex items-center justify-center">
-              <svg className="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+            <div className="w-8 h-8 bg-surface-elevated border border-app rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
               </svg>
             </div>

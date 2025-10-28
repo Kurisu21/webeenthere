@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from './SidebarContext';
@@ -58,21 +58,72 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
   ),
+  history: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0zM4 4v4h4" />
+    </svg>
+  ),
+  changelog: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M7 20h10a2 2 0 002-2V6a2 2 0 00-2-2h-5.586a1 1 0 00-.707.293L9.293 6.707A1 1 0 019 7.414V8H7a2 2 0 00-2 2v8a2 2 0 002 2z" />
+    </svg>
+  ),
+  support: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636A9 9 0 105.636 18.364 9 9 0 0018.364 5.636zM9 10h.01M15 10h.01M8 15h8" />
+    </svg>
+  ),
+  help: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10a4 4 0 118 0c0 1.657-1 2.5-2 3m-2 4h.01" />
+    </svg>
+  ),
+  forum: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V10a2 2 0 012-2h8z" />
+    </svg>
+  ),
+  feedback: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h6m1 8l-4-4H8a2 2 0 01-2-2V6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+    </svg>
+  ),
 };
 
-const navItems = [
-  { id: 'main', label: 'Main', icon: Icons.main, href: '/user/main' },
-  { id: 'profile', label: 'User Details', icon: Icons.profile, href: '/user/profile' },
-  { id: 'create', label: '+ Create', icon: Icons.create, href: '/user/create' },
-  { id: 'pages', label: 'My Pages', icon: Icons.pages, href: '/user/pages' },
-  { id: 'subscription', label: 'Subscription', icon: Icons.subscription, href: '/user/subscription' },
-  { id: 'host', label: 'Host', icon: Icons.host, href: '/user/host' },
-  { id: 'extensions', label: 'Extensions', icon: Icons.extensions, href: '/user/extensions' },
-  { id: 'share', label: 'Share', icon: Icons.share, href: '/user/share' },
-  { id: 'images', label: 'Added Images', icon: Icons.images, href: '/user/images' },
-  { id: 'goals', label: 'Problems & Goals', icon: Icons.goals, href: '/user/goals' },
-  { id: 'history', label: 'History', icon: Icons.history, href: '/user/history' },
-  { id: 'changelog', label: 'Changelog', icon: Icons.changelog, href: '/user/changelog' },
+type NavItem = { id: string; label: string; icon: JSX.Element; href: string };
+type NavSection = { id: string; title: string; items: NavItem[] };
+
+const sections: NavSection[] = [
+  {
+    id: 'general',
+    title: 'General',
+    items: [
+      { id: 'main', label: 'Main', icon: Icons.main, href: '/user/main' },
+      { id: 'create', label: '+ Create', icon: Icons.create, href: '/user/create' },
+      { id: 'pages', label: 'My Pages', icon: Icons.pages, href: '/user/pages' },
+      { id: 'images', label: 'Added Images', icon: Icons.images, href: '/user/images' },
+    ],
+  },
+  {
+    id: 'account',
+    title: 'Account',
+    items: [
+      { id: 'profile', label: 'User Details', icon: Icons.profile, href: '/user/profile' },
+      { id: 'subscription', label: 'Subscription', icon: Icons.subscription, href: '/user/subscription' },
+      { id: 'history', label: 'History', icon: Icons.history, href: '/user/history' },
+      { id: 'changelog', label: 'Changelog', icon: Icons.changelog, href: '/user/changelog' },
+    ],
+  },
+  {
+    id: 'support',
+    title: 'Support',
+    items: [
+      { id: 'help', label: 'Help Center', icon: Icons.help, href: '/user/help' },
+      { id: 'support', label: 'Support', icon: Icons.support, href: '/user/support' },
+      { id: 'forum', label: 'Forum', icon: Icons.forum, href: '/user/forum' },
+      { id: 'feedback', label: 'Feedback', icon: Icons.feedback, href: '/user/feedback' },
+    ],
+  },
 ];
 
 const DashboardSidebar = memo(() => {
@@ -125,40 +176,57 @@ const DashboardSidebar = memo(() => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex md:flex-col flex-1 space-y-2 overflow-x-auto md:overflow-x-visible">
-        {navItems.map((item, index) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.id}
-              href={item.href}
-              className={`
-                flex-shrink-0 md:w-full flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg transition-all duration-300 transform hover:scale-105 md:hover:translate-x-2 group
-                ${isActive
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/50'
-                  : 'hover:bg-surface-elevated text-secondary hover:text-primary'
-                }
-                ${isCollapsed ? 'justify-center' : ''}
-              `}
-              title={isCollapsed ? item.label : ''}
-            >
-              <span className="flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
-                {item.icon}
-              </span>
+      <div className="relative flex-1">
+        {/* Slider for long menus */}
+        <div className="absolute right-0 top-0 bottom-0 pr-1 hidden md:flex items-center">
+          {/* We'll show via JS if needed (CSS kept minimal) */}
+        </div>
+        <nav className="flex md:flex-col flex-1 space-y-4 pr-2 overflow-y-auto">
+          {sections.map((section) => (
+            <div key={section.id}>
               {!isCollapsed && (
-                <>
-                  <span className="font-medium text-sm md:text-base whitespace-nowrap">
-                    {item.label}
-                  </span>
-                  {isActive && (
-                    <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
-                  )}
-                </>
+                <div className="px-2 text-xs uppercase tracking-wide text-secondary">
+                  {section.title}
+                </div>
               )}
-            </Link>
-          );
-        })}
-      </nav>
+              <div className="mt-1 space-y-2">
+                {section.items.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      className={`
+                        flex-shrink-0 md:w-full flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg transition-all duration-300 transform hover:scale-105 md:hover:translate-x-2 group
+                        ${isActive
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/50'
+                          : 'hover:bg-surface-elevated text-secondary hover:text-primary'
+                        }
+                        ${isCollapsed ? 'justify-center' : ''}
+                      `}
+                      title={isCollapsed ? item.label : ''}
+                    >
+                      <span className="flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
+                        {item.icon}
+                      </span>
+                      {!isCollapsed && (
+                        <>
+                          <span className="font-medium text-sm md:text-base whitespace-nowrap">
+                            {item.label}
+                          </span>
+                          {isActive && (
+                            <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
+                          )}
+                        </>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+      </div>
       
       {/* Bottom User Profile */}
       {!isCollapsed && (

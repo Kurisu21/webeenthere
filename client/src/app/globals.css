@@ -38,8 +38,26 @@
 }
 
 :root {
+  /* Light theme defaults (used when no data-theme is set) */
   --background: #ffffff;
   --foreground: #171717;
+  --surface: #ffffff;
+  --surface-elevated: #f9fafb; /* gray-50 */
+  --text-primary: #0f172a; /* slate-900 */
+  --text-secondary: #334155; /* slate-700 */
+  --border: #e5e7eb; /* gray-200 */
+  --app: #e5e7eb; /* gray-200 - for border-app */
+  --muted: #6b7280; /* gray-500 */
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --accent: #3b82f6; /* blue-500 */
+  --accent-foreground: #ffffff;
+  --input: #ffffff;
+  --ring: #93c5fd; /* blue-300 */
+  /* Scrollbar variables for light theme */
+  --scrollbar-track: #f1f5f9; /* slate-100 */
+  --scrollbar-thumb: #cbd5e1; /* slate-300 */
+  --scrollbar-thumb-hover: #94a3b8; /* slate-400 */
 }
 
 /* Explicit theme overrides via data-theme take precedence over media query */
@@ -66,25 +84,25 @@
 }
 
 [data-theme="dark"] {
-  --background: #111827; /* gray-900 - same as home page */
+  --background: #0b1220; /* deep slate/blue */
   --foreground: #f9fafb; /* gray-50 */
-  --surface: #1f2937; /* gray-800 - same as home page sections */
-  --surface-elevated: #374151; /* gray-700 - same as home page cards */
+  --surface: #0f172a; /* slate-900 for base surfaces */
+  --surface-elevated: #111827; /* near-surface, less gray */
   --text-primary: #ffffff; /* white - same as home page */
-  --text-secondary: #d1d5db; /* gray-300 - same as home page */
-  --border: #374151; /* gray-700 - same as home page */
-  --app: #374151; /* gray-700 - for border-app */
+  --text-secondary: #cbd5e1; /* slate-300 */
+  --border: #1e293b; /* slate-800 */
+  --app: #1e293b; /* slate-800 - subtle borders */
   --muted: #9ca3af; /* gray-400 - same as home page */
-  --card: #374151; /* gray-700 - same as home page cards */
+  --card: #111827; /* match elevated */
   --card-foreground: #ffffff; /* white */
   --accent: #60a5fa; /* blue-400 */
   --accent-foreground: #111827;
-  --input: #374151; /* gray-700 */
+  --input: #0f172a; /* align to surface */
   --ring: #2563eb; /* blue-600 */
   /* Scrollbar variables for dark theme */
-  --scrollbar-track: #1f2937; /* gray-800 */
-  --scrollbar-thumb: #4b5563; /* gray-600 */
-  --scrollbar-thumb-hover: #6b7280; /* gray-500 */
+  --scrollbar-track: #0f172a; /* slate-900 */
+  --scrollbar-thumb: #334155; /* slate-700 */
+  --scrollbar-thumb-hover: #475569; /* slate-600 */
 }
 
 @media (prefers-color-scheme: dark) {

@@ -47,7 +47,16 @@ export default function ThreadViewer({ threadId, onBack }: ThreadViewerProps) {
         page: currentPage,
         limit: 20
       });
-      setReplies(data);
+      const normalized: ReplyListResponse = Array.isArray((data as any))
+        ? {
+            replies: data as unknown as ForumReply[],
+            total: (data as unknown as ForumReply[]).length,
+            page: currentPage,
+            limit: 20,
+            totalPages: 1,
+          }
+        : (data as ReplyListResponse);
+      setReplies(normalized);
     } catch (error) {
       console.error('Error fetching replies:', error);
     }
@@ -164,7 +173,7 @@ export default function ThreadViewer({ threadId, onBack }: ThreadViewerProps) {
           </div>
         </div>
 
-        {thread.tags.length > 0 && (
+        {Array.isArray(thread.tags) && thread.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4">
             {thread.tags.map(tag => (
               <span
@@ -231,7 +240,7 @@ export default function ThreadViewer({ threadId, onBack }: ThreadViewerProps) {
         )}
 
         {/* Replies List */}
-        {replies?.replies.map((reply) => (
+        {(replies?.replies ?? []).map((reply) => (
           <div key={reply.id} className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 bg-blue-600/20 rounded-full flex items-center justify-center">
@@ -254,7 +263,7 @@ export default function ThreadViewer({ threadId, onBack }: ThreadViewerProps) {
           </div>
         ))}
 
-        {replies?.replies.length === 0 && (
+        {(replies?.replies?.length ?? 0) === 0 && (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

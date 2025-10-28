@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-// import { forumApi, ForumCategory, ForumThread, ThreadListResponse } from '../../lib/forumApi';
-// import ThreadViewer from '../_components/forum/ThreadViewer';
-// import ForumSearch from '../_components/forum/ForumSearch';
+import DashboardHeader from '../../_components/layout/DashboardHeader';
+import DashboardSidebar from '../../_components/layout/DashboardSidebar';
+import MainContentWrapper from '../../_components/layout/MainContentWrapper';
+import { forumApi, ForumCategory, ForumThread, ThreadListResponse } from '../../../lib/forumApi';
+import ThreadViewer from '../../_components/forum/ThreadViewer';
+import ForumSearch from '../../_components/forum/ForumSearch';
 
 export default function ForumPage() {
   const [categories, setCategories] = useState<ForumCategory[]>([]);
@@ -44,13 +47,24 @@ export default function ForumPage() {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await forumApi.getThreads(
-        selectedCategory || undefined,
-        currentPage,
-        10,
+      const resp: any = await forumApi.getThreads({
+        categoryId: selectedCategory || undefined,
+        page: currentPage,
+        limit: 10,
         sortBy
-      );
-      setThreads(data);
+      } as any);
+
+      if (Array.isArray(resp)) {
+        setThreads({
+          threads: resp as ForumThread[],
+          total: (resp as ForumThread[]).length,
+          page: currentPage,
+          limit: 10,
+          totalPages: 1
+        });
+      } else {
+        setThreads(resp as ThreadListResponse);
+      }
     } catch (error) {
       setError('Failed to fetch threads');
       console.error('Error fetching threads:', error);
@@ -110,15 +124,27 @@ export default function ForumPage() {
 
   if (selectedThread) {
     return (
-      <ThreadViewer
-        threadId={selectedThread.id}
-        onBack={handleBackToList}
-      />
+      <div className="min-h-screen bg-surface">
+        <DashboardHeader />
+        <div className="flex flex-col md:flex-row">
+          <DashboardSidebar />
+          <MainContentWrapper>
+            <ThreadViewer
+              threadId={selectedThread.id}
+              onBack={handleBackToList}
+            />
+          </MainContentWrapper>
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-surface">
+      <DashboardHeader />
+      <div className="flex flex-col md:flex-row">
+        <DashboardSidebar />
+        <MainContentWrapper>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -469,6 +495,8 @@ export default function ForumPage() {
             </div>
           </div>
         )}
+      </div>
+        </MainContentWrapper>
       </div>
     </div>
   );

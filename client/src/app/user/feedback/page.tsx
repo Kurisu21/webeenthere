@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-// import { feedbackApi, Feedback } from '../../lib/feedbackApi';
+import { feedbackApi, Feedback } from '../../../lib/feedbackApi';
+import DashboardHeader from '../../_components/layout/DashboardHeader';
+import DashboardSidebar from '../../_components/layout/DashboardSidebar';
+import MainContentWrapper from '../../_components/layout/MainContentWrapper';
 
 export default function FeedbackPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,20 +60,20 @@ export default function FeedbackPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return 'bg-yellow-500/20 text-yellow-400';
-      case 'assigned': return 'bg-blue-500/20 text-blue-400';
-      case 'responded': return 'bg-purple-500/20 text-purple-400';
-      case 'closed': return 'bg-green-500/20 text-green-400';
-      default: return 'bg-gray-500/20 text-secondary';
+      case 'open': return 'bg-yellow-100 text-yellow-800';
+      case 'assigned': return 'bg-blue-100 text-blue-800';
+      case 'responded': return 'bg-purple-100 text-purple-800';
+      case 'closed': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-secondary';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-500/20 text-red-400';
-      case 'medium': return 'bg-yellow-500/20 text-yellow-400';
-      case 'low': return 'bg-green-500/20 text-green-400';
-      default: return 'bg-gray-500/20 text-secondary';
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-secondary';
     }
   };
 
@@ -86,6 +89,10 @@ export default function FeedbackPage() {
 
   return (
     <div className="min-h-screen bg-surface">
+      <DashboardHeader />
+      <div className="flex flex-col md:flex-row">
+        <DashboardSidebar />
+        <MainContentWrapper>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -114,13 +121,13 @@ export default function FeedbackPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-secondary mb-2">
                   Feedback Type
                 </label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-surface-elevated border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   required
                 >
                   <option value="">Select feedback type</option>
@@ -132,13 +139,13 @@ export default function FeedbackPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-secondary mb-2">
                   Priority
                 </label>
                 <select
                   value={formData.priority}
                   onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as any }))}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-surface-elevated border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -147,14 +154,14 @@ export default function FeedbackPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-secondary mb-2">
                   Message
                 </label>
                 <textarea
                   value={formData.message}
                   onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
                   rows={8}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-primary placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
+                  className="w-full px-4 py-3 bg-surface-elevated border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
                   placeholder="Please describe your feedback in detail. Include steps to reproduce if reporting a bug, or explain your feature request..."
                   required
                 />
@@ -194,7 +201,7 @@ export default function FeedbackPage() {
               </div>
             ) : myFeedback.length === 0 ? (
               <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-surface-elevated rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                   </svg>
@@ -205,10 +212,10 @@ export default function FeedbackPage() {
             ) : (
               <div className="space-y-4">
                 {myFeedback.map(feedback => (
-                  <div key={feedback.id} className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
+                  <div key={feedback.id} className="bg-card rounded-lg p-5 border border-app">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded text-xs">
+                        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
                           {feedback.type}
                         </span>
                         <span className={`px-2 py-1 rounded text-xs ${getPriorityColor(feedback.priority)}`}>
@@ -219,23 +226,23 @@ export default function FeedbackPage() {
                         </span>
                       </div>
                       <span className="text-secondary text-xs">
-                        {formatDate(feedback.createdAt)}
+                        {new Date(feedback.createdAt).toString() !== 'Invalid Date' ? formatDate(feedback.createdAt) : ''}
                       </span>
                     </div>
                     
-                    <p className="text-gray-300 text-sm mb-3">
+                    <p className="text-primary text-sm mb-3">
                       {feedback.message.substring(0, 150)}...
                     </p>
                     
                     {feedback.response && (
-                      <div className="mt-3 p-3 bg-purple-600/10 border border-purple-500/20 rounded">
+                      <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded">
                         <div className="flex items-center gap-2 mb-2">
-                          <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                           </svg>
-                          <span className="text-purple-400 text-xs font-medium">Admin Response</span>
+                          <span className="text-purple-700 text-xs font-medium">Admin Response</span>
                         </div>
-                        <p className="text-purple-300 text-sm">{feedback.response}</p>
+                        <p className="text-purple-800 text-sm whitespace-pre-wrap">{typeof feedback.response === 'string' ? feedback.response : (feedback.response?.message || '')}</p>
                       </div>
                     )}
                   </div>
@@ -254,7 +261,7 @@ export default function FeedbackPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="/support"
+                href="/user/support"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary rounded-lg transition-all duration-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,8 +270,8 @@ export default function FeedbackPage() {
                 Contact Support
               </a>
               <a
-                href="/help"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-primary rounded-lg transition-all duration-200"
+                href="/user/help"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-surface-elevated hover:bg-surface text-primary rounded-lg transition-all duration-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -274,6 +281,8 @@ export default function FeedbackPage() {
             </div>
           </div>
         </div>
+      </div>
+        </MainContentWrapper>
       </div>
     </div>
   );

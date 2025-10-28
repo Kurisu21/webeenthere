@@ -26,31 +26,62 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
         autosave: false,
         autoload: false,
       },
+      // Enable and customize the built-in Rich Text Editor (RTE)
+      // Users can double-click text to open this toolbar
+      // We extend with headings, alignment, and lists
+      // (defaults like bold/italic/underline/link remain available)
+      // Note: Actions added after init below ensure compatibility with typings
+      // Note: RTE actions are extended post-init to avoid version-specific
+      // constraints. Leaving defaults here prevents init-time errors.
       canvas: {
         styles: [
           'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap',
-          'https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css',
+          // Tailwind CDN CSS is not available as a static stylesheet in v3+
+          // If Tailwind utilities are needed inside the canvas iframe,
+          // serve a compiled Tailwind CSS from /public and link it here.
         ],
       },
       blockManager: {
         appendTo: '.blocks-container',
+        defaults: {
+          open: false,
+        },
         blocks: [
           {
             id: 'section',
             label: '<b>Section</b>',
             attributes: { class: 'gjs-block-section' },
+            media: `
+              <div style="width:100%;height:56px;border-radius:8px;border:1px dashed currentColor;color:#64748b;display:flex;align-items:center;justify-content:center;background:var(--gjs-thumb-bg)">
+                <div style="width:80%;height:60%;border-radius:6px;border:1px solid currentColor;position:relative;">
+                  <div style="position:absolute;top:0;left:0;right:0;height:10px;background:currentColor;opacity:.15;border-bottom:1px solid currentColor"></div>
+                </div>
+              </div>
+            `,
             content: '<section class="p-8 bg-gray-100 min-h-screen"><div class="max-w-6xl mx-auto">Section Content</div></section>',
             category: 'Layout',
           },
           {
             id: 'text',
             label: 'Text',
+            media: `
+              <div style="width:100%;height:56px;border-radius:8px;border:1px dashed currentColor;color:#64748b;display:flex;align-items:center;justify-content:center;background:var(--gjs-thumb-bg);font-weight:700;font-size:22px">T</div>
+            `,
             content: { type: 'text', components: 'Insert your text here' },
             category: 'Basic',
           },
           {
             id: 'image',
             label: 'Image',
+            media: `
+              <div style="width:100%;height:56px;border-radius:8px;border:1px dashed currentColor;color:#64748b;display:flex;align-items:center;justify-content:center;background:var(--gjs-thumb-bg)">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="2"></circle>
+                  <path d="M21 15l-5-5L5 21"></path>
+                </svg>
+              </div>
+            `,
             select: true,
             content: { type: 'image' },
             activate: true,
@@ -59,12 +90,20 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
           {
             id: 'heading',
             label: 'Heading',
-            content: { type: 'heading', components: 'Heading Text' },
+            media: `
+              <div style="width:100%;height:56px;border-radius:8px;border:1px dashed currentColor;color:#64748b;display:flex;align-items:center;justify-content:center;background:var(--gjs-thumb-bg);font-weight:800;font-size:18px">H1</div>
+            `,
+            content: { type: 'text', tagName: 'h1', components: 'Heading Text' },
             category: 'Basic',
           },
           {
             id: 'button',
             label: 'Button',
+            media: `
+              <div style="width:100%;height:56px;border-radius:8px;border:1px dashed currentColor;color:#64748b;display:flex;align-items:center;justify-content:center;background:var(--gjs-thumb-bg)">
+                <div style="padding:6px 12px;border-radius:6px;border:1px solid currentColor;font-weight:600;font-size:12px">Button</div>
+              </div>
+            `,
             content: '<button class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Click Me</button>',
             category: 'Basic',
           },
@@ -635,6 +674,196 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
     });
 
     editorRef.current = editor;
+
+    // Extend RTE actions post-init to avoid strict typing on init config
+    try {
+      const rte: any = (editor as any).RichTextEditor;
+      if (rte) {
+        const actionsList = [
+          'bold', 'italic', 'underline', 'strikethrough',
+          'h1', 'h2', 'p', 'pre',
+          'align-left', 'align-center', 'align-right', 'align-justify',
+          'ul', 'ol',
+          'indent', 'outdent',
+          'subscript', 'superscript',
+          'link', 'unlink',
+          'color', 'highlight',
+          'removeFormat',
+        ];
+
+        // Ensure any enabled RTE instance uses the full action set
+        // Event passes the view on which RTE is enabled; get its component model
+        editor.on('rte:enable', (view: any) => {
+          try {
+            const comp = view && (view.model || view);
+            if (comp && typeof comp.set === 'function') {
+              comp.set('rte', { actions: actionsList });
+            }
+          } catch (e) {
+            console.warn('RTE set actions error', e);
+          }
+        });
+        // Headings
+        rte.add('h1', {
+          icon: '<b>H1</b>',
+          attributes: { title: 'Heading 1' },
+          result: (r: any) => r.exec('formatBlock', 'H1'),
+        });
+        rte.add('h2', {
+          icon: '<b>H2</b>',
+          attributes: { title: 'Heading 2' },
+          result: (r: any) => r.exec('formatBlock', 'H2'),
+        });
+        rte.add('p', {
+          icon: '<span style="font-weight:600">P</span>',
+          attributes: { title: 'Paragraph' },
+          result: (r: any) => r.exec('formatBlock', 'P'),
+        });
+        rte.add('pre', {
+          icon: '<span>&lt;/&gt;</span>',
+          attributes: { title: 'Code block' },
+          result: (r: any) => r.exec('formatBlock', 'PRE'),
+        });
+
+        // Alignment
+        // Guard against duplicates
+        const safeAdd = (name: string, def: any) => {
+          if (!rte.get(name)) rte.add(name, def);
+        };
+
+        safeAdd('align-left', {
+          icon: '⟸',
+          attributes: { title: 'Align left' },
+          result: () => {
+            const sel = (editor as any).getSelected?.();
+            if (sel && sel.addStyle) sel.addStyle({ 'text-align': 'left' });
+          },
+        });
+        safeAdd('align-center', {
+          icon: '↔',
+          attributes: { title: 'Align center' },
+          result: () => {
+            const sel = (editor as any).getSelected?.();
+            if (sel && sel.addStyle) sel.addStyle({ 'text-align': 'center' });
+          },
+        });
+        safeAdd('align-right', {
+          icon: '⟹',
+          attributes: { title: 'Align right' },
+          result: () => {
+            const sel = (editor as any).getSelected?.();
+            if (sel && sel.addStyle) sel.addStyle({ 'text-align': 'right' });
+          },
+        });
+        safeAdd('align-justify', {
+          icon: '≡',
+          attributes: { title: 'Justify' },
+          result: () => {
+            const sel = (editor as any).getSelected?.();
+            if (sel && sel.addStyle) sel.addStyle({ 'text-align': 'justify' });
+          },
+        });
+
+        // Lists
+        safeAdd('ul', {
+          icon: '•',
+          attributes: { title: 'Unordered list' },
+          result: (r: any) => r.exec('insertUnorderedList'),
+        });
+        safeAdd('ol', {
+          icon: '1.',
+          attributes: { title: 'Ordered list' },
+          result: (r: any) => r.exec('insertOrderedList'),
+        });
+
+        // Indent / Outdent
+        safeAdd('indent', {
+          icon: '→',
+          attributes: { title: 'Indent' },
+          result: (r: any) => r.exec('indent'),
+        });
+        safeAdd('outdent', {
+          icon: '←',
+          attributes: { title: 'Outdent' },
+          result: (r: any) => r.exec('outdent'),
+        });
+
+        // Sub/Superscript
+        safeAdd('subscript', {
+          icon: 'x₂',
+          attributes: { title: 'Subscript' },
+          result: (r: any) => r.exec('subscript'),
+        });
+        safeAdd('superscript', {
+          icon: 'x²',
+          attributes: { title: 'Superscript' },
+          result: (r: any) => r.exec('superscript'),
+        });
+
+        // Unlink
+        safeAdd('unlink', {
+          icon: '⨂',
+          attributes: { title: 'Remove link' },
+          result: (r: any) => r.exec('unlink'),
+        });
+
+        // Text color / highlight via prompt for simplicity
+        safeAdd('color', {
+          icon: 'A',
+          attributes: { title: 'Text color' },
+          result: (r: any) => {
+            const color = typeof window !== 'undefined' ? window.prompt('Text color (e.g. #111827 or red):', '#111827') : null;
+            if (color) {
+              const selHtml = r.selection?.() || '';
+              const html = `<span style="color:${color}">${selHtml || '&ZeroWidthSpace;'}</span>`;
+              r.insertHTML(html, { select: true });
+            }
+          },
+        });
+        safeAdd('highlight', {
+          icon: '▇',
+          attributes: { title: 'Highlight color' },
+          result: (r: any) => {
+            const color = typeof window !== 'undefined' ? window.prompt('Highlight color (e.g. #fff59d or yellow):', '#fff59d') : null;
+            if (color) {
+              const selHtml = r.selection?.() || '';
+              const html = `<span style="background-color:${color}">${selHtml || '&ZeroWidthSpace;'}</span>`;
+              r.insertHTML(html, { select: true });
+            }
+          },
+        });
+
+        // Ensure common text-like components use the full action set
+        const dc: any = (editor as any).DomComponents;
+        if (dc && typeof dc.getType === 'function') {
+          ['text', 'link'].forEach((type) => {
+            const t = dc.getType(type);
+            if (t && t.model && t.model.prototype && t.model.prototype.defaults) {
+              t.model.prototype.defaults.rte = { actions: actionsList };
+            }
+          });
+        }
+
+        // Backfill for already existing components on selection
+        editor.on('component:selected', (comp: any) => {
+          try {
+            if (!comp) return;
+            const isTextLike = comp.is('text') || comp.is('link') || comp.get('editable');
+            if (isTextLike) {
+              const cfg = comp.get('rte');
+              if (!(cfg && cfg.actions)) {
+                comp.set('rte', { actions: actionsList });
+              }
+            }
+          } catch (e) {
+            console.warn('RTE backfill error', e);
+          }
+        });
+      }
+    } catch (err) {
+      // Ignore RTE extension errors; defaults still work
+      console.warn('RTE extension error:', err);
+    }
 
     // Call onEditorInit callback
     if (onEditorInit) {

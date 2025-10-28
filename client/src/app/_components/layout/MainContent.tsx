@@ -190,7 +190,7 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
       </div>
 
       {/* Create New Website Section */}
-      <div className="bg-surface-elevated rounded-lg p-4 md:p-6 mb-6 hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02]">
+      <div className="bg-surface rounded-xl border border-app p-4 md:p-6 mb-6 hover:shadow-xl transition-all duration-500">
         <div className="text-center">
           <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">
             {userWebsites.length > 0 ? 'Create New Website' : 'Create Your First Website'}
@@ -212,11 +212,11 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
 
       {/* Past Websites Section */}
       {userWebsites.length > 0 && (
-        <div className="bg-surface-elevated rounded-lg p-4 md:p-6 mb-6">
+        <div className="bg-surface rounded-xl border border-app p-4 md:p-6 mb-6">
           <h3 className="text-lg md:text-xl font-semibold text-primary mb-4">Your Websites</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {userWebsites.map((website) => (
-              <div key={website.id} className="bg-surface rounded-lg p-4 hover:bg-surface-elevated transition-colors duration-300">
+              <div key={website.id} className="bg-surface rounded-lg border border-app p-4 hover:bg-surface-elevated/60 transition-colors duration-300">
                 <div className="flex justify-between items-start mb-3">
                   <h4 className="text-primary font-medium text-sm md:text-base truncate">{website.title}</h4>
                   <span className={`px-2 py-1 rounded-full text-xs ${

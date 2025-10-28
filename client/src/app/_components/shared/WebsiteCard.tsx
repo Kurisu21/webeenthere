@@ -208,7 +208,7 @@ export const WebsiteCard: React.FC<WebsiteCardProps> = ({
                 </>
               )}
               
-              {onShareAsTemplate && website.is_published && (
+              {onShareAsTemplate && !!website.is_published && (
                 <button
                   onClick={onShareAsTemplate}
                   className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"

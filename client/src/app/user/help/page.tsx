@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { helpCenterApi, HelpArticle, HelpCategory, ArticleListResponse } from '../../../lib/helpCenterApi';
+import DashboardHeader from '../../_components/layout/DashboardHeader';
+import DashboardSidebar from '../../_components/layout/DashboardSidebar';
+import MainContentWrapper from '../../_components/layout/MainContentWrapper';
 
 export default function HelpCenterPage() {
   const [articles, setArticles] = useState<ArticleListResponse | null>(null);
@@ -92,6 +95,10 @@ export default function HelpCenterPage() {
   if (selectedArticle) {
     return (
       <div className="min-h-screen bg-surface">
+        <DashboardHeader />
+        <div className="flex flex-col md:flex-row">
+          <DashboardSidebar />
+          <MainContentWrapper>
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -190,12 +197,18 @@ export default function HelpCenterPage() {
             </a>
           </div>
         </div>
+          </MainContentWrapper>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-surface">
+      <DashboardHeader />
+      <div className="flex flex-col md:flex-row">
+        <DashboardSidebar />
+        <MainContentWrapper>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -241,7 +254,7 @@ export default function HelpCenterPage() {
               className={`p-6 rounded-lg border transition-all duration-200 text-left ${
                 selectedCategory === ''
                   ? 'bg-purple-600/20 border-purple-500/50 text-purple-300'
-                  : 'bg-gray-800 border-app hover:border-gray-600 text-primary'
+                  : 'bg-surface-elevated border-app hover:border-app text-primary'
               }`}
             >
               <div className="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mb-4">
@@ -260,7 +273,7 @@ export default function HelpCenterPage() {
                 className={`p-6 rounded-lg border transition-all duration-200 text-left ${
                   selectedCategory === category.id
                     ? 'bg-purple-600/20 border-purple-500/50 text-purple-300'
-                    : 'bg-gray-800 border-app hover:border-gray-600 text-primary'
+                    : 'bg-surface-elevated border-app hover:border-app text-primary'
                 }`}
               >
                 <div className="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mb-4">
@@ -285,7 +298,7 @@ export default function HelpCenterPage() {
                 : 'All Articles'
               }
             </h2>
-            {articles && (
+              {articles && (
               <span className="text-secondary">
                 {articles.total} articles
               </span>
@@ -318,7 +331,7 @@ export default function HelpCenterPage() {
                   <div
                     key={article.id}
                     onClick={() => handleArticleSelect(article)}
-                    className="bg-surface rounded-lg border border-app p-6 hover:border-gray-600 transition-all duration-200 cursor-pointer group"
+                      className="bg-surface rounded-lg border border-app p-6 hover:border-app transition-all duration-200 cursor-pointer group"
                   >
                     <div className="flex items-center gap-2 mb-3">
                       <span className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded text-xs">
@@ -347,7 +360,7 @@ export default function HelpCenterPage() {
 
               {articles?.articles.length === 0 && (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-surface-elevated rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg className="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
@@ -362,7 +375,7 @@ export default function HelpCenterPage() {
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 text-primary rounded-lg transition-colors"
+                    className="px-4 py-2 bg-surface-elevated hover:bg-surface disabled:bg-surface-elevated disabled:text-secondary text-primary rounded-lg transition-colors"
                   >
                     Previous
                   </button>
@@ -372,7 +385,7 @@ export default function HelpCenterPage() {
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(articles.totalPages, prev + 1))}
                     disabled={currentPage === articles.totalPages}
-                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 text-primary rounded-lg transition-colors"
+                    className="px-4 py-2 bg-surface-elevated hover:bg-surface disabled:bg-surface-elevated disabled:text-secondary text-primary rounded-lg transition-colors"
                   >
                     Next
                   </button>
@@ -391,7 +404,7 @@ export default function HelpCenterPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="/support"
+                href="/user/support"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary rounded-lg transition-all duration-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -400,8 +413,8 @@ export default function HelpCenterPage() {
                 Contact Support
               </a>
               <a
-                href="/forum"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-primary rounded-lg transition-all duration-200"
+                href="/user/forum"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-surface-elevated hover:bg-surface text-primary rounded-lg transition-all duration-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
@@ -411,6 +424,8 @@ export default function HelpCenterPage() {
             </div>
           </div>
         </div>
+      </div>
+        </MainContentWrapper>
       </div>
     </div>
   );

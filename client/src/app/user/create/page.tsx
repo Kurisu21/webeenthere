@@ -58,7 +58,16 @@ export default function CreateWebsitePage() {
     return true;
   };
 
+  const guardWhileGenerating = () => {
+    if (isGenerating) {
+      alert('AI is currently generating a template. Please wait for it to finish or close the preview before continuing.');
+      return true;
+    }
+    return false;
+  };
+
   const handleTemplateSelect = async (template: Template) => {
+    if (guardWhileGenerating()) return;
     setSelectedTemplate(template);
     
     try {
@@ -185,6 +194,7 @@ export default function CreateWebsitePage() {
   };
 
   const handleBuildFromScratch = async () => {
+    if (guardWhileGenerating()) return;
     try {
       // Check if user is authenticated before making API calls
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -315,8 +325,12 @@ export default function CreateWebsitePage() {
                 </div>
                 <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
                   <button
-                    onClick={() => setShowTemplateSection(!showTemplateSection)}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-4 md:px-6 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-lg shadow-blue-500/20 w-full sm:w-auto text-sm md:text-base"
+                    onClick={() => {
+                      if (guardWhileGenerating()) return;
+                      setShowTemplateSection(!showTemplateSection);
+                    }}
+                    disabled={isGenerating}
+                    className={`bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-4 md:px-6 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-lg shadow-blue-500/20 w-full sm:w-auto text-sm md:text-base ${isGenerating ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
                     <svg className="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -325,7 +339,8 @@ export default function CreateWebsitePage() {
                   </button>
                   <button
                     onClick={handleBuildFromScratch}
-                    className="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white px-4 md:px-6 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-lg shadow-emerald-500/20 w-full sm:w-auto text-sm md:text-base"
+                    disabled={isGenerating}
+                    className={`bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white px-4 md:px-6 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-lg shadow-emerald-500/20 w-full sm:w-auto text-sm md:text-base ${isGenerating ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
                     <svg className="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

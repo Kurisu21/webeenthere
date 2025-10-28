@@ -112,20 +112,18 @@ const UsageStats: React.FC<UsageStatsProps> = ({ limits, className = '' }) => {
         )}
       </div>
 
-      {/* Usage Tips */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4">
-        <div className="flex items-start">
-          <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <p className="text-gray-800 dark:text-blue-300 text-sm font-medium">Usage Tips</p>
-            <ul className="text-gray-700 dark:text-blue-200 text-xs mt-1 space-y-1">
-              <li>• AI chat usage resets monthly</li>
-              <li>• Website limits are permanent until you upgrade</li>
-              <li>• Upgrade anytime to unlock unlimited features</li>
-            </ul>
-          </div>
+      {/* Usage Tips (theme-aware) */}
+      <div className="rounded-lg p-4 border flex items-start bg-surface-elevated border-app">
+        <svg className="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div>
+          <p className="text-primary text-sm font-medium">Usage Tips</p>
+          <ul className="text-secondary text-xs mt-1 space-y-1">
+            <li>• AI chat usage resets monthly</li>
+            <li>• Website limits are permanent until you upgrade</li>
+            <li>• Upgrade anytime to unlock unlimited features</li>
+          </ul>
         </div>
       </div>
     </div>

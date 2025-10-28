@@ -62,7 +62,15 @@ class FeedbackController {
   // Get feedback
   async getFeedback(req, res) {
     try {
-      const filters = req.query;
+      const filters = { ...req.query };
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+
+      // For regular users, only show their own feedback by default
+      if (userRole !== 'admin') {
+        filters.userId = userId;
+      }
+
       const feedback = await databaseFeedbackService.getAllFeedback(filters);
 
       res.json({
@@ -189,7 +197,7 @@ class FeedbackController {
       res.json({
         success: true,
         message: 'Response added successfully',
-        data: result
+        data: feedback
       });
     } catch (error) {
       console.error('Error adding response:', error);

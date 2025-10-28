@@ -178,10 +178,36 @@ export default function PublicWebsiteViewer() {
     }
   }
   
+  // Always merge database css_content with any extracted CSS from JSON/inline
+  const combinedCss = [extractedCss, cssContent]
+    .filter(Boolean)
+    .join('\n');
+
+  // Render in an iframe to isolate from app styles for accurate rendering
+  const srcDoc = `<!doctype html>
+  <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+      <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet" />
+      <style>
+        html, body { margin: 0; padding: 0; background: #ffffff; color: #111827; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'; }
+        ${combinedCss}
+      </style>
+    </head>
+    <body>
+      ${extractedHtml || ''}
+    </body>
+  </html>`;
+
   return (
-    <div className="min-h-screen bg-white" style={{ margin: 0, padding: 0 }}>
-      {extractedCss && <style dangerouslySetInnerHTML={{ __html: extractedCss }} />}
-      <div dangerouslySetInnerHTML={{ __html: extractedHtml }} style={{ margin: 0, padding: 0 }} />
-    </div>
+    <iframe
+      title={website.title || 'Website Preview'}
+      srcDoc={srcDoc}
+      className="w-full min-h-screen border-0"
+      style={{ display: 'block' }}
+      sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+    />
   );
 }

@@ -60,7 +60,7 @@ export default function ForumSearch({ onThreadSelect, placeholder = "Search thre
     <div className="relative">
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-5 w-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
@@ -70,7 +70,7 @@ export default function ForumSearch({ onThreadSelect, placeholder = "Search thre
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query.trim().length >= 2 && setShowResults(true)}
           onBlur={() => setTimeout(() => setShowResults(false), 200)}
-          className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          className="w-full pl-10 pr-4 py-3 bg-surface-elevated border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           placeholder={placeholder}
         />
         {isLoading && (
@@ -82,7 +82,7 @@ export default function ForumSearch({ onThreadSelect, placeholder = "Search thre
 
       {/* Search Results */}
       {showResults && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-surface border border-app rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
           {error && (
             <div className="p-4 text-red-400 text-sm">
               {error}
@@ -90,7 +90,7 @@ export default function ForumSearch({ onThreadSelect, placeholder = "Search thre
           )}
 
           {results.length === 0 && query.trim().length >= 2 && !isLoading && (
-            <div className="p-4 text-gray-400 text-center">
+            <div className="p-4 text-secondary text-center">
               No threads found for "{query}"
             </div>
           )}
@@ -99,17 +99,17 @@ export default function ForumSearch({ onThreadSelect, placeholder = "Search thre
             <button
               key={thread.id}
               onClick={() => handleThreadSelect(thread)}
-              className="w-full p-4 text-left hover:bg-gray-700 transition-colors border-b border-gray-700 last:border-b-0"
+              className="w-full p-4 text-left hover:bg-surface-elevated transition-colors border-b border-app last:border-b-0"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-white font-medium truncate">
+                  <h4 className="text-primary font-medium truncate">
                     {thread.title}
                   </h4>
-                  <p className="text-gray-400 text-sm mt-1 line-clamp-2">
+                  <p className="text-secondary text-sm mt-1 line-clamp-2">
                     {thread.content.substring(0, 100)}...
                   </p>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                  <div className="flex items-center gap-4 mt-2 text-xs text-secondary">
                     <span>{thread.replies} replies</span>
                     <span>{thread.views} views</span>
                     <span>{formatDate(thread.createdAt)}</span>
@@ -132,13 +132,13 @@ export default function ForumSearch({ onThreadSelect, placeholder = "Search thre
           ))}
 
           {results.length > 0 && (
-            <div className="p-3 border-t border-gray-700 text-center">
+            <div className="p-3 border-t border-app text-center">
               <button
                 onClick={() => {
                   setQuery('');
                   setShowResults(false);
                 }}
-                className="text-purple-400 hover:text-purple-300 text-sm"
+                className="text-purple-600 hover:text-purple-500 text-sm"
               >
                 Clear search
               </button>
