@@ -26,8 +26,16 @@ const DashboardHeader = memo(() => {
       if (response.success) {
         setCurrentSubscription(response.data);
       }
-    } catch (error) {
-      console.error('Failed to load current subscription:', error);
+    } catch (error: any) {
+      // Silently handle network errors - don't show error if API is unavailable
+      // This prevents the app from breaking when the backend is not running
+      if (error?.isNetworkError || error?.message?.includes('Failed to fetch') || error?.message?.includes('NetworkError') || error?.message?.includes('Network error')) {
+        console.warn('Subscription API unavailable - continuing without subscription data');
+      } else {
+        console.error('Failed to load current subscription:', error);
+      }
+      // Set subscription to null so UI doesn't break
+      setCurrentSubscription(null);
     } finally {
       setIsLoadingSubscription(false);
     }

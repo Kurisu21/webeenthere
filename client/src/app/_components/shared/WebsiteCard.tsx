@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { WebsitePreviewImage } from './WebsitePreviewImage';
 
 interface WebsiteCardProps {
   website: {
@@ -85,13 +86,36 @@ export const WebsiteCard: React.FC<WebsiteCardProps> = ({
         {getStatusBadge()}
       </div>
 
-      {/* Thumbnail placeholder */}
-      <div className="w-full h-32 bg-surface-elevated border border-app rounded-lg mb-4 flex items-center justify-center">
-        <div className="text-center">
-          <svg className="w-8 h-8 text-secondary mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <p className="text-xs text-secondary">Website Preview</p>
+      {/* Website Preview - Browser-like frame */}
+      <div className="w-full mb-4">
+        <div className="bg-gray-200 dark:bg-gray-700 rounded-t-lg p-2 flex items-center gap-2 border border-b-0 border-app">
+          {/* Browser dots */}
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-400"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+            <div className="w-3 h-3 rounded-full bg-green-400"></div>
+          </div>
+          {/* Browser address bar */}
+          <div className="flex-1 bg-white dark:bg-gray-800 rounded px-3 py-1 text-xs text-gray-500 dark:text-gray-400 truncate">
+            {website.slug}.webeenthere.com
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-900 border border-app rounded-b-lg overflow-hidden shadow-inner" style={{ aspectRatio: '16/9', minHeight: '200px' }}>
+          {website.id ? (
+            <WebsitePreviewImage
+              websiteId={website.id}
+              alt={`${website.title} preview`}
+              className="w-full h-full"
+              style={{ objectFit: 'cover' }}
+            />
+          ) : (
+            <div className="preview-placeholder text-center flex flex-col items-center justify-center w-full h-full bg-gray-50 dark:bg-gray-800">
+              <svg className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Website Preview</p>
+            </div>
+          )}
         </div>
       </div>
 

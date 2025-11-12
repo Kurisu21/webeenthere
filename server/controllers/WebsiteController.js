@@ -3,6 +3,7 @@ const Website = require('../models/Website');
 const Template = require('../models/Template');
 const databaseActivityLogger = require('../services/DatabaseActivityLogger');
 const SubscriptionService = require('../services/SubscriptionService');
+const PreviewService = require('../services/PreviewService');
 
 class WebsiteController {
   constructor(db) {
@@ -10,6 +11,7 @@ class WebsiteController {
     this.websiteModel = new Website(db);
     this.templateModel = new Template(db);
     this.subscriptionService = new SubscriptionService(db);
+    this.previewService = new PreviewService();
   }
 
   // Get all websites for a user
@@ -137,6 +139,21 @@ class WebsiteController {
         ai_prompt_id: ai_prompt_id || null
       };
 
+      // Generate preview if content exists
+      let previewBuffer = null;
+      if (htmlContent) {
+        try {
+          previewBuffer = await this.previewService.generatePreview(htmlContent, cssContent);
+        } catch (error) {
+          console.error('Error generating preview during website creation:', error);
+          // Continue without preview if generation fails
+        }
+      }
+
+      if (previewBuffer) {
+        websiteData.preview_url = previewBuffer;
+      }
+
       const websiteId = await this.websiteModel.create(websiteData);
       
       // Log website creation activity
@@ -199,6 +216,22 @@ class WebsiteController {
             success: false,
             message: 'Website URL already exists'
           });
+        }
+      }
+
+      // Generate preview if HTML content is being updated
+      if (updateData.html_content || updateData.css_content) {
+        try {
+          const htmlContent = updateData.html_content || website.html_content;
+          const cssContent = updateData.css_content || website.css_content;
+          
+          if (htmlContent) {
+            const previewBuffer = await this.previewService.generatePreview(htmlContent, cssContent);
+            updateData.preview_url = previewBuffer;
+          }
+        } catch (error) {
+          console.error('Error generating preview during website update:', error);
+          // Continue without preview if generation fails
         }
       }
 
@@ -785,6 +818,87 @@ class WebsiteController {
       res.status(500).json({
         success: false,
         message: 'Error fetching hosting statistics'
+      });
+    }
+  }
+
+  // Get website preview image
+  async getWebsitePreview(req, res) {
+    try {
+      const { id } = req.params;
+      const website = await this.websiteModel.findById(id);
+      
+      if (!website) {
+        return res.status(404).json({
+          success: false,
+          message: 'Website not found'
+        });
+      }
+
+      // Allow access if:
+      // 1. User is authenticated and owns the website
+      // 2. User is admin
+      // 3. Website is published (public preview)
+      // Otherwise deny access
+      if (req.user) {
+        if (req.user.role !== 'admin' && website.user_id !== req.user.id && !website.is_published) {
+          return res.status(403).json({
+            success: false,
+            message: 'Access denied'
+          });
+        }
+      } else if (!website.is_published) {
+        // Not authenticated and website is not published
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied'
+        });
+      }
+
+      // If preview exists, return it
+      if (website.preview_url) {
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        return res.send(website.preview_url);
+      }
+
+      // If no preview exists, generate one (with timeout protection)
+      try {
+        if (website.html_content) {
+          // Set a timeout for preview generation to prevent hanging
+          const previewPromise = this.previewService.generatePreview(
+            website.html_content,
+            website.css_content || ''
+          );
+          
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Preview generation timeout')), 60000); // 60 second timeout
+          });
+          
+          const previewBuffer = await Promise.race([previewPromise, timeoutPromise]);
+          
+          // Save preview to database
+          await this.websiteModel.update(id, { preview_url: previewBuffer });
+          
+          res.setHeader('Content-Type', 'image/png');
+          res.setHeader('Cache-Control', 'public, max-age=3600');
+          return res.send(previewBuffer);
+        }
+      } catch (error) {
+        console.error('Error generating preview:', error.message);
+        // Don't throw - return 404 instead to prevent repeated attempts
+      }
+
+      // Return placeholder if preview generation fails
+      res.status(404).json({
+        success: false,
+        message: 'Preview not available'
+      });
+    } catch (error) {
+      console.error('Error fetching website preview:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error fetching preview'
       });
     }
   }

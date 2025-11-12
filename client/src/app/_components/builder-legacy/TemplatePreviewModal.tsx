@@ -1,6 +1,7 @@
 // components/builder/TemplatePreviewModal.tsx
 import React, { useState } from 'react';
 import { Template } from '../../../lib/templateApi';
+import { WebsitePreviewImage } from '../shared/WebsitePreviewImage';
 
 interface TemplatePreviewModalProps {
   template: Template | null;
@@ -91,35 +92,55 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
         <div className="p-6 overflow-y-auto max-h-[60vh]">
           {activeTab === 'preview' ? (
             <div className="space-y-6">
-              {/* Template Preview */}
-              <div className="bg-gray-100 rounded-lg p-8">
-                <div className="bg-white rounded-lg shadow-lg mx-auto max-w-4xl overflow-hidden">
-                  <div className="relative" style={{ height: '600px', width: '100%' }}>
-                    {/* Background based on template category */}
-                    <div 
-                      className="absolute inset-0"
-                      style={{
-                        background: template.category === 'portfolio' 
-                          ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                          : template.category === 'business'
-                          ? 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)'
-                          : template.category === 'landing'
-                          ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                          : '#f8f9fa'
-                      }}
-                    />
-                    
-                    {/* Template content preview */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center text-white">
-                        <div className="text-6xl mb-4">📄</div>
-                        <h3 className="text-2xl font-bold">{template.name}</h3>
-                        <p className="text-lg opacity-90 mt-2">{template.description}</p>
-                        {template.is_community && template.creator_username && (
-                          <p className="text-sm opacity-75 mt-2">by {template.creator_username}</p>
-                        )}
-                      </div>
+              {/* Template Preview - Use WebsitePreviewImage if source_website_id exists */}
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8">
+                <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg mx-auto max-w-4xl overflow-hidden border border-app">
+                  {/* Browser-like frame (same as user/main and user/page) */}
+                  <div className="bg-gray-200 dark:bg-gray-700 rounded-t-lg p-2 flex items-center gap-2 border-b border-app">
+                    {/* Browser dots */}
+                    <div className="flex gap-1.5">
+                      <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
                     </div>
+                    {/* Browser address bar */}
+                    <div className="flex-1 bg-white dark:bg-gray-800 rounded px-3 py-1 text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {template.name.toLowerCase().replace(/\s+/g, '-')}.webeenthere.com
+                    </div>
+                  </div>
+                  <div className="relative" style={{ height: '600px', width: '100%', minHeight: '600px' }}>
+                    {template.source_website_id ? (
+                      // Use WebsitePreviewImage if source_website_id exists (same as user/main and user/page)
+                      <WebsitePreviewImage
+                        websiteId={template.source_website_id}
+                        alt={`${template.name} preview`}
+                        className="w-full h-full"
+                        style={{ objectFit: 'contain', backgroundColor: '#f8f9fa' }}
+                      />
+                    ) : (
+                      // Fallback to gradient background for templates without source_website_id
+                      <div 
+                        className="absolute inset-0 flex items-center justify-center"
+                        style={{
+                          background: template.category === 'portfolio' 
+                            ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                            : template.category === 'business'
+                            ? 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)'
+                            : template.category === 'landing'
+                            ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                            : '#f8f9fa'
+                        }}
+                      >
+                        <div className="text-center text-white">
+                          <div className="text-6xl mb-4">📄</div>
+                          <h3 className="text-2xl font-bold">{template.name}</h3>
+                          <p className="text-lg opacity-90 mt-2">{template.description}</p>
+                          {template.is_community && template.creator_username && (
+                            <p className="text-sm opacity-75 mt-2">by {template.creator_username}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -201,9 +222,9 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
-          <div className="text-sm text-gray-600">
-            This template includes {template.elements.length} pre-designed elements
+        <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            {template.source_website_id ? 'Template preview from website' : 'Template preview'}
           </div>
           <div className="flex space-x-3">
             <button

@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const WebsiteController = require('../controllers/WebsiteController');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, optionalAuthMiddleware } = require('../middleware/auth');
 
 module.exports = (db) => {
   const websiteController = new WebsiteController(db);
@@ -10,6 +10,9 @@ module.exports = (db) => {
 // Public routes (no authentication required)
 router.get('/public/:slug', websiteController.getPublicWebsite.bind(websiteController));
 router.get('/public/all', websiteController.getAllPublicWebsites.bind(websiteController));
+
+// Preview route - optional auth (allows public access for published websites)
+router.get('/preview/:id', optionalAuthMiddleware, websiteController.getWebsitePreview.bind(websiteController));
 
 // Protected routes (authentication required)
 router.get('/', authMiddleware, websiteController.getUserWebsites.bind(websiteController));

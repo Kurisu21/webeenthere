@@ -8,8 +8,8 @@ import {
   Template,
   TEMPLATE_CATEGORIES 
 } from '../../../lib/templateApi';
-import TemplatePreview from './TemplatePreview';
 import TemplatePreviewModal from './TemplatePreviewModal';
+import { WebsitePreviewImage } from '../shared/WebsitePreviewImage';
 
 interface TemplateSelectorProps {
   onTemplateSelect: (template: Template) => void;
@@ -99,9 +99,6 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
     return filtered;
   }, [activeTab, selectedCategory, searchQuery, officialTemplates, communityTemplates]);
 
-  const featuredTemplates = useMemo(() => {
-    return getCurrentTemplates().filter(template => template.is_featured);
-  }, [activeTab, officialTemplates, communityTemplates]);
 
   if (loading) {
     return (
@@ -226,40 +223,17 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
         </div>
       </div>
 
-      {/* Featured Templates */}
-      {selectedCategory === 'all' && !searchQuery && featuredTemplates.length > 0 && (
-        <div className="mb-6 md:mb-8">
-          <div className="flex items-center mb-4">
-            <h2 className="text-lg md:text-xl font-semibold text-white">Featured Templates</h2>
-            <div className="ml-3 px-2 py-1 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-full">
-              <span className="text-xs font-medium text-white">Premium</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {featuredTemplates.map((template) => (
-              <TemplateCard
-                key={template.id}
-                template={template}
-                onSelect={() => onTemplateSelect(template)}
-                onPreview={() => handleTemplatePreview(template)}
-                isFeatured={true}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* All Templates */}
+      {/* All Templates - Same grid layout as user/page */}
       <div className="mb-6 md:mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg md:text-xl font-semibold text-white">
+          <h2 className="text-lg md:text-xl font-semibold text-primary">
             {selectedCategory === 'all' ? 'All Templates' : `${TEMPLATE_CATEGORIES.find(c => c.id === selectedCategory)?.name} Templates`}
           </h2>
-          <span className="text-blue-400 text-sm font-medium bg-blue-500/10 px-3 py-1 rounded-full">
+          <span className="text-secondary text-sm font-medium bg-surface-elevated px-3 py-1 rounded-full">
             {filteredTemplates.length} templates
           </span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTemplates.map((template) => (
             <TemplateCard
               key={template.id}
@@ -315,61 +289,99 @@ interface TemplateCardProps {
 }
 
 const TemplateCard = memo(({ template, onSelect, onPreview, isFeatured }: TemplateCardProps) => {
+  // Use the same card structure as WebsiteCard from user/main and user/page
   return (
-    <div className="group cursor-pointer bg-gray-800/50 backdrop-blur-sm border border-blue-500/30 rounded-xl overflow-hidden hover:border-blue-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/20 transform hover:scale-105">
-      {/* Template Preview */}
-      <div className="relative h-48 overflow-hidden">
-        <TemplatePreview template={template} onClick={onSelect} />
-        
-        {/* Preview Button Overlay */}
-        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onPreview();
-            }}
-            className="opacity-0 group-hover:opacity-100 bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 hover:from-blue-700 hover:to-indigo-800 transform translate-y-2 group-hover:translate-y-0 shadow-lg"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            Preview
-          </button>
+    <div 
+      className="bg-surface border border-app rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:border-purple-500/50 cursor-pointer"
+      onClick={onSelect}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-primary mb-1 line-clamp-2">
+            {template.name}
+          </h3>
+          <p className="text-sm text-secondary mb-2">
+            {template.category.charAt(0).toUpperCase() + template.category.slice(1)} Template
+          </p>
+          {template.is_community && template.creator_username && (
+            <p className="text-xs text-secondary">
+              by {template.creator_username}
+            </p>
+          )}
         </div>
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+          {template.is_community ? 'Community' : 'Official'}
+        </span>
       </div>
 
-      {/* Template Info */}
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-white text-lg">{template.name}</h3>
-          <div className="flex items-center space-x-2">
-            {isFeatured && (
-              <span className="text-xs text-yellow-400 bg-gradient-to-r from-yellow-400/20 to-yellow-500/20 px-3 py-1 rounded-full font-medium">
-                Featured
-              </span>
-            )}
-            <span className="text-xs text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full font-medium">
-              {TEMPLATE_CATEGORIES.find(c => c.id === template.category)?.name || template.category}
-            </span>
+      {/* Template Preview - Browser-like frame (same as WebsiteCard) */}
+      <div className="w-full mb-4">
+        <div className="bg-gray-200 dark:bg-gray-700 rounded-t-lg p-2 flex items-center gap-2 border border-b-0 border-app">
+          {/* Browser dots */}
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-400"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+            <div className="w-3 h-3 rounded-full bg-green-400"></div>
+          </div>
+          {/* Browser address bar */}
+          <div className="flex-1 bg-white dark:bg-gray-800 rounded px-3 py-1 text-xs text-gray-500 dark:text-gray-400 truncate">
+            {template.name.toLowerCase().replace(/\s+/g, '-')}.webeenthere.com
           </div>
         </div>
-        <p className="text-sm text-gray-300 line-clamp-2 mb-3 leading-relaxed">{template.description}</p>
-        
-        {/* Template Stats */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span className="text-xs text-blue-400 font-medium">
-              {template.is_community ? 'Community' : 'Official'}
-            </span>
-          </div>
-          {template.is_community && template.creator_username && (
-            <div className="text-xs text-gray-400">
-              by {template.creator_username}
+        <div className="bg-white dark:bg-gray-900 border border-app rounded-b-lg overflow-hidden shadow-inner relative" style={{ aspectRatio: '16/9', height: 'auto', minHeight: '180px' }}>
+          {template.source_website_id ? (
+            <div className="w-full h-full relative flex items-center justify-center" style={{ minHeight: '180px' }}>
+              <WebsitePreviewImage
+                websiteId={template.source_website_id}
+                alt={`${template.name} preview`}
+                className="w-full h-full"
+                style={{ objectFit: 'contain', width: '100%', height: '100%', maxHeight: '100%' }}
+              />
+            </div>
+          ) : (
+            <div className="preview-placeholder text-center flex flex-col items-center justify-center w-full h-full bg-gray-50 dark:bg-gray-800" style={{ minHeight: '180px' }}>
+              <svg className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Template Preview</p>
             </div>
           )}
         </div>
+      </div>
+
+      {/* Description */}
+      <p className="text-sm text-secondary mb-4 line-clamp-2">
+        {template.description}
+      </p>
+
+      {/* Actions */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect();
+          }}
+          className="flex-1 px-3 py-2 text-xs font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/40 rounded-md transition-colors"
+        >
+          <svg className="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Use Template
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onPreview();
+          }}
+          className="flex-1 px-3 py-2 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 rounded-md transition-colors"
+        >
+          <svg className="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          Preview
+        </button>
       </div>
     </div>
   );

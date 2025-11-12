@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, memo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { WebsitePreviewImage } from '../../_components/shared/WebsitePreviewImage';
 
 interface MainContentProps {
   currentWebsite?: any;
@@ -147,9 +148,36 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
               Continue Editing →
             </button>
           </div>
-          <div className="bg-surface rounded-lg p-8 text-center hover:bg-surface-elevated transition-colors duration-300">
-            <p className="text-secondary">Website preview will be shown here</p>
-            <p className="text-sm text-secondary mt-2">Your current website: Hiflux</p>
+          {/* Website Preview - Browser-like frame */}
+          <div className="w-full">
+            <div className="bg-gray-200 dark:bg-gray-700 rounded-t-lg p-2 flex items-center gap-2 border border-b-0 border-app">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                <div className="w-3 h-3 rounded-full bg-green-400"></div>
+              </div>
+              <div className="flex-1 bg-white dark:bg-gray-800 rounded px-3 py-1 text-xs text-gray-500 dark:text-gray-400 truncate">
+                {currentWebsite?.slug || 'preview'}.webeenthere.com
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-900 border border-app rounded-b-lg overflow-hidden shadow-inner" style={{ aspectRatio: '16/9', minHeight: '300px' }}>
+              {currentWebsite?.id ? (
+                <WebsitePreviewImage
+                  websiteId={currentWebsite.id}
+                  alt={`${currentWebsite.title} preview`}
+                  className="w-full h-full"
+                  style={{ objectFit: 'cover' }}
+                />
+              ) : (
+                <div className="preview-placeholder text-center flex flex-col items-center justify-center w-full h-full bg-gray-50 dark:bg-gray-800">
+                  <svg className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p className="text-gray-600 dark:text-gray-400">Website preview will be shown here</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">Your current website: {currentWebsite?.title || 'Hiflux'}</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -217,6 +245,36 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {userWebsites.map((website) => (
               <div key={website.id} className="bg-surface rounded-lg border border-app p-4 hover:bg-surface-elevated/60 transition-colors duration-300">
+                {/* Website Preview - Browser-like frame */}
+                <div className="w-full mb-3">
+                  <div className="bg-gray-200 dark:bg-gray-700 rounded-t-lg p-1.5 flex items-center gap-1.5 border border-b-0 border-app">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 rounded-full bg-red-400"></div>
+                      <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
+                      <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                    </div>
+                    <div className="flex-1 bg-white dark:bg-gray-800 rounded px-2 py-0.5 text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {website.slug}
+                    </div>
+                  </div>
+                  <div className="bg-white dark:bg-gray-900 border border-app rounded-b-lg overflow-hidden shadow-inner" style={{ aspectRatio: '16/9', minHeight: '120px' }}>
+                    {website.id ? (
+                      <WebsitePreviewImage
+                        websiteId={website.id}
+                        alt={`${website.title} preview`}
+                        className="w-full h-full"
+                        style={{ objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div className="preview-placeholder text-center flex flex-col items-center justify-center w-full h-full bg-gray-50 dark:bg-gray-800">
+                        <svg className="w-8 h-8 text-gray-400 dark:text-gray-600 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Preview</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="flex justify-between items-start mb-3">
                   <h4 className="text-primary font-medium text-sm md:text-base truncate">{website.title}</h4>
                   <span className={`px-2 py-1 rounded-full text-xs ${

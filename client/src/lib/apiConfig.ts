@@ -110,9 +110,16 @@ export const apiCall = async (
     }
     
     return response;
-  } catch (error) {
-    // Don't log to console.error to avoid Next.js error overlay
-    // The error will be caught and displayed in the UI
+  } catch (error: any) {
+    // Handle network errors (server not running, CORS, etc.)
+    if (error?.message?.includes('Failed to fetch') || error?.name === 'TypeError' && error?.message?.includes('fetch')) {
+      const networkError: any = new Error('Network error: Unable to connect to server. Please ensure the backend server is running.');
+      networkError.isNetworkError = true;
+      networkError.originalError = error;
+      throw networkError;
+    }
+    
+    // Re-throw other errors
     throw error;
   }
 };
@@ -173,6 +180,16 @@ export const apiGet = async (endpoint: string): Promise<any> => {
     
     return response.json();
   } catch (error: any) {
+    // Handle network errors gracefully
+    if (error.isNetworkError) {
+      // Return a rejected promise with network error info
+      return Promise.reject({
+        message: error.message,
+        isNetworkError: true,
+        originalError: error.originalError
+      });
+    }
+    
     // If error has a response, parse the error message
     if (error.response) {
       try {

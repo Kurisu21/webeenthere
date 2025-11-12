@@ -55,6 +55,30 @@ const adminAuthMiddleware = (req, res, next) => {
   }
 };
 
-module.exports = { authMiddleware, adminAuthMiddleware };
+// Optional authentication middleware - doesn't fail if no token provided
+const optionalAuthMiddleware = (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+        req.user = decoded;
+      } catch (error) {
+        // Invalid token, but continue without auth
+        req.user = null;
+      }
+    } else {
+      req.user = null;
+    }
+    next();
+  } catch (error) {
+    // Continue without auth
+    req.user = null;
+    next();
+  }
+};
+
+module.exports = { authMiddleware, adminAuthMiddleware, optionalAuthMiddleware };
 
 

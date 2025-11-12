@@ -4,10 +4,10 @@ class Website {
     this.db = db;
   }
 
-  async create({ user_id, title, slug, html_content, css_content, template_id, is_published, is_active }) {
+  async create({ user_id, title, slug, html_content, css_content, template_id, is_published, is_active, preview_url }) {
     const [result] = await this.db.execute(
-      'INSERT INTO websites (user_id, title, slug, html_content, css_content, template_id, is_published, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [user_id, title, slug, html_content, css_content, template_id, is_published, is_active]
+      'INSERT INTO websites (user_id, title, slug, html_content, css_content, template_id, is_published, is_active, preview_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [user_id, title, slug, html_content, css_content, template_id, is_published, is_active, preview_url || null]
     );
     return result.insertId;
   }

@@ -136,6 +136,7 @@ class DatabaseORM {
           template_id INT,
           is_published BOOLEAN DEFAULT FALSE,
           is_active BOOLEAN DEFAULT TRUE,
+          preview_url LONGBLOB,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id),
@@ -547,63 +548,1027 @@ class DatabaseORM {
         console.log(`ℹ️  Users table already has data, skipping`);
       }
 
-      // Seed templates
-      if (!(await this.tableHasData('templates'))) {
-        const templates = [
+      // Seed premium template websites (under admin user_id: 3)
+      // These will be converted to templates with source_website_id
+      // NOTE: These are created AFTER the regular websites to avoid ID conflicts
+      const adminUserId = 3; // Admin user
+      
+      // Check if templates table needs seeding (but don't create websites yet - do it after regular websites)
+      const needsTemplateSeeding = !(await this.tableHasData('templates'));
+      
+      // Define premium template websites (will be created after regular websites)
+      const premiumTemplateWebsites = needsTemplateSeeding ? [
           {
-            name: 'Modern Portfolio',
-            description: 'Clean and modern portfolio template perfect for designers and developers',
+            title: 'Modern Portfolio Pro',
+            slug: 'template-modern-portfolio-pro',
             category: 'portfolio',
-            html_base: '<div class="hero-section"><h1>Welcome to My Portfolio</h1><p>I create amazing digital experiences</p></div>',
-            css_base: '.hero-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 100px 0; text-align: center; }',
+            description: 'Premium portfolio template with modern design, perfect for designers and developers',
+            html_content: `
+              <div class="hero-section">
+                <nav class="navbar">
+                  <div class="nav-brand">Your Name</div>
+                  <div class="nav-links">
+                    <a href="#about">About</a>
+                    <a href="#projects">Projects</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1 class="hero-title">Full-Stack Developer</h1>
+                  <p class="hero-subtitle">Creating digital experiences that matter</p>
+                  <div class="hero-buttons">
+                    <button class="btn-primary">View My Work</button>
+                    <button class="btn-secondary">Get In Touch</button>
+                  </div>
+                </div>
+              </div>
+              <section id="about" class="about-section">
+                <div class="container">
+                  <h2>About Me</h2>
+                  <div class="about-content">
+                    <div class="about-text">
+                      <p>I'm a passionate developer with 5+ years of experience building web applications.</p>
+                    </div>
+                    <div class="skills">
+                      <span class="skill-tag">React</span>
+                      <span class="skill-tag">Node.js</span>
+                      <span class="skill-tag">TypeScript</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+              <section id="projects" class="projects-section">
+                <div class="container">
+                  <h2>Featured Projects</h2>
+                  <div class="projects-grid">
+                    <div class="project-card">
+                      <div class="project-image"></div>
+                      <h3>Project Title</h3>
+                      <p>Project description</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+              .hero-section { height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); position: relative; }
+              .navbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .nav-brand { font-size: 24px; font-weight: 700; color: white; }
+              .nav-links { display: flex; gap: 30px; }
+              .nav-links a { color: white; text-decoration: none; font-weight: 500; }
+              .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-title { font-size: 4rem; font-weight: 700; margin-bottom: 20px; }
+              .hero-subtitle { font-size: 1.5rem; margin-bottom: 40px; }
+              .hero-buttons { display: flex; gap: 20px; justify-content: center; }
+              .btn-primary, .btn-secondary { padding: 15px 30px; border: none; border-radius: 50px; font-weight: 600; cursor: pointer; }
+              .btn-primary { background: white; color: #667eea; }
+              .btn-secondary { background: transparent; color: white; border: 2px solid white; }
+              .about-section { padding: 100px 0; background: #f8f9fa; }
+              .about-section h2 { text-align: center; font-size: 3rem; margin-bottom: 60px; }
+              .skills { display: flex; flex-wrap: wrap; gap: 15px; }
+              .skill-tag { background: #667eea; color: white; padding: 10px 20px; border-radius: 25px; }
+              .projects-section { padding: 100px 0; }
+              .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
+              .project-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+              .project-image { height: 200px; background: linear-gradient(45deg, #ff6b6b, #4ecdc4); }
+            `,
             is_featured: true
           },
           {
-            name: 'Business Landing',
-            description: 'Professional business landing page template',
+            title: 'Business Landing Elite',
+            slug: 'template-business-landing-elite',
             category: 'business',
-            html_base: '<div class="business-hero"><h1>Your Business Solution</h1><p>We help businesses grow</p></div>',
-            css_base: '.business-hero { background: #2c3e50; color: white; padding: 80px 0; text-align: center; }',
+            description: 'Professional business landing page with modern design and call-to-action sections',
+            html_content: `
+              <div class="business-hero">
+                <nav class="business-nav">
+                  <div class="business-logo">Your Business</div>
+                  <div class="business-menu">
+                    <a href="#services">Services</a>
+                    <a href="#about">About</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1>Your Trusted Business Partner</h1>
+                  <p>Empowering businesses with innovative solutions</p>
+                  <div class="cta-buttons">
+                    <button class="btn-primary">Get Started</button>
+                    <button class="btn-secondary">Learn More</button>
+                  </div>
+                </div>
+              </div>
+              <section class="services-section">
+                <div class="services-container">
+                  <h2>Our Services</h2>
+                  <div class="services-grid">
+                    <div class="service-card">
+                      <div class="service-icon">📊</div>
+                      <h3>Business Consulting</h3>
+                      <p>Strategic guidance to grow your business</p>
+                    </div>
+                    <div class="service-card">
+                      <div class="service-icon">💼</div>
+                      <h3>Project Management</h3>
+                      <p>Efficient project delivery</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Roboto', sans-serif; background: #f8f9fa; }
+              .business-hero { height: 100vh; background: linear-gradient(135deg, #34495e, #2c3e50); position: relative; }
+              .business-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .business-logo { font-size: 24px; font-weight: 700; color: #ecf0f1; }
+              .business-menu { display: flex; gap: 30px; }
+              .business-menu a { color: #bdc3c7; text-decoration: none; font-weight: 500; }
+              .hero-content { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-content h1 { font-size: 4rem; font-weight: 700; margin-bottom: 20px; }
+              .hero-content p { font-size: 1.5rem; margin-bottom: 40px; }
+              .cta-buttons { display: flex; gap: 20px; justify-content: center; }
+              .btn-primary, .btn-secondary { padding: 15px 30px; border: none; border-radius: 50px; font-weight: 600; cursor: pointer; }
+              .btn-primary { background: #3498db; color: white; }
+              .btn-secondary { background: transparent; color: white; border: 2px solid white; }
+              .services-section { padding: 100px 0; background: white; }
+              .services-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+              .services-container h2 { text-align: center; font-size: 3rem; margin-bottom: 60px; }
+              .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
+              .service-card { background: #f8f9fa; padding: 40px; border-radius: 15px; text-align: center; }
+              .service-icon { font-size: 3rem; margin-bottom: 20px; }
+            `,
             is_featured: true
           },
           {
-            name: 'Creative Artist',
-            description: 'Bold and creative template for artists and creatives',
+            title: 'Creative Art Gallery',
+            slug: 'template-creative-art-gallery',
             category: 'creative',
-            html_base: '<div class="creative-showcase"><h1>My Creative World</h1><p>Explore my artistic journey</p></div>',
-            css_base: '.creative-showcase { background: linear-gradient(45deg, #ff6b6b, #4ecdc4); color: white; padding: 120px 0; text-align: center; }',
-            is_featured: false
-          },
-          {
-            name: 'Minimal Blog',
-            description: 'Simple and elegant blog template',
-            category: 'blog',
-            html_base: '<div class="blog-header"><h1>My Thoughts</h1><p>Sharing ideas and experiences</p></div>',
-            css_base: '.blog-header { background: #f8f9fa; color: #333; padding: 60px 0; text-align: center; border-bottom: 1px solid #dee2e6; }',
-            is_featured: false
-          },
-          {
-            name: 'Restaurant Menu',
-            description: 'Appetizing template for restaurants and food businesses',
-            category: 'restaurant',
-            html_base: '<div class="restaurant-banner"><h1>Delicious Dining</h1><p>Experience our culinary excellence</p></div>',
-            css_base: '.restaurant-banner { background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url("food-bg.jpg"); color: white; padding: 100px 0; text-align: center; }',
+            description: 'Bold and vibrant template for artists, photographers, and creative professionals',
+            html_content: `
+              <div class="gallery-hero">
+                <nav class="gallery-nav">
+                  <div class="logo">Your Art Studio</div>
+                  <div class="nav-menu">
+                    <a href="#gallery">Gallery</a>
+                    <a href="#about">About</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-text">
+                  <h1>Digital Art Gallery</h1>
+                  <p>Where creativity meets technology</p>
+                </div>
+              </div>
+              <section id="gallery" class="art-gallery">
+                <div class="gallery-container">
+                  <h2>Featured Works</h2>
+                  <div class="art-grid">
+                    <div class="art-piece">
+                      <div class="art-image art-1"></div>
+                      <h3>Digital Dreams</h3>
+                      <p>Mixed media digital art</p>
+                    </div>
+                    <div class="art-piece">
+                      <div class="art-image art-2"></div>
+                      <h3>Abstract Reality</h3>
+                      <p>Abstract digital painting</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Playfair Display', serif; }
+              .gallery-hero { height: 100vh; background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4); background-size: 400% 400%; animation: gradientShift 8s ease infinite; position: relative; }
+              @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+              .gallery-nav { display: flex; justify-content: space-between; align-items: center; padding: 30px 50px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .logo { font-size: 28px; font-weight: 700; color: white; }
+              .nav-menu { display: flex; gap: 40px; }
+              .nav-menu a { color: white; text-decoration: none; font-weight: 500; font-size: 18px; }
+              .hero-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-text h1 { font-size: 5rem; font-weight: 300; margin-bottom: 20px; }
+              .art-gallery { padding: 120px 0; background: #f8f9fa; }
+              .gallery-container { max-width: 1400px; margin: 0 auto; padding: 0 40px; }
+              .gallery-container h2 { text-align: center; font-size: 3.5rem; margin-bottom: 80px; }
+              .art-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 50px; }
+              .art-piece { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+              .art-image { height: 300px; }
+              .art-1 { background: linear-gradient(135deg, #667eea, #764ba2); }
+              .art-2 { background: linear-gradient(135deg, #f093fb, #f5576c); }
+            `,
             is_featured: true
+          },
+          {
+            title: 'Minimal Blog Theme',
+            slug: 'template-minimal-blog',
+            category: 'blog',
+            description: 'Clean and elegant blog template perfect for writers and content creators',
+            html_content: `
+              <div class="blog-header">
+                <nav class="blog-nav">
+                  <div class="blog-logo">My Blog</div>
+                  <div class="blog-menu">
+                    <a href="#home">Home</a>
+                    <a href="#posts">Posts</a>
+                    <a href="#about">About</a>
+                  </div>
+                </nav>
+                <div class="header-content">
+                  <h1>My Thoughts</h1>
+                  <p>Sharing ideas and experiences</p>
+                </div>
+              </div>
+              <section class="blog-posts">
+                <div class="posts-container">
+                  <article class="post-card">
+                    <div class="post-image"></div>
+                    <div class="post-content">
+                      <h2>Blog Post Title</h2>
+                      <p class="post-meta">Published on January 1, 2024</p>
+                      <p class="post-excerpt">This is a sample blog post excerpt...</p>
+                    </div>
+                  </article>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Georgia', serif; background: #fff; }
+              .blog-header { background: #f8f9fa; padding: 60px 0; text-align: center; border-bottom: 1px solid #dee2e6; }
+              .blog-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; }
+              .blog-logo { font-size: 24px; font-weight: 700; }
+              .blog-menu { display: flex; gap: 30px; }
+              .blog-menu a { color: #333; text-decoration: none; }
+              .header-content h1 { font-size: 3rem; margin-bottom: 10px; }
+              .blog-posts { padding: 60px 0; }
+              .posts-container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+              .post-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 40px; }
+              .post-image { height: 300px; background: linear-gradient(135deg, #667eea, #764ba2); }
+              .post-content { padding: 30px; }
+              .post-content h2 { font-size: 2rem; margin-bottom: 10px; }
+              .post-meta { color: #666; margin-bottom: 15px; }
+            `,
+            is_featured: false
+          },
+          {
+            title: 'Restaurant & Cafe',
+            slug: 'template-restaurant-cafe',
+            category: 'restaurant',
+            description: 'Appetizing template for restaurants, cafes, and food businesses',
+            html_content: `
+              <div class="restaurant-hero">
+                <nav class="restaurant-nav">
+                  <div class="restaurant-logo">Delicious Dining</div>
+                  <div class="restaurant-menu">
+                    <a href="#menu">Menu</a>
+                    <a href="#about">About</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1>Experience Our Culinary Excellence</h1>
+                  <p>Fresh ingredients, authentic flavors</p>
+                  <button class="cta-button">View Menu</button>
+                </div>
+              </div>
+              <section class="menu-section">
+                <div class="menu-container">
+                  <h2>Our Menu</h2>
+                  <div class="menu-grid">
+                    <div class="menu-item">
+                      <div class="menu-image"></div>
+                      <h3>Signature Dish</h3>
+                      <p>Delicious description</p>
+                      <span class="price">$24.99</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Playfair Display', serif; }
+              .restaurant-hero { height: 100vh; background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%23d4a574" width="1200" height="600"/></svg>'); background-size: cover; position: relative; }
+              .restaurant-nav { display: flex; justify-content: space-between; align-items: center; padding: 30px 50px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .restaurant-logo { font-size: 28px; font-weight: 700; color: white; }
+              .restaurant-menu { display: flex; gap: 40px; }
+              .restaurant-menu a { color: white; text-decoration: none; font-weight: 500; }
+              .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-content h1 { font-size: 4rem; margin-bottom: 20px; }
+              .cta-button { padding: 15px 40px; background: #d4a574; color: white; border: none; border-radius: 50px; font-size: 1.2rem; cursor: pointer; }
+              .menu-section { padding: 100px 0; background: #f8f9fa; }
+              .menu-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+              .menu-container h2 { text-align: center; font-size: 3rem; margin-bottom: 60px; }
+              .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
+              .menu-item { background: white; border-radius: 15px; overflow: hidden; }
+              .menu-image { height: 200px; background: linear-gradient(135deg, #d4a574, #c19a6b); }
+              .price { font-size: 1.5rem; font-weight: 700; color: #d4a574; }
+            `,
+            is_featured: true
+          },
+          {
+            title: 'E-commerce Store',
+            slug: 'template-ecommerce-store',
+            category: 'ecommerce',
+            description: 'Modern e-commerce template with product showcase and shopping features',
+            html_content: `
+              <div class="store-hero">
+                <nav class="store-nav">
+                  <div class="store-logo">Shop Name</div>
+                  <div class="store-menu">
+                    <a href="#products">Products</a>
+                    <a href="#about">About</a>
+                    <a href="#cart">Cart</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1>Welcome to Our Store</h1>
+                  <p>Discover amazing products</p>
+                </div>
+              </div>
+              <section class="products-section">
+                <div class="products-container">
+                  <h2>Featured Products</h2>
+                  <div class="products-grid">
+                    <div class="product-card">
+                      <div class="product-image"></div>
+                      <h3>Product Name</h3>
+                      <p class="product-price">$99.99</p>
+                      <button class="add-to-cart">Add to Cart</button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Roboto', sans-serif; }
+              .store-hero { height: 80vh; background: linear-gradient(135deg, #667eea, #764ba2); position: relative; }
+              .store-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; }
+              .store-logo { font-size: 24px; font-weight: 700; color: white; }
+              .store-menu { display: flex; gap: 30px; }
+              .store-menu a { color: white; text-decoration: none; }
+              .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-content h1 { font-size: 4rem; margin-bottom: 20px; }
+              .products-section { padding: 100px 0; }
+              .products-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+              .products-container h2 { text-align: center; font-size: 3rem; margin-bottom: 60px; }
+              .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; }
+              .product-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+              .product-image { height: 250px; background: linear-gradient(135deg, #ff6b6b, #4ecdc4); }
+              .product-price { font-size: 1.5rem; font-weight: 700; color: #667eea; }
+              .add-to-cart { width: 100%; padding: 15px; background: #667eea; color: white; border: none; cursor: pointer; }
+            `,
+            is_featured: true
+          },
+          {
+            title: 'Fitness & Gym',
+            slug: 'template-fitness-gym',
+            category: 'personal',
+            description: 'Energetic template for fitness trainers, gyms, and wellness centers',
+            html_content: `
+              <div class="fitness-hero">
+                <nav class="fitness-nav">
+                  <div class="fitness-logo">FitLife Gym</div>
+                  <div class="fitness-menu">
+                    <a href="#programs">Programs</a>
+                    <a href="#trainers">Trainers</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1>Transform Your Body</h1>
+                  <p>Join us for a healthier lifestyle</p>
+                  <button class="cta-button">Start Today</button>
+                </div>
+              </div>
+              <section class="programs-section">
+                <div class="programs-container">
+                  <h2>Our Programs</h2>
+                  <div class="programs-grid">
+                    <div class="program-card">
+                      <div class="program-icon">💪</div>
+                      <h3>Strength Training</h3>
+                      <p>Build muscle and strength</p>
+                    </div>
+                    <div class="program-card">
+                      <div class="program-icon">🏃</div>
+                      <h3>Cardio Fitness</h3>
+                      <p>Improve your endurance</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Roboto', sans-serif; }
+              .fitness-hero { height: 100vh; background: linear-gradient(135deg, #ff6b6b, #ee5a6f); position: relative; }
+              .fitness-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .fitness-logo { font-size: 24px; font-weight: 700; color: white; }
+              .fitness-menu { display: flex; gap: 30px; }
+              .fitness-menu a { color: white; text-decoration: none; font-weight: 600; }
+              .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-content h1 { font-size: 4.5rem; font-weight: 900; margin-bottom: 20px; }
+              .cta-button { padding: 18px 40px; background: white; color: #ff6b6b; border: none; border-radius: 50px; font-size: 1.2rem; font-weight: 700; cursor: pointer; }
+              .programs-section { padding: 100px 0; background: #f8f9fa; }
+              .programs-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+              .programs-container h2 { text-align: center; font-size: 3rem; margin-bottom: 60px; }
+              .programs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
+              .program-card { background: white; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+              .program-icon { font-size: 4rem; margin-bottom: 20px; }
+            `,
+            is_featured: false
+          },
+          {
+            title: 'Photography Portfolio',
+            slug: 'template-photography-portfolio',
+            category: 'portfolio',
+            description: 'Stunning photography portfolio template with gallery showcase',
+            html_content: `
+              <div class="photo-hero">
+                <nav class="photo-nav">
+                  <div class="photo-logo">Photo Studio</div>
+                  <div class="photo-menu">
+                    <a href="#gallery">Gallery</a>
+                    <a href="#about">About</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1>Capturing Life's Moments</h1>
+                  <p>Professional photography services</p>
+                </div>
+              </div>
+              <section class="gallery-section">
+                <div class="gallery-container">
+                  <h2>Portfolio Gallery</h2>
+                  <div class="photo-grid">
+                    <div class="photo-item">
+                      <div class="photo-image"></div>
+                      <h3>Portrait Photography</h3>
+                    </div>
+                    <div class="photo-item">
+                      <div class="photo-image"></div>
+                      <h3>Wedding Photography</h3>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Playfair Display', serif; }
+              .photo-hero { height: 100vh; background: linear-gradient(135deg, #2c3e50, #34495e); position: relative; }
+              .photo-nav { display: flex; justify-content: space-between; align-items: center; padding: 30px 50px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .photo-logo { font-size: 28px; font-weight: 700; color: white; }
+              .photo-menu { display: flex; gap: 40px; }
+              .photo-menu a { color: white; text-decoration: none; }
+              .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-content h1 { font-size: 4.5rem; font-weight: 300; margin-bottom: 20px; }
+              .gallery-section { padding: 100px 0; background: #f8f9fa; }
+              .gallery-container { max-width: 1400px; margin: 0 auto; padding: 0 40px; }
+              .gallery-container h2 { text-align: center; font-size: 3rem; margin-bottom: 60px; }
+              .photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; }
+              .photo-item { background: white; border-radius: 10px; overflow: hidden; }
+              .photo-image { height: 400px; background: linear-gradient(135deg, #667eea, #764ba2); }
+            `,
+            is_featured: true
+          },
+          {
+            title: 'Tech Startup Landing',
+            slug: 'template-tech-startup',
+            category: 'landing',
+            description: 'Modern landing page for tech startups and SaaS companies',
+            html_content: `
+              <div class="startup-hero">
+                <nav class="startup-nav">
+                  <div class="startup-logo">TechStart</div>
+                  <div class="startup-menu">
+                    <a href="#features">Features</a>
+                    <a href="#pricing">Pricing</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1>Revolutionary Tech Solution</h1>
+                  <p>Transform your business with our innovative platform</p>
+                  <div class="cta-buttons">
+                    <button class="btn-primary">Get Started</button>
+                    <button class="btn-secondary">Watch Demo</button>
+                  </div>
+                </div>
+              </div>
+              <section class="features-section">
+                <div class="features-container">
+                  <h2>Key Features</h2>
+                  <div class="features-grid">
+                    <div class="feature-card">
+                      <div class="feature-icon">⚡</div>
+                      <h3>Lightning Fast</h3>
+                      <p>Optimized for speed</p>
+                    </div>
+                    <div class="feature-card">
+                      <div class="feature-icon">🔒</div>
+                      <h3>Secure</h3>
+                      <p>Enterprise-grade security</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Inter', sans-serif; }
+              .startup-hero { height: 100vh; background: linear-gradient(135deg, #667eea, #764ba2); position: relative; }
+              .startup-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .startup-logo { font-size: 24px; font-weight: 700; color: white; }
+              .startup-menu { display: flex; gap: 30px; }
+              .startup-menu a { color: white; text-decoration: none; }
+              .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-content h1 { font-size: 4.5rem; font-weight: 700; margin-bottom: 20px; }
+              .cta-buttons { display: flex; gap: 20px; justify-content: center; margin-top: 40px; }
+              .btn-primary, .btn-secondary { padding: 15px 30px; border: none; border-radius: 50px; font-weight: 600; cursor: pointer; }
+              .btn-primary { background: white; color: #667eea; }
+              .btn-secondary { background: transparent; color: white; border: 2px solid white; }
+              .features-section { padding: 100px 0; background: white; }
+              .features-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+              .features-container h2 { text-align: center; font-size: 3rem; margin-bottom: 60px; }
+              .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
+              .feature-card { text-align: center; padding: 40px; }
+              .feature-icon { font-size: 4rem; margin-bottom: 20px; }
+            `,
+            is_featured: true
+          },
+          {
+            title: 'Real Estate Agency',
+            slug: 'template-real-estate',
+            category: 'business',
+            description: 'Professional template for real estate agencies and property listings',
+            html_content: `
+              <div class="estate-hero">
+                <nav class="estate-nav">
+                  <div class="estate-logo">Prime Properties</div>
+                  <div class="estate-menu">
+                    <a href="#listings">Listings</a>
+                    <a href="#about">About</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1>Find Your Dream Home</h1>
+                  <p>Premium properties in prime locations</p>
+                  <button class="cta-button">Browse Properties</button>
+                </div>
+              </div>
+              <section class="listings-section">
+                <div class="listings-container">
+                  <h2>Featured Properties</h2>
+                  <div class="properties-grid">
+                    <div class="property-card">
+                      <div class="property-image"></div>
+                      <div class="property-info">
+                        <h3>Luxury Villa</h3>
+                        <p class="property-price">$1,250,000</p>
+                        <p class="property-location">📍 Downtown</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Roboto', sans-serif; }
+              .estate-hero { height: 100vh; background: linear-gradient(135deg, #2c3e50, #34495e); position: relative; }
+              .estate-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .estate-logo { font-size: 24px; font-weight: 700; color: white; }
+              .estate-menu { display: flex; gap: 30px; }
+              .estate-menu a { color: white; text-decoration: none; }
+              .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-content h1 { font-size: 4rem; margin-bottom: 20px; }
+              .cta-button { padding: 15px 40px; background: #3498db; color: white; border: none; border-radius: 50px; font-size: 1.2rem; cursor: pointer; }
+              .listings-section { padding: 100px 0; background: #f8f9fa; }
+              .listings-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+              .listings-container h2 { text-align: center; font-size: 3rem; margin-bottom: 60px; }
+              .properties-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; }
+              .property-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+              .property-image { height: 300px; background: linear-gradient(135deg, #3498db, #2980b9); }
+              .property-info { padding: 30px; }
+              .property-price { font-size: 1.8rem; font-weight: 700; color: #2c3e50; margin: 10px 0; }
+            `,
+            is_featured: false
+          },
+          {
+            title: 'Music Artist',
+            slug: 'template-music-artist',
+            category: 'creative',
+            description: 'Bold template for musicians, bands, and music producers',
+            html_content: `
+              <div class="music-hero">
+                <nav class="music-nav">
+                  <div class="music-logo">Artist Name</div>
+                  <div class="music-menu">
+                    <a href="#music">Music</a>
+                    <a href="#tour">Tour</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1>New Album Out Now</h1>
+                  <p>Stream on all platforms</p>
+                  <button class="cta-button">Listen Now</button>
+                </div>
+              </div>
+              <section class="albums-section">
+                <div class="albums-container">
+                  <h2>Latest Releases</h2>
+                  <div class="albums-grid">
+                    <div class="album-card">
+                      <div class="album-cover"></div>
+                      <h3>Album Title</h3>
+                      <p>2024</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Montserrat', sans-serif; background: #0a0a0a; color: white; }
+              .music-hero { height: 100vh; background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1); background-size: 400% 400%; animation: gradientShift 10s ease infinite; position: relative; }
+              @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+              .music-nav { display: flex; justify-content: space-between; align-items: center; padding: 30px 50px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .music-logo { font-size: 28px; font-weight: 700; color: white; }
+              .music-menu { display: flex; gap: 40px; }
+              .music-menu a { color: white; text-decoration: none; font-weight: 600; }
+              .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+              .hero-content h1 { font-size: 5rem; font-weight: 900; margin-bottom: 20px; }
+              .cta-button { padding: 18px 40px; background: white; color: #ff6b6b; border: none; border-radius: 50px; font-size: 1.2rem; font-weight: 700; cursor: pointer; }
+              .albums-section { padding: 100px 0; background: #1a1a1a; }
+              .albums-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+              .albums-container h2 { text-align: center; font-size: 3rem; margin-bottom: 60px; }
+              .albums-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
+              .album-card { text-align: center; }
+              .album-cover { width: 100%; aspect-ratio: 1; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; margin-bottom: 20px; }
+            `,
+            is_featured: false
+          },
+          {
+            title: 'Education & Course',
+            slug: 'template-education-course',
+            category: 'business',
+            description: 'Professional template for online courses, education platforms, and training',
+            html_content: `
+              <div class="education-hero">
+                <nav class="education-nav">
+                  <div class="education-logo">LearnHub</div>
+                  <div class="education-menu">
+                    <a href="#courses">Courses</a>
+                    <a href="#about">About</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1>Learn Anything, Anytime</h1>
+                  <p>Expert-led courses for your career growth</p>
+                  <button class="cta-button">Browse Courses</button>
+                </div>
+              </div>
+              <section class="courses-section">
+                <div class="courses-container">
+                  <h2>Popular Courses</h2>
+                  <div class="courses-grid">
+                    <div class="course-card">
+                      <div class="course-image"></div>
+                      <div class="course-info">
+                        <h3>Web Development</h3>
+                        <p>Master modern web technologies</p>
+                        <span class="course-price">$99</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Roboto', sans-serif; }
+              .education-hero { height: 100vh; background: linear-gradient(135deg, #667eea, #764ba2); position: relative; }
+              .education-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .education-logo { font-size: 24px; font-weight: 700; color: white; }
+              .education-menu { display: flex; gap: 30px; }
+              .education-menu a { color: white; text-decoration: none; }
+              .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-content h1 { font-size: 4rem; margin-bottom: 20px; }
+              .cta-button { padding: 15px 40px; background: white; color: #667eea; border: none; border-radius: 50px; font-size: 1.2rem; font-weight: 600; cursor: pointer; }
+              .courses-section { padding: 100px 0; background: #f8f9fa; }
+              .courses-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+              .courses-container h2 { text-align: center; font-size: 3rem; margin-bottom: 60px; }
+              .courses-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
+              .course-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+              .course-image { height: 200px; background: linear-gradient(135deg, #667eea, #764ba2); }
+              .course-info { padding: 30px; }
+              .course-price { font-size: 1.8rem; font-weight: 700; color: #667eea; }
+            `,
+            is_featured: false
+          },
+          {
+            title: 'Travel & Tourism',
+            slug: 'template-travel-tourism',
+            category: 'landing',
+            description: 'Beautiful template for travel agencies, tour operators, and tourism businesses',
+            html_content: `
+              <div class="travel-hero">
+                <nav class="travel-nav">
+                  <div class="travel-logo">Wanderlust Travel</div>
+                  <div class="travel-menu">
+                    <a href="#destinations">Destinations</a>
+                    <a href="#packages">Packages</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1>Explore the World</h1>
+                  <p>Discover amazing destinations</p>
+                  <button class="cta-button">Book Now</button>
+                </div>
+              </div>
+              <section class="destinations-section">
+                <div class="destinations-container">
+                  <h2>Popular Destinations</h2>
+                  <div class="destinations-grid">
+                    <div class="destination-card">
+                      <div class="destination-image"></div>
+                      <h3>Exotic Paradise</h3>
+                      <p>Starting from $1,299</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Playfair Display', serif; }
+              .travel-hero { height: 100vh; background: linear-gradient(135deg, #4facfe, #00f2fe); position: relative; }
+              .travel-nav { display: flex; justify-content: space-between; align-items: center; padding: 30px 50px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .travel-logo { font-size: 28px; font-weight: 700; color: white; }
+              .travel-menu { display: flex; gap: 40px; }
+              .travel-menu a { color: white; text-decoration: none; }
+              .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-content h1 { font-size: 4.5rem; font-weight: 300; margin-bottom: 20px; }
+              .cta-button { padding: 18px 40px; background: white; color: #4facfe; border: none; border-radius: 50px; font-size: 1.2rem; font-weight: 700; cursor: pointer; }
+              .destinations-section { padding: 100px 0; background: #f8f9fa; }
+              .destinations-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+              .destinations-container h2 { text-align: center; font-size: 3rem; margin-bottom: 60px; }
+              .destinations-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; }
+              .destination-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+              .destination-image { height: 300px; background: linear-gradient(135deg, #4facfe, #00f2fe); }
+            `,
+            is_featured: true
+          },
+          {
+            title: 'Medical & Health',
+            slug: 'template-medical-health',
+            category: 'business',
+            description: 'Professional template for medical practices, clinics, and healthcare services',
+            html_content: `
+              <div class="medical-hero">
+                <nav class="medical-nav">
+                  <div class="medical-logo">HealthCare Plus</div>
+                  <div class="medical-menu">
+                    <a href="#services">Services</a>
+                    <a href="#doctors">Doctors</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1>Your Health, Our Priority</h1>
+                  <p>Comprehensive healthcare services</p>
+                  <button class="cta-button">Book Appointment</button>
+                </div>
+              </div>
+              <section class="services-section">
+                <div class="services-container">
+                  <h2>Our Services</h2>
+                  <div class="services-grid">
+                    <div class="service-card">
+                      <div class="service-icon">🏥</div>
+                      <h3>General Medicine</h3>
+                      <p>Comprehensive health care</p>
+                    </div>
+                    <div class="service-card">
+                      <div class="service-icon">💊</div>
+                      <h3>Specialist Care</h3>
+                      <p>Expert medical consultation</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Roboto', sans-serif; }
+              .medical-hero { height: 100vh; background: linear-gradient(135deg, #3498db, #2980b9); position: relative; }
+              .medical-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .medical-logo { font-size: 24px; font-weight: 700; color: white; }
+              .medical-menu { display: flex; gap: 30px; }
+              .medical-menu a { color: white; text-decoration: none; }
+              .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-content h1 { font-size: 4rem; margin-bottom: 20px; }
+              .cta-button { padding: 15px 40px; background: white; color: #3498db; border: none; border-radius: 50px; font-size: 1.2rem; font-weight: 600; cursor: pointer; }
+              .services-section { padding: 100px 0; background: #f8f9fa; }
+              .services-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+              .services-container h2 { text-align: center; font-size: 3rem; margin-bottom: 60px; }
+              .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
+              .service-card { background: white; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+              .service-icon { font-size: 4rem; margin-bottom: 20px; }
+            `,
+            is_featured: false
+          },
+          {
+            title: 'Fashion & Style',
+            slug: 'template-fashion-style',
+            category: 'creative',
+            description: 'Elegant template for fashion brands, boutiques, and style influencers',
+            html_content: `
+              <div class="fashion-hero">
+                <nav class="fashion-nav">
+                  <div class="fashion-logo">Style Boutique</div>
+                  <div class="fashion-menu">
+                    <a href="#collection">Collection</a>
+                    <a href="#about">About</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1>Discover Your Style</h1>
+                  <p>Latest fashion trends and collections</p>
+                  <button class="cta-button">Shop Now</button>
+                </div>
+              </div>
+              <section class="collection-section">
+                <div class="collection-container">
+                  <h2>New Collection</h2>
+                  <div class="fashion-grid">
+                    <div class="fashion-item">
+                      <div class="fashion-image"></div>
+                      <h3>Designer Outfit</h3>
+                      <p class="fashion-price">$299</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Playfair Display', serif; }
+              .fashion-hero { height: 100vh; background: linear-gradient(135deg, #f093fb, #f5576c); position: relative; }
+              .fashion-nav { display: flex; justify-content: space-between; align-items: center; padding: 30px 50px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .fashion-logo { font-size: 28px; font-weight: 700; color: white; }
+              .fashion-menu { display: flex; gap: 40px; }
+              .fashion-menu a { color: white; text-decoration: none; }
+              .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-content h1 { font-size: 4.5rem; font-weight: 300; margin-bottom: 20px; }
+              .cta-button { padding: 18px 40px; background: white; color: #f5576c; border: none; border-radius: 50px; font-size: 1.2rem; font-weight: 700; cursor: pointer; }
+              .collection-section { padding: 100px 0; background: #f8f9fa; }
+              .collection-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+              .collection-container h2 { text-align: center; font-size: 3rem; margin-bottom: 60px; }
+              .fashion-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
+              .fashion-item { background: white; border-radius: 15px; overflow: hidden; }
+              .fashion-image { height: 400px; background: linear-gradient(135deg, #f093fb, #f5576c); }
+              .fashion-price { font-size: 1.8rem; font-weight: 700; color: #f5576c; }
+            `,
+            is_featured: false
+          },
+          {
+            title: 'Non-Profit Organization',
+            slug: 'template-nonprofit',
+            category: 'business',
+            description: 'Heartfelt template for non-profits, charities, and social causes',
+            html_content: `
+              <div class="nonprofit-hero">
+                <nav class="nonprofit-nav">
+                  <div class="nonprofit-logo">Hope Foundation</div>
+                  <div class="nonprofit-menu">
+                    <a href="#mission">Mission</a>
+                    <a href="#donate">Donate</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1>Making a Difference</h1>
+                  <p>Together we can change lives</p>
+                  <button class="cta-button">Donate Now</button>
+                </div>
+              </div>
+              <section class="mission-section">
+                <div class="mission-container">
+                  <h2>Our Mission</h2>
+                  <p>We are dedicated to making a positive impact in our community through various programs and initiatives.</p>
+                  <div class="impact-grid">
+                    <div class="impact-card">
+                      <div class="impact-number">10,000+</div>
+                      <div class="impact-label">Lives Changed</div>
+                    </div>
+                    <div class="impact-card">
+                      <div class="impact-number">500+</div>
+                      <div class="impact-label">Volunteers</div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Roboto', sans-serif; }
+              .nonprofit-hero { height: 100vh; background: linear-gradient(135deg, #667eea, #764ba2); position: relative; }
+              .nonprofit-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .nonprofit-logo { font-size: 24px; font-weight: 700; color: white; }
+              .nonprofit-menu { display: flex; gap: 30px; }
+              .nonprofit-menu a { color: white; text-decoration: none; }
+              .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-content h1 { font-size: 4rem; margin-bottom: 20px; }
+              .cta-button { padding: 15px 40px; background: white; color: #667eea; border: none; border-radius: 50px; font-size: 1.2rem; font-weight: 600; cursor: pointer; }
+              .mission-section { padding: 100px 0; background: #f8f9fa; }
+              .mission-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; text-align: center; }
+              .mission-container h2 { font-size: 3rem; margin-bottom: 30px; }
+              .mission-container p { font-size: 1.2rem; margin-bottom: 60px; color: #666; }
+              .impact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; }
+              .impact-card { background: white; padding: 40px; border-radius: 15px; text-align: center; }
+              .impact-number { font-size: 3rem; font-weight: 700; color: #667eea; margin-bottom: 10px; }
+            `,
+            is_featured: false
+          },
+          {
+            title: 'Wedding & Events',
+            slug: 'template-wedding-events',
+            category: 'personal',
+            description: 'Elegant template for wedding planners, event organizers, and special occasions',
+            html_content: `
+              <div class="wedding-hero">
+                <nav class="wedding-nav">
+                  <div class="wedding-logo">Elegant Events</div>
+                  <div class="wedding-menu">
+                    <a href="#services">Services</a>
+                    <a href="#gallery">Gallery</a>
+                    <a href="#contact">Contact</a>
+                  </div>
+                </nav>
+                <div class="hero-content">
+                  <h1>Your Perfect Day</h1>
+                  <p>Creating unforgettable moments</p>
+                  <button class="cta-button">Plan Your Event</button>
+                </div>
+              </div>
+              <section class="services-section">
+                <div class="services-container">
+                  <h2>Our Services</h2>
+                  <div class="services-grid">
+                    <div class="service-card">
+                      <div class="service-icon">💒</div>
+                      <h3>Wedding Planning</h3>
+                      <p>Complete wedding coordination</p>
+                    </div>
+                    <div class="service-card">
+                      <div class="service-icon">🎉</div>
+                      <h3>Event Management</h3>
+                      <p>Corporate and private events</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `,
+            css_content: `
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Playfair Display', serif; }
+              .wedding-hero { height: 100vh; background: linear-gradient(135deg, #f093fb, #f5576c); position: relative; }
+              .wedding-nav { display: flex; justify-content: space-between; align-items: center; padding: 30px 50px; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+              .wedding-logo { font-size: 28px; font-weight: 700; color: white; }
+              .wedding-menu { display: flex; gap: 40px; }
+              .wedding-menu a { color: white; text-decoration: none; }
+              .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; }
+              .hero-content h1 { font-size: 4.5rem; font-weight: 300; margin-bottom: 20px; }
+              .cta-button { padding: 18px 40px; background: white; color: #f5576c; border: none; border-radius: 50px; font-size: 1.2rem; font-weight: 700; cursor: pointer; }
+              .services-section { padding: 100px 0; background: #f8f9fa; }
+              .services-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+              .services-container h2 { text-align: center; font-size: 3rem; margin-bottom: 60px; }
+              .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
+              .service-card { background: white; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+              .service-icon { font-size: 4rem; margin-bottom: 20px; }
+            `,
+            is_featured: false
           }
-        ];
+        ] : [];
 
-        for (const template of templates) {
-          await connection.promise().execute(
-            `INSERT INTO templates (name, description, category, html_base, css_base, is_featured) VALUES (?, ?, ?, ?, ?, ?)`,
-            [template.name, template.description, template.category, template.html_base, template.css_base, template.is_featured]
-          );
-        }
-        console.log(`✅ Seeded ${templates.length} templates`);
-      } else {
-        console.log(`ℹ️  Templates table already has data, skipping`);
-      }
+      // Note: Template websites will be created AFTER regular websites (see below)
 
-      // Seed websites
+      // Seed websites (regular user websites - these come FIRST)
       if (!(await this.tableHasData('websites'))) {
         const websites = [
           {
@@ -715,7 +1680,7 @@ class DatabaseORM {
               .footer p { font-size: 1.2rem; margin-bottom: 30px; opacity: 0.9; }
               @media (max-width: 768px) { .hero-title { font-size: 2.5rem; } .about-content { grid-template-columns: 1fr; } .hero-buttons { flex-direction: column; align-items: center; } }
             `,
-            template_id: 1,
+            template_id: null,
             is_published: true
           },
           {
@@ -814,7 +1779,7 @@ class DatabaseORM {
               .commission-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,0,0,0.3); }
               @media (max-width: 768px) { .hero-text h1 { font-size: 3rem; } .about-container { grid-template-columns: 1fr; } .art-grid { grid-template-columns: 1fr; } }
             `,
-            template_id: 3,
+            template_id: null,
             is_published: true
           },
           {
@@ -871,7 +1836,7 @@ class DatabaseORM {
               .stat-card h3 { color: #bdc3c7; margin-bottom: 20px; font-size: 1.2rem; }
               .stat-number { font-size: 3rem; font-weight: 700; color: #3498db; }
             `,
-            template_id: 2,
+            template_id: null,
             is_published: false
           },
           {
@@ -953,7 +1918,7 @@ class DatabaseORM {
               .work-item h3 { padding: 25px 25px 10px; font-size: 1.8rem; color: #fff; font-weight: 400; }
               .work-item p { padding: 0 25px 25px; color: #ccc; font-size: 1.1rem; }
             `,
-            template_id: 3,
+            template_id: null,
             is_published: true
           },
           {
@@ -1048,7 +2013,7 @@ class DatabaseORM {
               .service-card h3 { font-size: 1.5rem; margin-bottom: 15px; color: #2c3e50; }
               .service-card p { color: #666; line-height: 1.6; }
             `,
-            template_id: 2,
+            template_id: null,
             is_published: false
           }
         ];
@@ -1059,9 +2024,68 @@ class DatabaseORM {
             [website.user_id, website.title, website.slug, website.html_content, website.css_content, website.template_id, website.is_published]
           );
         }
-        console.log(`✅ Seeded ${websites.length} websites`);
+        console.log(`✅ Seeded ${websites.length} regular user websites`);
       } else {
-        console.log(`ℹ️  Websites table already has data, skipping`);
+        console.log(`ℹ️  Websites table already has data, skipping regular websites`);
+      }
+
+      // Now create template websites (AFTER regular websites to avoid ID conflicts)
+      // These are only created if templates table needs seeding
+      if (needsTemplateSeeding && premiumTemplateWebsites.length > 0) {
+        let templateWebsiteIds = [];
+        const PreviewService = require('../services/PreviewService');
+        const previewService = new PreviewService();
+        
+        // Create template websites (under admin user) and generate previews
+        for (const website of premiumTemplateWebsites) {
+          const [websiteResult] = await connection.promise().execute(
+            `INSERT INTO websites (user_id, title, slug, html_content, css_content, is_published, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [adminUserId, website.title, website.slug, website.html_content, website.css_content, true, true]
+          );
+          
+          // Generate preview for template website
+          let previewBuffer = null;
+          try {
+            previewBuffer = await previewService.generatePreview(website.html_content, website.css_content);
+            if (previewBuffer) {
+              await connection.promise().execute(
+                `UPDATE websites SET preview_url = ? WHERE id = ?`,
+                [previewBuffer, websiteResult.insertId]
+              );
+            }
+          } catch (error) {
+            console.error(`⚠️  Error generating preview for template website ${website.title}:`, error.message);
+            // Continue without preview if generation fails
+          }
+          
+          templateWebsiteIds.push({ websiteId: websiteResult.insertId, ...website });
+        }
+        
+        // Close browser after generating all previews
+        await previewService.closeBrowser();
+        console.log(`✅ Created ${premiumTemplateWebsites.length} premium template websites with previews (after regular websites)`);
+
+        // Now create templates from these websites
+        for (const templateData of templateWebsiteIds) {
+          await connection.promise().execute(
+            `INSERT INTO templates (name, description, category, html_base, css_base, is_featured, is_active, is_community, creator_user_id, source_website_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              templateData.title,
+              templateData.description,
+              templateData.category,
+              templateData.html_content,
+              templateData.css_content,
+              templateData.is_featured,
+              true, // is_active
+              false, // is_community (official templates)
+              adminUserId, // creator_user_id
+              templateData.websiteId // source_website_id
+            ]
+          );
+        }
+        console.log(`✅ Seeded ${templateWebsiteIds.length} premium templates from websites`);
+      } else if (!needsTemplateSeeding) {
+        console.log(`ℹ️  Templates table already has data, skipping template website creation`);
       }
 
       // Seed plans

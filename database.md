@@ -83,6 +83,7 @@ CREATE TABLE websites (
     template_id INT,
     is_published BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
+    preview_url LONGBLOB, -- NEW: Website Preview Feature - Stores screenshot/preview image of the website as binary data. Generated automatically using Puppeteer when website is saved or updated. Used to display website previews in user dashboard and website cards. Format: PNG image as binary blob.
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
