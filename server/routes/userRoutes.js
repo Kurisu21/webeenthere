@@ -72,6 +72,9 @@ router.post(
   (req, res) => userController.login(req, res)
 );
 
+// Logout route
+router.post('/logout', authMiddleware, (req, res) => userController.logout(req, res));
+
 // Email verification route
 router.get('/verify/:token', (req, res) => userController.verifyEmail(req, res));
 
@@ -82,6 +85,31 @@ router.post(
     body('email').isEmail().withMessage('Valid email is required'),
   ],
   (req, res) => userController.resendVerification(req, res)
+);
+
+// Verify email with 6-digit code
+router.post(
+  '/verify-code',
+  [
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('code')
+      .notEmpty()
+      .withMessage('Verification code is required')
+      .isLength({ min: 6, max: 6 })
+      .withMessage('Verification code must be 6 digits')
+      .matches(/^\d+$/)
+      .withMessage('Verification code must contain only numbers'),
+  ],
+  (req, res) => userController.verifyEmailCode(req, res)
+);
+
+// Resend verification code
+router.post(
+  '/resend-code',
+  [
+    body('email').isEmail().withMessage('Valid email is required'),
+  ],
+  (req, res) => userController.resendVerificationCode(req, res)
 );
 
 // Forgot password route

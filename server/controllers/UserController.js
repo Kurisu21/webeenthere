@@ -5,12 +5,16 @@ const jwt = require('jsonwebtoken');
 const EmailService = require('../services/EmailService');
 const TokenStorage = require('../services/TokenStorage');
 const databaseActivityLogger = require('../services/DatabaseActivityLogger');
+const SubscriptionService = require('../services/SubscriptionService');
+const { getDatabaseConnection } = require('../database/database');
 
 class UserController {
   constructor(userModel) {
     this.userModel = userModel;
     this.emailService = new EmailService();
     this.tokenStorage = new TokenStorage();
+    this.db = getDatabaseConnection();
+    this.subscriptionService = new SubscriptionService(this.db);
     
     // Initialize token storage
     this.tokenStorage.initialize().catch(err => {
@@ -37,19 +41,39 @@ class UserController {
         password
       });
       
-      // Generate verification token and store it separately
-      const verificationToken = await this.tokenStorage.generateVerificationToken(userId, email, username);
+      // Automatically assign free plan to new user
+      try {
+        const freePlanId = 1; // Free plan is always plan_id 1
+        await this.subscriptionService.createSubscription(userId, freePlanId, 'REGISTRATION_FREE_PLAN');
+        console.log(`✅ Assigned free plan to new user ${userId}`);
+      } catch (subscriptionError) {
+        console.error('Failed to assign free plan to new user:', subscriptionError);
+        // Continue with registration even if plan assignment fails
+      }
       
-      // Send verification email
-      const emailSent = await this.emailService.sendVerificationEmail(email, username, verificationToken);
+      // Generate 6-digit verification code
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
       
-      if (!emailSent) {
-        console.error('Failed to send verification email to:', email);
+      // Store verification code in database
+      await this.userModel.storeVerificationCode(userId, verificationCode, expiresAt);
+      
+      // Send verification code email
+      const codeEmailSent = await this.emailService.sendVerificationCodeEmail(email, username, verificationCode);
+      if (!codeEmailSent) {
+        console.error('Failed to send verification code email to:', email);
+      }
+      
+      // Send welcome email
+      const welcomeEmailSent = await this.emailService.sendWelcomeEmail(email, username);
+      if (!welcomeEmailSent) {
+        console.error('Failed to send welcome email to:', email);
       }
       
       res.status(201).json({ 
-        message: 'User registered successfully. Please check your email for verification.', 
-        userId 
+        message: 'User registered successfully. Please check your email for the verification code.', 
+        userId,
+        email
       });
     } catch (err) {
       console.error('Registration error:', err);
@@ -191,6 +215,17 @@ class UserController {
         { expiresIn: '1d' }
       );
       
+      // Store session token in database
+      try {
+        await this.db.execute(
+          'UPDATE users SET session_token = ? WHERE id = ?',
+          [token, user.id]
+        );
+      } catch (tokenError) {
+        console.error('Failed to store session token:', tokenError);
+        // Continue with login even if token storage fails
+      }
+      
       // Log successful login
       await databaseActivityLogger.logUserLogin(user.id, ipAddress, userAgent);
       
@@ -205,6 +240,54 @@ class UserController {
       });
     } catch (err) {
       console.error('Login error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+
+  // Logout a user
+  async logout(req, res) {
+    try {
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+      
+      // Clear session token from database
+      try {
+        await this.db.execute(
+          'UPDATE users SET session_token = NULL WHERE id = ?',
+          [userId]
+        );
+        
+        // Log logout activity
+        const ipAddress = req.ip || 
+          req.connection.remoteAddress || 
+          req.socket.remoteAddress ||
+          (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
+          req.headers['x-forwarded-for']?.split(',')[0] ||
+          'unknown';
+        const userAgent = req.headers['user-agent'] || 'unknown';
+        
+        await databaseActivityLogger.logActivity({
+          userId: userId,
+          action: 'user_logout',
+          entityType: 'user',
+          entityId: userId,
+          ipAddress: ipAddress,
+          userAgent: userAgent,
+          details: { 
+            timestamp: new Date().toISOString()
+          }
+        });
+        
+        res.json({ message: 'Logged out successfully' });
+      } catch (error) {
+        console.error('Failed to clear session token:', error);
+        res.status(500).json({ error: 'Failed to logout' });
+      }
+    } catch (err) {
+      console.error('Logout error:', err);
       res.status(500).json({ error: 'Server error' });
     }
   }
@@ -242,7 +325,104 @@ class UserController {
     }
   }
 
-  // Resend verification email
+  // Verify email with 6-digit code
+  async verifyEmailCode(req, res) {
+    try {
+      const { email, code } = req.body;
+      
+      if (!email || !code) {
+        return res.status(400).json({ 
+          error: 'Email and verification code are required' 
+        });
+      }
+      
+      // Find user by email
+      const user = await this.userModel.findByEmail(email);
+      if (!user) {
+        return res.status(400).json({ 
+          error: 'User not found' 
+        });
+      }
+      
+      if (user.is_verified) {
+        return res.status(400).json({ 
+          error: 'Email is already verified' 
+        });
+      }
+      
+      // Verify the code
+      const verificationResult = await this.userModel.verifyEmailCode(user.id, code);
+      
+      if (!verificationResult.valid) {
+        return res.status(400).json({ 
+          error: verificationResult.error || 'Invalid verification code' 
+        });
+      }
+      
+      // Mark user as verified
+      const success = await this.userModel.verifyUser(user.id);
+      if (!success) {
+        return res.status(500).json({ error: 'Failed to verify email' });
+      }
+      
+      // Clear verification code
+      await this.userModel.clearVerificationCode(user.id);
+      
+      res.json({ 
+        message: 'Email verified successfully! You can now log in.' 
+      });
+    } catch (err) {
+      console.error('Email verification error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+
+  // Resend verification code
+  async resendVerificationCode(req, res) {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ 
+          error: 'Email is required' 
+        });
+      }
+      
+      const user = await this.userModel.findByEmail(email);
+      if (!user) {
+        return res.status(400).json({ 
+          error: 'Email not found' 
+        });
+      }
+      
+      if (user.is_verified) {
+        return res.status(400).json({ 
+          error: 'Email is already verified' 
+        });
+      }
+      
+      // Generate new 6-digit verification code
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+      
+      // Store verification code in database
+      await this.userModel.storeVerificationCode(user.id, verificationCode, expiresAt);
+      
+      // Send verification code email
+      const emailSent = await this.emailService.sendVerificationCodeEmail(email, user.username, verificationCode);
+      
+      if (emailSent) {
+        res.json({ message: 'Verification code sent successfully' });
+      } else {
+        res.status(500).json({ error: 'Failed to send verification code email' });
+      }
+    } catch (err) {
+      console.error('Resend verification code error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+
+  // Resend verification email (legacy method for backward compatibility)
   async resendVerification(req, res) {
     try {
       const { email } = req.body;

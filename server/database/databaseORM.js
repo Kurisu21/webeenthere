@@ -6,6 +6,7 @@ class DatabaseORM {
   constructor() {
     this.connection = null;
     this.dbName = 'webeenthere';
+    this.seededUserIds = null; // Store user IDs for plan assignment after plans are seeded
   }
 
   // Create connection without specifying database first
@@ -92,11 +93,15 @@ class DatabaseORM {
           username VARCHAR(50) NOT NULL UNIQUE,
           email VARCHAR(100) NOT NULL UNIQUE,
           password_hash VARCHAR(255) NOT NULL,
+          session_token VARCHAR(255) NULL,
           profile_image VARCHAR(255),
           role ENUM('user', 'admin') DEFAULT 'user',
           theme_mode ENUM('light', 'dark') DEFAULT 'light',
           is_verified BOOLEAN DEFAULT FALSE,
           is_active BOOLEAN DEFAULT TRUE,
+          email_verification_code VARCHAR(6) NULL,
+          email_verification_code_expires_at DATETIME NULL,
+          email_verification_attempts INT DEFAULT 0,
           ai_chat_usage INT DEFAULT 0,
           ai_chat_reset_date DATETIME DEFAULT CURRENT_TIMESTAMP,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -452,6 +457,12 @@ class DatabaseORM {
       
       // Add foreign key constraint for templates.source_website_id after websites table is created
       await this.addTemplateWebsiteForeignKey(connection);
+      
+      // Add session_token column and index if they don't exist (for existing databases)
+      await this.addSessionTokenColumn(connection);
+      
+      // Add email verification code columns if they don't exist (for existing databases)
+      await this.addEmailVerificationColumns(connection);
     } finally {
       connection.end();
     }
@@ -483,6 +494,117 @@ class DatabaseORM {
       }
     } catch (error) {
       console.log(`⚠️  Could not add foreign key constraint for templates.source_website_id: ${error.message}`);
+    }
+  }
+
+  // Add session_token column and index if they don't exist (for existing databases)
+  async addSessionTokenColumn(connection) {
+    try {
+      // Check if the column already exists
+      const [columns] = await connection.promise().execute(`
+        SELECT COLUMN_NAME 
+        FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'users' 
+        AND COLUMN_NAME = 'session_token'
+      `);
+
+      if (columns.length === 0) {
+        // Add the session_token column
+        await connection.promise().execute(`
+          ALTER TABLE users 
+          ADD COLUMN session_token VARCHAR(255) NULL
+        `);
+        console.log(`✅ Column 'session_token' added to users table`);
+      } else {
+        console.log(`ℹ️  Column 'session_token' already exists in users table`);
+      }
+
+      // Check if the index already exists
+      const [indexes] = await connection.promise().execute(`
+        SELECT INDEX_NAME 
+        FROM information_schema.STATISTICS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'users' 
+        AND INDEX_NAME = 'idx_session_token'
+      `);
+
+      if (indexes.length === 0) {
+        // Add the index
+        await connection.promise().execute(`
+          ALTER TABLE users 
+          ADD INDEX idx_session_token (session_token)
+        `);
+        console.log(`✅ Index 'idx_session_token' added to users table`);
+      } else {
+        console.log(`ℹ️  Index 'idx_session_token' already exists in users table`);
+      }
+    } catch (error) {
+      console.log(`⚠️  Could not add session_token column/index: ${error.message}`);
+    }
+  }
+
+  // Add email verification code columns if they don't exist (for existing databases)
+  async addEmailVerificationColumns(connection) {
+    try {
+      // Check and add email_verification_code column
+      const [codeColumn] = await connection.promise().execute(`
+        SELECT COLUMN_NAME 
+        FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'users' 
+        AND COLUMN_NAME = 'email_verification_code'
+      `);
+
+      if (codeColumn.length === 0) {
+        await connection.promise().execute(`
+          ALTER TABLE users 
+          ADD COLUMN email_verification_code VARCHAR(6) NULL
+        `);
+        console.log(`✅ Column 'email_verification_code' added to users table`);
+      } else {
+        console.log(`ℹ️  Column 'email_verification_code' already exists in users table`);
+      }
+
+      // Check and add email_verification_code_expires_at column
+      const [expiresColumn] = await connection.promise().execute(`
+        SELECT COLUMN_NAME 
+        FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'users' 
+        AND COLUMN_NAME = 'email_verification_code_expires_at'
+      `);
+
+      if (expiresColumn.length === 0) {
+        await connection.promise().execute(`
+          ALTER TABLE users 
+          ADD COLUMN email_verification_code_expires_at DATETIME NULL
+        `);
+        console.log(`✅ Column 'email_verification_code_expires_at' added to users table`);
+      } else {
+        console.log(`ℹ️  Column 'email_verification_code_expires_at' already exists in users table`);
+      }
+
+      // Check and add email_verification_attempts column
+      const [attemptsColumn] = await connection.promise().execute(`
+        SELECT COLUMN_NAME 
+        FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'users' 
+        AND COLUMN_NAME = 'email_verification_attempts'
+      `);
+
+      if (attemptsColumn.length === 0) {
+        await connection.promise().execute(`
+          ALTER TABLE users 
+          ADD COLUMN email_verification_attempts INT DEFAULT 0
+        `);
+        console.log(`✅ Column 'email_verification_attempts' added to users table`);
+      } else {
+        console.log(`ℹ️  Column 'email_verification_attempts' already exists in users table`);
+      }
+    } catch (error) {
+      console.log(`⚠️  Could not add email verification columns: ${error.message}`);
     }
   }
 
@@ -537,13 +659,17 @@ class DatabaseORM {
           }
         ];
 
+        const seededUserIds = [];
         for (const user of users) {
-          await connection.promise().execute(
+          const [result] = await connection.promise().execute(
             `INSERT INTO users (username, email, password_hash, role, theme_mode, is_verified) VALUES (?, ?, ?, ?, ?, ?)`,
             [user.username, user.email, user.password_hash, user.role, user.theme_mode, user.is_verified]
           );
+          seededUserIds.push(result.insertId);
         }
         console.log(`✅ Seeded ${users.length} users`);
+        // Store user IDs for later plan assignment (after plans are seeded)
+        this.seededUserIds = seededUserIds;
       } else {
         console.log(`ℹ️  Users table already has data, skipping`);
       }
@@ -1563,6 +1689,499 @@ class DatabaseORM {
               .service-icon { font-size: 4rem; margin-bottom: 20px; }
             `,
             is_featured: false
+          },
+          {
+            title: 'Dimension Style Portfolio',
+            slug: 'template-dimension-style-portfolio',
+            category: 'portfolio',
+            description: 'Modern single-page portfolio inspired by HTML5 UP Dimension. Features dark theme, centered content, and clean typography. Fully editable with our builder. Inspired by HTML5 UP Dimension template (html5up.net) - recreated with different implementation for builder compatibility.',
+            html_content: `
+              <!-- Header Section -->
+              <header class="dimension-header">
+                <div class="header-content">
+                  <div class="logo-icon">💎</div>
+                  <div class="header-text">
+                    <h1 class="site-title">Your Name</h1>
+                    <p class="site-tagline">Full-Stack Developer & Designer</p>
+                  </div>
+                </div>
+                <nav class="main-nav">
+                  <ul>
+                    <li><a href="#intro">Intro</a></li>
+                    <li><a href="#work">Work</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                  </ul>
+                </nav>
+              </header>
+
+              <!-- Intro Section -->
+              <section id="intro" class="dimension-section intro-section">
+                <div class="section-content">
+                  <h2 class="section-title">Welcome</h2>
+                  <div class="intro-image-placeholder"></div>
+                  <p class="section-text">I'm a passionate developer and designer creating digital experiences that matter. With expertise in modern web technologies, I bring ideas to life through clean code and thoughtful design.</p>
+                  <p class="section-text">Check out my <a href="#work" class="section-link">awesome work</a> below, or learn more <a href="#about" class="section-link">about me</a>.</p>
+                </div>
+              </section>
+
+              <!-- Work Section -->
+              <section id="work" class="dimension-section work-section">
+                <div class="section-content">
+                  <h2 class="section-title">My Work</h2>
+                  <div class="work-image-placeholder"></div>
+                  <p class="section-text">I specialize in building modern web applications with a focus on user experience and performance. Here are some of my recent projects.</p>
+                  <div class="work-grid">
+                    <div class="work-item">
+                      <div class="work-item-image"></div>
+                      <h3>E-Commerce Platform</h3>
+                      <p>Modern shopping experience with React and Node.js</p>
+                    </div>
+                    <div class="work-item">
+                      <div class="work-item-image"></div>
+                      <h3>Task Management App</h3>
+                      <p>Collaborative tool for team productivity</p>
+                    </div>
+                    <div class="work-item">
+                      <div class="work-item-image"></div>
+                      <h3>Portfolio Website</h3>
+                      <p>Creative showcase for artists and designers</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- About Section -->
+              <section id="about" class="dimension-section about-section">
+                <div class="section-content">
+                  <h2 class="section-title">About Me</h2>
+                  <div class="about-image-placeholder"></div>
+                  <p class="section-text">I'm a full-stack developer with over 5 years of experience building web applications. I love creating beautiful, functional interfaces that users enjoy interacting with.</p>
+                  <p class="section-text">My skills include React, Node.js, TypeScript, and modern CSS. I'm always learning new technologies and improving my craft.</p>
+                  <div class="skills-list">
+                    <span class="skill-badge">React</span>
+                    <span class="skill-badge">Node.js</span>
+                    <span class="skill-badge">TypeScript</span>
+                    <span class="skill-badge">CSS3</span>
+                    <span class="skill-badge">MongoDB</span>
+                  </div>
+                </div>
+              </section>
+
+              <!-- Contact Section -->
+              <section id="contact" class="dimension-section contact-section">
+                <div class="section-content">
+                  <h2 class="section-title">Get In Touch</h2>
+                  <p class="section-text">Have a project in mind? I'd love to hear from you. Send me a message and I'll respond as soon as possible.</p>
+                  <form class="contact-form">
+                    <div class="form-row">
+                      <div class="form-field">
+                        <label for="contact-name">Name</label>
+                        <input type="text" id="contact-name" name="name" placeholder="Your Name" />
+                      </div>
+                      <div class="form-field">
+                        <label for="contact-email">Email</label>
+                        <input type="email" id="contact-email" name="email" placeholder="your.email@example.com" />
+                      </div>
+                    </div>
+                    <div class="form-field">
+                      <label for="contact-message">Message</label>
+                      <textarea id="contact-message" name="message" rows="5" placeholder="Your message here..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                      <button type="submit" class="btn-primary">Send Message</button>
+                      <button type="reset" class="btn-secondary">Reset</button>
+                    </div>
+                  </form>
+                  <div class="social-links">
+                    <a href="#" class="social-link" aria-label="Twitter">🐦</a>
+                    <a href="#" class="social-link" aria-label="GitHub">💻</a>
+                    <a href="#" class="social-link" aria-label="LinkedIn">💼</a>
+                    <a href="#" class="social-link" aria-label="Email">✉️</a>
+                  </div>
+                </div>
+              </section>
+
+              <!-- Footer -->
+              <footer class="dimension-footer">
+                <p>&copy; 2024 Your Name. Design inspired by <a href="https://html5up.net" target="_blank" rel="noopener">HTML5 UP</a>.</p>
+              </footer>
+            `,
+            css_content: `
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+
+              body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: #1a1a1a;
+                color: #e0e0e0;
+                line-height: 1.6;
+                overflow-x: hidden;
+              }
+
+              /* Header Styles */
+              .dimension-header {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 1000;
+                background: rgba(26, 26, 26, 0.95);
+                backdrop-filter: blur(10px);
+                padding: 2rem 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+              }
+
+              .header-content {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 2rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 1.5rem;
+                margin-bottom: 2rem;
+              }
+
+              .logo-icon {
+                font-size: 3rem;
+                line-height: 1;
+              }
+
+              .header-text {
+                text-align: center;
+              }
+
+              .site-title {
+                font-size: 2.5rem;
+                font-weight: 300;
+                color: #ffffff;
+                margin-bottom: 0.5rem;
+                letter-spacing: 2px;
+              }
+
+              .site-tagline {
+                font-size: 1.1rem;
+                color: #b0b0b0;
+                font-weight: 300;
+              }
+
+              .main-nav ul {
+                list-style: none;
+                display: flex;
+                justify-content: center;
+                gap: 2rem;
+                flex-wrap: wrap;
+              }
+
+              .main-nav a {
+                color: #e0e0e0;
+                text-decoration: none;
+                font-size: 1rem;
+                font-weight: 400;
+                padding: 0.5rem 1rem;
+                border-radius: 4px;
+                transition: all 0.3s ease;
+              }
+
+              .main-nav a:hover {
+                color: #ffffff;
+                background: rgba(255, 255, 255, 0.1);
+              }
+
+              /* Section Styles */
+              .dimension-section {
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 8rem 2rem 4rem;
+                position: relative;
+              }
+
+              .section-content {
+                max-width: 800px;
+                width: 100%;
+                text-align: center;
+              }
+
+              .section-title {
+                font-size: 2.5rem;
+                font-weight: 300;
+                color: #ffffff;
+                margin-bottom: 2rem;
+                letter-spacing: 1px;
+              }
+
+              .section-text {
+                font-size: 1.1rem;
+                color: #d0d0d0;
+                margin-bottom: 1.5rem;
+                line-height: 1.8;
+              }
+
+              .section-link {
+                color: #4a9eff;
+                text-decoration: none;
+                border-bottom: 1px solid rgba(74, 158, 255, 0.3);
+                transition: all 0.3s ease;
+              }
+
+              .section-link:hover {
+                color: #6bb0ff;
+                border-bottom-color: #6bb0ff;
+              }
+
+              /* Image Placeholders */
+              .intro-image-placeholder,
+              .work-image-placeholder,
+              .about-image-placeholder {
+                width: 100%;
+                height: 300px;
+                background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+                border-radius: 8px;
+                margin: 2rem 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #666;
+                font-size: 1.2rem;
+              }
+
+              /* Work Grid */
+              .work-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 2rem;
+                margin-top: 3rem;
+              }
+
+              .work-item {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 8px;
+                padding: 1.5rem;
+                transition: all 0.3s ease;
+              }
+
+              .work-item:hover {
+                background: rgba(255, 255, 255, 0.08);
+                transform: translateY(-5px);
+              }
+
+              .work-item-image {
+                width: 100%;
+                height: 150px;
+                background: linear-gradient(135deg, #3a3a3a 0%, #4a4a4a 100%);
+                border-radius: 4px;
+                margin-bottom: 1rem;
+              }
+
+              .work-item h3 {
+                color: #ffffff;
+                font-size: 1.3rem;
+                margin-bottom: 0.5rem;
+                font-weight: 400;
+              }
+
+              .work-item p {
+                color: #b0b0b0;
+                font-size: 0.95rem;
+              }
+
+              /* Skills List */
+              .skills-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 1rem;
+                justify-content: center;
+                margin-top: 2rem;
+              }
+
+              .skill-badge {
+                background: rgba(74, 158, 255, 0.2);
+                color: #4a9eff;
+                padding: 0.5rem 1.2rem;
+                border-radius: 20px;
+                font-size: 0.9rem;
+                border: 1px solid rgba(74, 158, 255, 0.3);
+              }
+
+              /* Contact Form */
+              .contact-form {
+                max-width: 600px;
+                margin: 2rem auto 0;
+                text-align: left;
+              }
+
+              .form-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+                margin-bottom: 1rem;
+              }
+
+              .form-field {
+                margin-bottom: 1.5rem;
+              }
+
+              .form-field label {
+                display: block;
+                color: #ffffff;
+                margin-bottom: 0.5rem;
+                font-weight: 400;
+              }
+
+              .form-field input,
+              .form-field textarea {
+                width: 100%;
+                padding: 0.75rem;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 4px;
+                color: #ffffff;
+                font-family: inherit;
+                font-size: 1rem;
+                transition: all 0.3s ease;
+              }
+
+              .form-field input:focus,
+              .form-field textarea:focus {
+                outline: none;
+                border-color: #4a9eff;
+                background: rgba(255, 255, 255, 0.15);
+              }
+
+              .form-field input::placeholder,
+              .form-field textarea::placeholder {
+                color: #888;
+              }
+
+              .form-actions {
+                display: flex;
+                gap: 1rem;
+                justify-content: center;
+                margin-top: 2rem;
+              }
+
+              .btn-primary,
+              .btn-secondary {
+                padding: 0.75rem 2rem;
+                border: none;
+                border-radius: 4px;
+                font-size: 1rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-family: inherit;
+              }
+
+              .btn-primary {
+                background: #4a9eff;
+                color: #ffffff;
+              }
+
+              .btn-primary:hover {
+                background: #6bb0ff;
+                transform: translateY(-2px);
+              }
+
+              .btn-secondary {
+                background: rgba(255, 255, 255, 0.1);
+                color: #e0e0e0;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+              }
+
+              .btn-secondary:hover {
+                background: rgba(255, 255, 255, 0.15);
+              }
+
+              /* Social Links */
+              .social-links {
+                display: flex;
+                justify-content: center;
+                gap: 1.5rem;
+                margin-top: 3rem;
+              }
+
+              .social-link {
+                font-size: 2rem;
+                text-decoration: none;
+                transition: transform 0.3s ease;
+                display: inline-block;
+              }
+
+              .social-link:hover {
+                transform: scale(1.2);
+              }
+
+              /* Footer */
+              .dimension-footer {
+                text-align: center;
+                padding: 3rem 2rem;
+                color: #888;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+              }
+
+              .dimension-footer a {
+                color: #4a9eff;
+                text-decoration: none;
+              }
+
+              .dimension-footer a:hover {
+                color: #6bb0ff;
+              }
+
+              /* Responsive Design */
+              @media (max-width: 768px) {
+                .site-title {
+                  font-size: 2rem;
+                }
+
+                .header-content {
+                  flex-direction: column;
+                  gap: 1rem;
+                }
+
+                .main-nav ul {
+                  gap: 1rem;
+                }
+
+                .dimension-section {
+                  padding: 6rem 1rem 3rem;
+                }
+
+                .section-title {
+                  font-size: 2rem;
+                }
+
+                .form-row {
+                  grid-template-columns: 1fr;
+                }
+
+                .work-grid {
+                  grid-template-columns: 1fr;
+                }
+              }
+
+              @media (max-width: 480px) {
+                .site-title {
+                  font-size: 1.5rem;
+                }
+
+                .section-title {
+                  font-size: 1.5rem;
+                }
+
+                .main-nav a {
+                  font-size: 0.9rem;
+                  padding: 0.4rem 0.8rem;
+                }
+              }
+            `,
+            is_featured: true
           }
         ] : [];
 
@@ -2128,57 +2747,94 @@ class DatabaseORM {
         console.log(`ℹ️  Plans table already has data, skipping`);
       }
 
-      // Seed subscription logs
-      if (!(await this.tableHasData('subscription_logs'))) {
-        const subscriptionLogs = [
-          {
-            user_id: 1,
-            plan_id: 1,
-            action: 'created',
-            payment_status: 'completed',
-            amount: 0.00,
-            payment_reference: 'FREE_PLAN_ASSIGNED'
-          },
-          {
-            user_id: 2,
-            plan_id: 2,
-            action: 'created',
-            payment_status: 'completed',
-            amount: 9.99,
-            payment_reference: 'TXN_MONTHLY_001'
+      // Assign free plan to all seeded users (must happen after plans are seeded)
+      if (this.seededUserIds && this.seededUserIds.length > 0) {
+        const freePlanId = 1; // Free plan is always plan_id 1
+        // Verify free plan exists
+        const [planCheck] = await connection.promise().execute(
+          'SELECT id FROM plans WHERE id = ?',
+          [freePlanId]
+        );
+        
+        if (planCheck.length > 0) {
+          for (const userId of this.seededUserIds) {
+            // Check if user already has a plan
+            const [existingPlan] = await connection.promise().execute(
+              'SELECT id FROM user_plan WHERE user_id = ?',
+              [userId]
+            );
+            
+            if (existingPlan.length === 0) {
+              // Create user_plan entry
+              await connection.promise().execute(
+                `INSERT INTO user_plan (user_id, plan_id, start_date, auto_renew, payment_reference) VALUES (?, ?, CURDATE(), FALSE, 'SEEDED_FREE_PLAN')`,
+                [userId, freePlanId]
+              );
+              
+              // Create subscription log
+              await connection.promise().execute(
+                `INSERT INTO subscription_logs (user_id, plan_id, action, payment_status, amount, payment_reference) VALUES (?, ?, ?, ?, ?, ?)`,
+                [userId, freePlanId, 'created', 'completed', 0.00, 'SEEDED_FREE_PLAN']
+              );
+            }
           }
-        ];
-
-        for (const log of subscriptionLogs) {
-          await connection.promise().execute(
-            `INSERT INTO subscription_logs (user_id, plan_id, action, payment_status, amount, payment_reference) VALUES (?, ?, ?, ?, ?, ?)`,
-            [log.user_id, log.plan_id, log.action, log.payment_status, log.amount, log.payment_reference]
-          );
+          console.log(`✅ Assigned free plan to ${this.seededUserIds.length} seeded users`);
+        } else {
+          console.log(`⚠️  Free plan (id: ${freePlanId}) not found, skipping plan assignment`);
         }
-        console.log(`✅ Seeded ${subscriptionLogs.length} subscription logs`);
+        // Clear the stored user IDs
+        this.seededUserIds = null;
+      }
+
+      // Seed subscription logs (only if plans exist - this happens after plans are seeded)
+      // Note: We skip the old hardcoded subscription logs since we now assign plans dynamically
+      // The subscription logs are created when we assign plans to users above
+      if (!(await this.tableHasData('subscription_logs'))) {
+        // Only seed if we have plans and users
+        const [planCheck] = await connection.promise().execute('SELECT COUNT(*) as count FROM plans');
+        const [userCheck] = await connection.promise().execute('SELECT COUNT(*) as count FROM users');
+        
+        if (planCheck[0].count > 0 && userCheck[0].count > 0) {
+          // Optional: Seed some example subscription logs for demonstration
+          // This is now handled by the dynamic plan assignment above
+          console.log(`ℹ️  Subscription logs will be created when plans are assigned to users`);
+        } else {
+          console.log(`ℹ️  Skipping subscription logs seeding - plans or users not available`);
+        }
       } else {
         console.log(`ℹ️  Subscription logs table already has data, skipping`);
       }
 
-      // Seed payment transactions
+      // Seed payment transactions (only if plans exist)
       if (!(await this.tableHasData('payment_transactions'))) {
-        const transactions = [
-          {
-            user_id: 2,
-            plan_id: 2,
-            amount: 9.99,
-            status: 'completed',
-            transaction_reference: 'TXN_MONTHLY_001'
-          }
-        ];
+        // Verify plan_id 2 exists before seeding
+        const [planCheck] = await connection.promise().execute('SELECT id FROM plans WHERE id = 2');
+        
+        if (planCheck.length > 0) {
+          const transactions = [
+            {
+              user_id: 2,
+              plan_id: 2,
+              amount: 9.99,
+              status: 'completed',
+              transaction_reference: 'TXN_MONTHLY_001'
+            }
+          ];
 
-        for (const transaction of transactions) {
-          await connection.promise().execute(
-            `INSERT INTO payment_transactions (user_id, plan_id, amount, status, transaction_reference) VALUES (?, ?, ?, ?, ?)`,
-            [transaction.user_id, transaction.plan_id, transaction.amount, transaction.status, transaction.transaction_reference]
-          );
+          for (const transaction of transactions) {
+            // Verify user exists
+            const [userCheck] = await connection.promise().execute('SELECT id FROM users WHERE id = ?', [transaction.user_id]);
+            if (userCheck.length > 0) {
+              await connection.promise().execute(
+                `INSERT INTO payment_transactions (user_id, plan_id, amount, status, transaction_reference) VALUES (?, ?, ?, ?, ?)`,
+                [transaction.user_id, transaction.plan_id, transaction.amount, transaction.status, transaction.transaction_reference]
+              );
+            }
+          }
+          console.log(`✅ Seeded payment transactions`);
+        } else {
+          console.log(`ℹ️  Skipping payment transactions seeding - plan_id 2 not found`);
         }
-        console.log(`✅ Seeded ${transactions.length} payment transactions`);
       } else {
         console.log(`ℹ️  Payment transactions table already has data, skipping`);
       }

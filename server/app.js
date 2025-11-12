@@ -17,8 +17,14 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (like mobile apps, curl requests, or server-side redirects)
+    // This is important for Auth0 OAuth callbacks which may not have an origin header
     if (!origin) return callback(null, true);
+    
+    // Allow Auth0 domains for OAuth callbacks
+    if (origin.includes('auth0.com') || origin.includes('auth0usercontent.com')) {
+      return callback(null, true);
+    }
     
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
@@ -44,6 +50,7 @@ app.use((err, req, res, next) => {
 });
 
 // Import routes
+const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const templateRoutes = require('./routes/templateRoutes');
 const websiteRoutes = require('./routes/websiteRoutes');
@@ -71,6 +78,7 @@ const analyticsTrackingRoutes = require('./routes/analyticsTrackingRoutes');
 const { getDatabaseConnection } = require('./database/database');
 
 // Use routes
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/templates', templateRoutes(getDatabaseConnection()));
 app.use('/api/websites', websiteRoutes(getDatabaseConnection()));

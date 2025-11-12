@@ -2,7 +2,7 @@
 
 import Background from '@/app/_components/layout/Background';
 import LoginForm from '@/app/_components/forms/LoginForm';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -93,7 +93,13 @@ export default function LoginPage() {
         <div className={`w-full lg:w-1/3 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center px-4 md:px-8 py-8 lg:py-0 h-screen lg:min-h-screen transition-transform duration-700 ease-out ${
           showLoginForm ? 'translate-x-0' : 'translate-x-full lg:translate-x-full'
         }`}>
-          <LoginForm />
+          <Suspense fallback={
+            <div className="w-full max-w-md mx-auto">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto"></div>
+            </div>
+          }>
+            <LoginForm />
+          </Suspense>
         </div>
       </main>
 

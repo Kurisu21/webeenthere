@@ -16,6 +16,13 @@ class User {
     return result.insertId;
   }
 
+  // Create a user from OAuth profile (password is placeholder for OAuth users)
+  async createFromOAuth({ username, email, password }) {
+    // OAuth users don't need real passwords, but database requires password_hash
+    // This method is a wrapper for clarity
+    return await this.create({ username, email, password });
+  }
+
   // Find user by email
   async findByEmail(email) {
     const [rows] = await this.db.execute(
@@ -40,6 +47,72 @@ class User {
   async verifyUser(userId) {
     const [result] = await this.db.execute(
       'UPDATE users SET is_verified = TRUE WHERE id = ?',
+      [userId]
+    );
+    return result.affectedRows > 0;
+  }
+
+  // Store email verification code
+  async storeVerificationCode(userId, code, expiresAt) {
+    const [result] = await this.db.execute(
+      'UPDATE users SET email_verification_code = ?, email_verification_code_expires_at = ?, email_verification_attempts = 0 WHERE id = ?',
+      [code, expiresAt, userId]
+    );
+    return result.affectedRows > 0;
+  }
+
+  // Verify email code
+  async verifyEmailCode(userId, code) {
+    const [rows] = await this.db.execute(
+      'SELECT email_verification_code, email_verification_code_expires_at, email_verification_attempts FROM users WHERE id = ?',
+      [userId]
+    );
+    
+    if (!rows[0]) {
+      return { valid: false, error: 'User not found' };
+    }
+
+    const user = rows[0];
+
+    // Check if code exists
+    if (!user.email_verification_code) {
+      return { valid: false, error: 'No verification code found' };
+    }
+
+    // Check if code has expired
+    if (new Date() > new Date(user.email_verification_code_expires_at)) {
+      return { valid: false, error: 'Verification code has expired' };
+    }
+
+    // Check if max attempts exceeded
+    if (user.email_verification_attempts >= 5) {
+      return { valid: false, error: 'Maximum verification attempts exceeded. Please request a new code.' };
+    }
+
+    // Check if code matches
+    if (user.email_verification_code !== code) {
+      // Increment attempts
+      await this.incrementVerificationAttempts(userId);
+      return { valid: false, error: 'Invalid verification code' };
+    }
+
+    // Code is valid
+    return { valid: true };
+  }
+
+  // Increment verification attempts
+  async incrementVerificationAttempts(userId) {
+    const [result] = await this.db.execute(
+      'UPDATE users SET email_verification_attempts = email_verification_attempts + 1 WHERE id = ?',
+      [userId]
+    );
+    return result.affectedRows > 0;
+  }
+
+  // Clear verification code after successful verification
+  async clearVerificationCode(userId) {
+    const [result] = await this.db.execute(
+      'UPDATE users SET email_verification_code = NULL, email_verification_code_expires_at = NULL, email_verification_attempts = 0 WHERE id = ?',
       [userId]
     );
     return result.affectedRows > 0;

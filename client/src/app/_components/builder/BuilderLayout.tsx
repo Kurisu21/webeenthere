@@ -70,7 +70,61 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
       
       // CRITICAL: Load CSS from css_content field (for seeded/manually coded sites)
       if (currentWebsite?.css_content) {
-        editor.setStyle(currentWebsite.css_content);
+        const cssContent = currentWebsite.css_content;
+        
+        // Apply CSS to editor's style manager
+        editor.setStyle(cssContent);
+        
+        // Inject CSS directly into canvas iframe head to ensure body/html styles work
+        // This is necessary because GrapesJS's setStyle() may not properly apply body/html selectors
+        const injectStylesIntoCanvas = () => {
+          try {
+            const canvas = editor.Canvas;
+            const frame = canvas?.getFrameEl?.();
+            
+            if (frame && frame.contentDocument) {
+              const frameDoc = frame.contentDocument;
+              const frameHead = frameDoc.head || frameDoc.getElementsByTagName('head')[0];
+              
+              if (frameHead) {
+                // Remove existing style tag if present
+                const existingStyle = frameDoc.getElementById('website-template-styles');
+                if (existingStyle) {
+                  existingStyle.remove();
+                }
+                
+                // Create and inject style tag into iframe head
+                const styleTag = frameDoc.createElement('style');
+                styleTag.id = 'website-template-styles';
+                styleTag.textContent = cssContent;
+                frameHead.appendChild(styleTag);
+              }
+            }
+          } catch (error) {
+            // Cross-origin or other iframe access issues - fallback to setStyle only
+            console.warn('Could not inject styles into canvas iframe:', error);
+          }
+        };
+        
+        // Try immediately, then retry after delays to ensure canvas is ready
+        injectStylesIntoCanvas();
+        const timeout1 = setTimeout(injectStylesIntoCanvas, 300);
+        const timeout2 = setTimeout(injectStylesIntoCanvas, 1000);
+        
+        // Listen for canvas frame load/reload events
+        const handleFrameLoad = () => {
+          injectStylesIntoCanvas();
+        };
+        editor.on('canvas:frame:load', handleFrameLoad);
+        editor.on('canvas:update', handleFrameLoad);
+        
+        // Cleanup function
+        return () => {
+          clearTimeout(timeout1);
+          clearTimeout(timeout2);
+          editor.off('canvas:frame:load', handleFrameLoad);
+          editor.off('canvas:update', handleFrameLoad);
+        };
       }
     }
   }, [editor, currentWebsite]);

@@ -1,14 +1,18 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function UserPage() {
   const router = useRouter();
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
-    // Redirect to main dashboard by default
-    router.replace('/user/main');
+    // Only redirect once to prevent loops
+    if (!hasRedirected.current) {
+      hasRedirected.current = true;
+      router.replace('/user/main');
+    }
   }, [router]);
 
   return (
