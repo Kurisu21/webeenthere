@@ -41,7 +41,7 @@ services:
     name: webeenthere-frontend
     env: node
     plan: free
-    buildCommand: cd client && npm install && npm run build
+    buildCommand: cd client && npm install --include=optional && npm run build
     startCommand: cd client && npm start
     envVars:
       - key: NODE_ENV

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { API_ENDPOINTS, apiGet } from '../../../lib/apiConfig';
+import { API_ENDPOINTS, apiGet } from '../../lib/apiConfig';
 
 export default function TestVisitorTracking() {
   const [websites, setWebsites] = useState<any[]>([]);

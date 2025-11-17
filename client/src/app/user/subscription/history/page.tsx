@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import DashboardHeader from '../../_components/layout/DashboardHeader';
-import DashboardSidebar from '../../_components/layout/DashboardSidebar';
-import MainContentWrapper from '../../_components/layout/MainContentWrapper';
-import { subscriptionApi, SubscriptionLog } from '../../../lib/subscriptionApi';
-import { useAuth } from '../../_components/auth/AuthContext';
+import DashboardHeader from '../../../_components/layout/DashboardHeader';
+import DashboardSidebar from '../../../_components/layout/DashboardSidebar';
+import MainContentWrapper from '../../../_components/layout/MainContentWrapper';
+import { subscriptionApi, SubscriptionLog } from '../../../../lib/subscriptionApi';
+import { useAuth } from '../../../_components/auth/AuthContext';
 
 export default function SubscriptionHistoryPage() {
   const { user, token } = useAuth();
