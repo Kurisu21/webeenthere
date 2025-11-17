@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "export": "next build && next export",
-    "postinstall": "npm rebuild lightningcss --update-binary || true"
+    "postinstall": "node scripts/install-lightningcss.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
@@ -17,6 +17,7 @@
     "date-fns": "^4.1.0",
     "grapesjs": "^0.22.13",
     "jszip": "^3.10.1",
+    "lightningcss": "^1.30.1",
     "lucide-react": "^0.546.0",
     "next": "15.4.1",
     "react": "19.1.0",
@@ -41,5 +42,12 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "optionalDependencies": {
+    "lightningcss-linux-x64-gnu": "^1.30.1",
+    "lightningcss-linux-arm64-gnu": "^1.30.1",
+    "lightningcss-darwin-x64": "^1.30.1",
+    "lightningcss-darwin-arm64": "^1.30.1",
+    "lightningcss-win32-x64-msvc": "^1.30.1"
   }
 }
