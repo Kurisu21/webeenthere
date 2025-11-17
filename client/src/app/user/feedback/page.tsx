@@ -207,7 +207,7 @@ export default function FeedbackPage() {
                   </svg>
                 </div>
                 <p className="text-secondary">No feedback submitted yet</p>
-                <p className="text-gray-500 text-sm mt-2">Your feedback history will appear here</p>
+                <p className="text-secondary text-sm mt-2">Your feedback history will appear here</p>
               </div>
             ) : (
               <div className="space-y-4">

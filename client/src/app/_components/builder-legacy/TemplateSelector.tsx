@@ -329,7 +329,7 @@ const TemplateCard = memo(({ template, onSelect, onPreview, isFeatured }: Templa
             {template.name.toLowerCase().replace(/\s+/g, '-')}.webeenthere.com
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-900 border border-app rounded-b-lg overflow-hidden shadow-inner relative" style={{ aspectRatio: '16/9', height: 'auto', minHeight: '180px' }}>
+        <div className="bg-white dark:bg-gray-900 border-x border-b border-app rounded-b-lg overflow-hidden shadow-inner relative" style={{ aspectRatio: '16/9', height: 'auto', minHeight: '180px' }}>
           {template.source_website_id ? (
             <div className="w-full h-full relative flex items-center justify-center" style={{ minHeight: '180px' }}>
               <WebsitePreviewImage

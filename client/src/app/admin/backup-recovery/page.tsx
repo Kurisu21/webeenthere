@@ -242,8 +242,8 @@ export default function BackupRecoveryPage() {
           <div className="p-6">
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">Backup & Recovery</h1>
-              <p className="text-gray-400">Manage system backups and recovery procedures</p>
+              <h1 className="text-3xl font-bold text-primary mb-2">Backup & Recovery</h1>
+              <p className="text-secondary">Manage system backups and recovery procedures</p>
             </div>
 
             {/* Success/Error Messages */}
@@ -273,20 +273,20 @@ export default function BackupRecoveryPage() {
             <BackupStats stats={stats} className="mb-8" />
 
             {/* Create Backup Form */}
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg border border-gray-700 p-6 mb-8">
-              <h2 className="text-xl font-semibold text-white mb-6">Create New Backup</h2>
+            <div className="bg-surface-elevated rounded-lg border border-app p-6 mb-8">
+              <h2 className="text-xl font-semibold text-primary mb-6">Create New Backup</h2>
               
               <form onSubmit={handleCreateBackup} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Backup Type */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Backup Type
                     </label>
                     <select
                       value={backupForm.type}
                       onChange={(e) => setBackupForm(prev => ({ ...prev, type: e.target.value as any }))}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     >
                       <option value="full">Full Backup (Database + Files)</option>
                       <option value="database">Database Only</option>
@@ -297,7 +297,7 @@ export default function BackupRecoveryPage() {
 
                   {/* Description */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Description (Optional)
                     </label>
                     <input
@@ -305,7 +305,7 @@ export default function BackupRecoveryPage() {
                       value={backupForm.description}
                       onChange={(e) => setBackupForm(prev => ({ ...prev, description: e.target.value }))}
                       placeholder="Brief description of this backup"
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -318,16 +318,16 @@ export default function BackupRecoveryPage() {
                       id="encrypt"
                       checked={backupForm.encrypt}
                       onChange={(e) => setBackupForm(prev => ({ ...prev, encrypt: e.target.checked }))}
-                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-600 rounded bg-gray-700"
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-app rounded bg-input"
                     />
-                    <label htmlFor="encrypt" className="ml-2 text-sm text-gray-300">
+                    <label htmlFor="encrypt" className="ml-2 text-sm text-secondary">
                       Encrypt backup with password
                     </label>
                   </div>
 
                   {backupForm.encrypt && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-secondary mb-2">
                         Encryption Password
                       </label>
                       <input
@@ -335,7 +335,7 @@ export default function BackupRecoveryPage() {
                         value={backupForm.password}
                         onChange={(e) => setBackupForm(prev => ({ ...prev, password: e.target.value }))}
                         placeholder="Enter password for encryption"
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
                     </div>
                   )}

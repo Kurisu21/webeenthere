@@ -58,7 +58,7 @@ export default function AdminFeedbackPage() {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                <p className="text-white">Loading feedback...</p>
+                <p className="text-primary">Loading feedback...</p>
               </div>
             </div>
           ) : error ? (
@@ -69,8 +69,8 @@ export default function AdminFeedbackPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
                 </div>
-                <p className="text-white text-lg font-medium mb-2">Error Loading Feedback</p>
-                <p className="text-gray-400">{error}</p>
+                <p className="text-primary text-lg font-medium mb-2">Error Loading Feedback</p>
+                <p className="text-secondary">{error}</p>
               </div>
             </div>
           ) : (
@@ -78,17 +78,17 @@ export default function AdminFeedbackPage() {
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-white">Feedback Management</h1>
+                <h1 className="text-3xl font-bold text-primary">Feedback Management</h1>
                 <div className="flex items-center space-x-4">
-                  <span className="text-sm text-gray-400">Last updated:</span>
-                  <span className="text-sm text-gray-300">{new Date().toLocaleTimeString()}</span>
+                  <span className="text-sm text-secondary">Last updated:</span>
+                  <span className="text-sm text-secondary">{new Date().toLocaleTimeString()}</span>
                 </div>
               </div>
             </div>
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,12 +97,12 @@ export default function AdminFeedbackPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-white mb-2">{stats?.total || 0}</p>
-                  <p className="text-gray-400 text-sm">Total Feedback</p>
+                  <p className="text-3xl font-bold text-primary mb-2">{stats?.total || 0}</p>
+                  <p className="text-secondary text-sm">Total Feedback</p>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,12 +111,12 @@ export default function AdminFeedbackPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-white mb-2">{stats?.open || 0}</p>
-                  <p className="text-gray-400 text-sm">Open</p>
+                  <p className="text-3xl font-bold text-primary mb-2">{stats?.open || 0}</p>
+                  <p className="text-secondary text-sm">Open</p>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,12 +125,12 @@ export default function AdminFeedbackPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-white mb-2">{stats?.closed || 0}</p>
-                  <p className="text-gray-400 text-sm">Closed</p>
+                  <p className="text-3xl font-bold text-primary mb-2">{stats?.closed || 0}</p>
+                  <p className="text-secondary text-sm">Closed</p>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,22 +139,22 @@ export default function AdminFeedbackPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-white mb-2">{stats?.averageResponseTime || 0}h</p>
-                  <p className="text-gray-400 text-sm">Avg Response Time</p>
+                  <p className="text-3xl font-bold text-primary mb-2">{stats?.averageResponseTime || 0}h</p>
+                  <p className="text-secondary text-sm">Avg Response Time</p>
                 </div>
               </div>
             </div>
 
             {/* Tabs */}
             <div className="mb-6">
-              <div className="border-b border-gray-700">
+              <div className="border-b border-app">
                 <nav className="-mb-px flex space-x-8">
                   <button
                     onClick={() => setActiveTab('overview')}
                     className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'overview'
                         ? 'border-purple-500 text-purple-400'
-                        : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+                        : 'border-transparent text-secondary hover:text-primary hover:border-app'
                     }`}
                   >
                     Overview
@@ -164,7 +164,7 @@ export default function AdminFeedbackPage() {
                     className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'feedback'
                         ? 'border-purple-500 text-purple-400'
-                        : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+                        : 'border-transparent text-secondary hover:text-primary hover:border-app'
                     }`}
                   >
                     Feedback List
@@ -187,7 +187,7 @@ export default function AdminFeedbackPage() {
 
             {/* Quick Actions */}
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-gray-700 p-6 hover:border-blue-500/50 transition-all duration-300 shadow-lg hover:shadow-xl group cursor-pointer">
+              <div className="bg-surface-elevated rounded-xl border border-app p-6 hover:border-blue-500/50 transition-all duration-300 shadow-lg hover:shadow-xl group cursor-pointer">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
                     <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,13 +195,13 @@ export default function AdminFeedbackPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-white font-medium group-hover:text-blue-400 transition-colors">Assign Feedback</h3>
-                    <p className="text-gray-400 text-sm">Assign feedback to team members</p>
+                    <h3 className="text-primary font-medium group-hover:text-blue-400 transition-colors">Assign Feedback</h3>
+                    <p className="text-secondary text-sm">Assign feedback to team members</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-gray-700 p-6 hover:border-purple-500/50 transition-all duration-300 shadow-lg hover:shadow-xl group cursor-pointer">
+              <div className="bg-surface-elevated rounded-xl border border-app p-6 hover:border-purple-500/50 transition-all duration-300 shadow-lg hover:shadow-xl group cursor-pointer">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
                     <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,13 +209,13 @@ export default function AdminFeedbackPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-white font-medium group-hover:text-purple-400 transition-colors">Bulk Actions</h3>
-                    <p className="text-gray-400 text-sm">Process multiple feedback items</p>
+                    <h3 className="text-primary font-medium group-hover:text-purple-400 transition-colors">Bulk Actions</h3>
+                    <p className="text-secondary text-sm">Process multiple feedback items</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-gray-700 p-6 hover:border-green-500/50 transition-all duration-300 shadow-lg hover:shadow-xl group cursor-pointer">
+              <div className="bg-surface-elevated rounded-xl border border-app p-6 hover:border-green-500/50 transition-all duration-300 shadow-lg hover:shadow-xl group cursor-pointer">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
                     <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,8 +223,8 @@ export default function AdminFeedbackPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-white font-medium group-hover:text-green-400 transition-colors">Export Reports</h3>
-                    <p className="text-gray-400 text-sm">Generate feedback reports</p>
+                    <h3 className="text-primary font-medium group-hover:text-green-400 transition-colors">Export Reports</h3>
+                    <p className="text-secondary text-sm">Generate feedback reports</p>
                   </div>
                 </div>
               </div>

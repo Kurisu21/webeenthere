@@ -24,46 +24,92 @@ export const formatActivityDetails = (action: string, details: any): string => {
   try {
     switch (action) {
       case 'website_created':
-        return `Created website "${parsedDetails.title || 'Untitled'}"${parsedDetails.slug ? ` (${parsedDetails.slug})` : ''}${parsedDetails.template_id ? ` using template ${parsedDetails.template_id}` : ''}`;
+        const createdTitle = parsedDetails.title || 'Untitled';
+        const createdSlug = parsedDetails.slug ? ` (${parsedDetails.slug})` : '';
+        return `Created website "${createdTitle}"${createdSlug}`;
       
       case 'website_updated':
+        const updatedTitle = parsedDetails.title || 'Untitled';
         const fields = parsedDetails.fields_updated || [];
-        return `Updated website "${parsedDetails.title || 'Untitled'}"${fields.length > 0 ? ` - Changed: ${fields.join(', ')}` : ''}`;
+        if (fields.length > 0) {
+          const fieldLabels = fields.map(field => {
+            // Convert field names to readable labels
+            const fieldMap: Record<string, string> = {
+              'html_content': 'HTML Content',
+              'css_content': 'CSS Content',
+              'is_published': 'Publish Status',
+              'preview_url': 'Preview',
+              'title': 'Title',
+              'slug': 'URL Slug'
+            };
+            return fieldMap[field] || field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          });
+          return `Updated website "${updatedTitle}" - Modified: ${fieldLabels.join(', ')}`;
+        }
+        return `Updated website "${updatedTitle}"`;
       
       case 'website_published':
-        return `Published website "${parsedDetails.title || 'Untitled'}"${parsedDetails.url ? ` → ${parsedDetails.url}` : ''}`;
+        const publishedTitle = parsedDetails.title || 'Untitled';
+        return parsedDetails.url 
+          ? `Published website "${publishedTitle}" → ${parsedDetails.url}`
+          : `Published website "${publishedTitle}"`;
       
       case 'website_unpublished':
         return `Unpublished website "${parsedDetails.title || 'Untitled'}"`;
       
       case 'website_deleted':
-        return `Deleted website "${parsedDetails.title || 'Untitled'}"${parsedDetails.was_published ? ' (was published)' : ' (was draft)'}`;
+        const deletedTitle = parsedDetails.title || 'Untitled';
+        return `Deleted website "${deletedTitle}"${parsedDetails.was_published ? ' (was published)' : ' (was draft)'}`;
       
       case 'profile_updated':
         const changedFields = parsedDetails.fields_changed || [];
-        let profileDetails = `Updated profile`;
-        if (changedFields.includes('username') && parsedDetails.username) {
-          profileDetails += ` - Username: ${parsedDetails.username}`;
+        if (changedFields.length === 0) {
+          return 'Updated profile information';
         }
-        if (changedFields.includes('email') && parsedDetails.email) {
-          profileDetails += ` - Email: ${parsedDetails.email}`;
-        }
-        if (changedFields.includes('theme_mode') && parsedDetails.theme_mode) {
-          profileDetails += ` - Theme: ${parsedDetails.theme_mode}`;
-        }
-        return profileDetails;
+        const fieldDescriptions = changedFields.map(field => {
+          if (field === 'username' && parsedDetails.username) {
+            return `Username: ${parsedDetails.username}`;
+          }
+          if (field === 'email' && parsedDetails.email) {
+            return `Email: ${parsedDetails.email}`;
+          }
+          if (field === 'theme_mode' && parsedDetails.theme_mode) {
+            return `Theme: ${parsedDetails.theme_mode}`;
+          }
+          return field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }).filter(Boolean);
+        return `Updated profile - ${fieldDescriptions.join(', ')}`;
       
       case 'password_changed':
-        return `Changed password${parsedDetails.method ? ` via ${parsedDetails.method.replace('_', ' ')}` : ''}`;
+        return parsedDetails.method 
+          ? `Changed password via ${parsedDetails.method.replace('_', ' ')}`
+          : 'Changed password';
       
       case 'user_login':
-        return `Logged in${parsedDetails.login_method ? ` via ${parsedDetails.login_method}` : ''}`;
+      case 'admin_login':
+        return parsedDetails.login_method 
+          ? `Logged in via ${parsedDetails.login_method}`
+          : 'Logged in successfully';
+      
+      case 'oauth_login':
+        const provider = parsedDetails.provider || 'OAuth';
+        // Format provider name nicely
+        const providerName = provider === 'google-oauth2' ? 'Google' : 
+                            provider === 'github' ? 'GitHub' :
+                            provider === 'facebook' ? 'Facebook' :
+                            provider.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const email = parsedDetails.email ? ` (${parsedDetails.email})` : '';
+        const username = parsedDetails.username ? ` as ${parsedDetails.username}` : '';
+        return `OAuth login via ${providerName}${email}${username}`;
       
       case 'user_logout':
+      case 'oauth_logout':
         return 'Logged out';
       
       case 'failed_login_attempt':
-        return `Failed login attempt${parsedDetails.email ? ` for ${parsedDetails.email}` : ''}${parsedDetails.reason ? ` - ${parsedDetails.reason}` : ''}`;
+        const attemptEmail = parsedDetails.email ? ` for ${parsedDetails.email}` : '';
+        const reason = parsedDetails.reason ? ` - ${parsedDetails.reason}` : '';
+        return `Failed login attempt${attemptEmail}${reason}`;
       
       case 'template_selected':
         return `Selected template${parsedDetails.template_name ? ` "${parsedDetails.template_name}"` : ''}${parsedDetails.template_id ? ` (ID: ${parsedDetails.template_id})` : ''}`;

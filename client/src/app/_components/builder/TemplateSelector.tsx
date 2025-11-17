@@ -146,66 +146,64 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
   }
 
   return (
-    <div className="p-4 md:p-6">
-      {/* Header */}
-      <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-primary mb-2">Choose Your Template</h1>
-        <p className="text-secondary text-sm md:text-base">Select a template to get started or build from scratch</p>
-      </div>
+    <div className="w-full">
+      {/* Compact Header with Search and Tabs */}
+      <div className="sticky top-0 z-10 bg-[var(--background)]/95 backdrop-blur-md border-b border-gray-800/50 mb-6 pb-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">Choose Your Template</h1>
+            <p className="text-gray-400 text-sm">Select a template to get started or build from scratch</p>
+          </div>
+          
+          {/* Search Bar - Compact */}
+          <div className="relative w-full md:w-80">
+            <input
+              type="text"
+              placeholder="Search templates..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="w-full px-4 py-2.5 pl-10 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 text-sm transition-all duration-300"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
 
-      {/* Tab Navigation */}
-      <div className="mb-6">
-        <div className="flex space-x-1 bg-surface-elevated p-1 rounded-lg">
+        {/* Tab Navigation - Compact */}
+        <div className="flex space-x-2 mb-4">
           <button
             onClick={() => setActiveTab('official')}
-            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               activeTab === 'official'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg'
-                : 'text-secondary hover:text-primary hover:bg-surface-elevated'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
+                : 'bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 border border-gray-700/50'
             }`}
           >
             Official Templates
           </button>
           <button
             onClick={() => setActiveTab('community')}
-            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               activeTab === 'community'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg'
-                : 'text-secondary hover:text-primary hover:bg-surface-elevated'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
+                : 'bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 border border-gray-700/50'
             }`}
           >
             Community Templates
           </button>
         </div>
-      </div>
 
-      {/* Search Bar */}
-      <div className="mb-6">
-        <div className="relative max-w-full md:max-w-md">
-          <input
-            type="text"
-            placeholder="Search templates..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="w-full px-4 py-3 pl-10 bg-surface-elevated/50 backdrop-blur-sm border border-app rounded-lg text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent text-sm md:text-base transition-all duration-300 hover:shadow-md hover:shadow-blue-500/20 focus:shadow-lg focus:shadow-blue-500/30"
-          />
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg className="h-4 w-4 md:h-5 md:w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {/* Category Filter */}
-      <div className="mb-6 md:mb-8">
-        <div className="flex flex-wrap gap-2">
+        {/* Category Filter - Horizontal Scroll */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           <button
             onClick={() => handleCategoryChange('all')}
-            className={`px-3 md:px-4 py-2 rounded-lg font-medium transition-all duration-300 text-sm md:text-base ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 text-sm whitespace-nowrap flex-shrink-0 ${
               selectedCategory === 'all'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/20'
-                : 'bg-gray-700/50 backdrop-blur-sm text-gray-300 hover:bg-gray-600/50 border border-gray-600/30'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
+                : 'bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 border border-gray-700/50'
             }`}
           >
             All Templates
@@ -214,10 +212,10 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
             <button
               key={category.id}
               onClick={() => handleCategoryChange(category.id)}
-              className={`px-3 md:px-4 py-2 rounded-lg font-medium transition-all duration-300 text-sm md:text-base ${
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 text-sm whitespace-nowrap flex-shrink-0 ${
                 selectedCategory === category.id
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/20'
-                  : 'bg-gray-700/50 backdrop-blur-sm text-gray-300 hover:bg-gray-600/50 border border-gray-600/30'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
+                  : 'bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 border border-gray-700/50'
               }`}
             >
               {category.name}
@@ -226,16 +224,23 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
         </div>
       </div>
 
-      {/* Featured Templates */}
+      {/* Featured Templates - Hero Section */}
       {selectedCategory === 'all' && !searchQuery && featuredTemplates.length > 0 && (
-        <div className="mb-6 md:mb-8">
-          <div className="flex items-center mb-4">
-            <h2 className="text-lg md:text-xl font-semibold text-white">Featured Templates</h2>
-            <div className="ml-3 px-2 py-1 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-full">
-              <span className="text-xs font-medium text-white">Premium</span>
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <h2 className="text-xl font-bold text-white">Featured Templates</h2>
+              <span className="px-2.5 py-1 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-full text-xs font-medium text-yellow-400">
+                Premium
+              </span>
             </div>
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {featuredTemplates.map((template) => (
               <TemplateCard
                 key={template.id}
@@ -249,49 +254,60 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
         </div>
       )}
 
-      {/* All Templates */}
-      <div className="mb-6 md:mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg md:text-xl font-semibold text-white">
+      {/* All Templates - Main Grid */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-white">
             {selectedCategory === 'all' ? 'All Templates' : `${TEMPLATE_CATEGORIES.find(c => c.id === selectedCategory)?.name} Templates`}
           </h2>
-          <span className="text-blue-400 text-sm font-medium bg-blue-500/10 px-3 py-1 rounded-full">
-            {filteredTemplates.length} templates
+          <span className="text-sm text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-700/50">
+            {filteredTemplates.length} {filteredTemplates.length === 1 ? 'template' : 'templates'}
           </span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredTemplates.map((template) => (
-            <TemplateCard
-              key={template.id}
-              template={template}
-              onSelect={() => onTemplateSelect(template)}
-              onPreview={() => handleTemplatePreview(template)}
-              isFeatured={template.is_featured}
-            />
-          ))}
-        </div>
+        
+        {filteredTemplates.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="w-20 h-20 mx-auto mb-4 bg-gray-800/50 rounded-full flex items-center justify-center">
+              <svg className="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">No templates found</h3>
+            <p className="text-gray-400 text-sm">Try adjusting your search or filter criteria</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredTemplates.map((template) => (
+              <TemplateCard
+                key={template.id}
+                template={template}
+                onSelect={() => onTemplateSelect(template)}
+                onPreview={() => handleTemplatePreview(template)}
+                isFeatured={template.is_featured}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Start from Scratch Option */}
-      <div className="border-t border-blue-500/30 pt-6 md:pt-8">
-        <div className="text-center">
-          <div className="mb-4">
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-blue-600 to-indigo-700 rounded-full flex items-center justify-center mb-3">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            </div>
-            <h3 className="text-lg md:text-xl font-semibold text-primary mb-2">Don't see what you're looking for?</h3>
-            <p className="text-secondary mb-6 text-sm md:text-base">Start with a blank canvas and build your website from scratch</p>
+      <div className="border-t border-gray-800/50 pt-8 mt-12">
+        <div className="text-center max-w-md mx-auto">
+          <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 rounded-2xl flex items-center justify-center border border-blue-500/30">
+            <svg className="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
           </div>
+          <h3 className="text-xl font-bold text-white mb-2">Start from Scratch</h3>
+          <p className="text-gray-400 mb-6 text-sm">Build your website with complete creative freedom</p>
           <button
             onClick={onStartFromScratch}
-            className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-8 py-4 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg shadow-blue-500/20 text-sm md:text-base"
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-blue-500/20 active:scale-[0.98]"
           >
             <svg className="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Start from Scratch
+            Create Blank Website
           </button>
         </div>
       </div>
@@ -316,57 +332,123 @@ interface TemplateCardProps {
 
 const TemplateCard = memo(({ template, onSelect, onPreview, isFeatured }: TemplateCardProps) => {
   return (
-    <div className="group cursor-pointer bg-gray-800/50 backdrop-blur-sm border border-blue-500/30 rounded-xl overflow-hidden hover:border-blue-500/60 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/20 transform hover:scale-105">
-      {/* Template Preview */}
-      <div className="relative h-48 overflow-hidden">
+    <div 
+      className="group cursor-pointer bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden hover:border-blue-500/60 transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/20 transform hover:scale-[1.02] hover:-translate-y-1"
+      onClick={onSelect}
+    >
+      {/* Template Preview - Larger */}
+      <div className="relative h-56 overflow-hidden bg-gray-900">
         <TemplatePreview template={template} onClick={onSelect} />
         
-        {/* Preview Button Overlay */}
-        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        
+        {/* Action Buttons Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect();
+            }}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all duration-300 hover:from-blue-700 hover:to-indigo-700 transform translate-y-4 group-hover:translate-y-0 shadow-xl shadow-blue-500/30 hover:scale-105"
+          >
+            <svg className="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Use Template
+          </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
               onPreview();
             }}
-            className="opacity-0 group-hover:opacity-100 bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 hover:from-blue-700 hover:to-indigo-800 transform translate-y-2 group-hover:translate-y-0 shadow-lg"
+            className="bg-white/10 backdrop-blur-md text-white px-5 py-2.5 rounded-xl font-medium transition-all duration-300 hover:bg-white/20 border border-white/20 transform translate-y-4 group-hover:translate-y-0 shadow-xl"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
             Preview
           </button>
         </div>
+
+        {/* Featured Badge */}
+        {isFeatured && (
+          <div className="absolute top-3 right-3 z-10">
+            <div className="flex items-center gap-1.5 bg-gradient-to-r from-yellow-500/90 to-orange-500/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+              <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <span className="text-xs font-bold text-white">Featured</span>
+            </div>
+          </div>
+        )}
+
+        {/* Category Badge */}
+        <div className="absolute top-3 left-3 z-10">
+          <span className="bg-gray-900/80 backdrop-blur-sm text-blue-400 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-500/30">
+            {TEMPLATE_CATEGORIES.find(c => c.id === template.category)?.name || template.category}
+          </span>
+        </div>
       </div>
 
       {/* Template Info */}
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-white text-lg">{template.name}</h3>
-          <div className="flex items-center space-x-2">
-            {isFeatured && (
-              <span className="text-xs text-yellow-400 bg-gradient-to-r from-yellow-400/20 to-yellow-500/20 px-3 py-1 rounded-full font-medium">
-                Featured
-              </span>
-            )}
-            <span className="text-xs text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full font-medium">
-              {TEMPLATE_CATEGORIES.find(c => c.id === template.category)?.name || template.category}
-            </span>
+      <div className="p-5 bg-gradient-to-br from-gray-800/50 to-gray-900/50">
+        <div className="mb-3">
+          <h3 className="font-bold text-white text-lg mb-1.5 line-clamp-1">{template.name}</h3>
+          <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed">{template.description}</p>
+        </div>
+        
+        {/* Template Details */}
+        <div className="grid grid-cols-2 gap-3 mb-3 pt-3 border-t border-gray-700/50">
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-xs text-gray-500">Category:</span>
+              <span className="text-xs text-gray-400 font-medium capitalize">{template.category}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs text-gray-500">Type:</span>
+              <span className="text-xs text-gray-400 font-medium">{template.is_community ? 'Community' : 'Official'}</span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-xs text-gray-500">Featured:</span>
+              <span className="text-xs text-gray-400 font-medium">{template.is_featured ? 'Yes' : 'No'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs text-gray-500">Status:</span>
+              <span className="text-xs text-gray-400 font-medium">{template.is_active ? 'Active' : 'Inactive'}</span>
+            </div>
           </div>
         </div>
-        <p className="text-sm text-gray-300 line-clamp-2 mb-3 leading-relaxed">{template.description}</p>
+
+        {/* Content Info */}
+        <div className="grid grid-cols-2 gap-3 mb-3 pt-3 border-t border-gray-700/50">
+          <div className="flex justify-between">
+            <span className="text-xs text-gray-500">HTML:</span>
+            <span className="text-xs text-gray-400 font-medium">{template.html_base ? `${template.html_base.length} chars` : 'None'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-xs text-gray-500">CSS:</span>
+            <span className="text-xs text-gray-400 font-medium">{template.css_base ? `${template.css_base.length} chars` : 'None'}</span>
+          </div>
+        </div>
         
-        {/* Template Stats */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span className="text-xs text-blue-400 font-medium">
+        {/* Template Footer */}
+        <div className="flex items-center justify-between pt-3 border-t border-gray-700/50">
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${template.is_community ? 'bg-green-500' : 'bg-blue-500'}`}></div>
+            <span className="text-xs text-gray-400 font-medium">
               {template.is_community ? 'Community' : 'Official'}
             </span>
           </div>
           {template.is_community && template.creator_username && (
-            <div className="text-xs text-gray-400">
-              by {template.creator_username}
+            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span>{template.creator_username}</span>
             </div>
           )}
         </div>

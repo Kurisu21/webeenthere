@@ -130,13 +130,6 @@ const DashboardSidebar = memo(() => {
   const pathname = usePathname();
   const { isCollapsed, toggleSidebar } = useSidebar();
 
-  // Placeholder user data (replace with actual user data when available)
-  const currentUser = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    avatar: null
-  };
-
   return (
     <aside className={`
       fixed left-0 top-0 z-20 bg-surface text-primary flex flex-col py-4 md:py-8 px-4 md:min-h-screen border-r-0 md:border-r-4 border-app shadow-2xl transition-all duration-300 ease-in-out
@@ -227,32 +220,6 @@ const DashboardSidebar = memo(() => {
           ))}
         </nav>
       </div>
-      
-      {/* Bottom User Profile */}
-      {!isCollapsed && (
-        <div className="mt-auto pt-4 border-t border-app hidden md:block">
-          <div className="bg-surface-elevated border border-app rounded-xl p-3 shadow-lg">
-            <div className="flex items-center space-x-3">
-              {/* Avatar */}
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-sm">
-                  {currentUser.name.split(' ').map(n => n[0]).join('')}
-                </span>
-              </div>
-              
-              {/* User Info */}
-              <div className="flex-1 min-w-0">
-                <h3 className="text-primary font-semibold text-sm truncate">
-                  {currentUser.name}
-                </h3>
-                <p className="text-secondary text-xs truncate">
-                  {currentUser.email}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </aside>
   );
 });

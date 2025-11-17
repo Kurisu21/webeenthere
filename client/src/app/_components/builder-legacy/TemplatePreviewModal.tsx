@@ -38,10 +38,10 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,39 +49,39 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
               </svg>
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{template.name}</h2>
-              <p className="text-gray-600">{template.description}</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{template.name}</h2>
+              <p className="text-gray-600 dark:text-gray-400">{template.description}</p>
               {template.is_community && template.creator_username && (
-                <p className="text-sm text-blue-600">by {template.creator_username}</p>
+                <p className="text-sm text-blue-600 dark:text-blue-400">by {template.creator_username}</p>
               )}
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl transition-colors"
           >
             ×
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-200 dark:border-gray-700">
           <button
             onClick={() => setActiveTab('preview')}
-            className={`px-6 py-3 font-medium ${
+            className={`px-6 py-3 font-medium transition-colors ${
               activeTab === 'preview'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
           >
             Preview
           </button>
           <button
             onClick={() => setActiveTab('elements')}
-            className={`px-6 py-3 font-medium ${
+            className={`px-6 py-3 font-medium transition-colors ${
               activeTab === 'elements'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
           >
             Details
@@ -89,7 +89,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
         </div>
 
         {/* Modal Content */}
-        <div className="p-6 overflow-y-auto max-h-[60vh]">
+        <div className="p-6 overflow-y-auto max-h-[60vh] bg-white dark:bg-gray-900">
           {activeTab === 'preview' ? (
             <div className="space-y-6">
               {/* Template Preview - Use WebsitePreviewImage if source_website_id exists */}
@@ -144,64 +144,19 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
                   </div>
                 </div>
               </div>
-
-              {/* Template Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Template Details</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Category:</span>
-                      <span className="font-medium capitalize">{template.category}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Type:</span>
-                      <span className="font-medium">{template.is_community ? 'Community' : 'Official'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Featured:</span>
-                      <span className="font-medium">{template.is_featured ? 'Yes' : 'No'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Status:</span>
-                      <span className="font-medium">{template.is_active ? 'Active' : 'Inactive'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Content</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">HTML:</span>
-                      <span className="font-medium">{template.html_base ? `${template.html_base.length} chars` : 'None'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">CSS:</span>
-                      <span className="font-medium">{template.css_base ? `${template.css_base.length} chars` : 'None'}</span>
-                    </div>
-                    {template.is_community && template.creator_username && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Creator:</span>
-                        <span className="font-medium text-blue-600">{template.creator_username}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
             </div>
           ) : (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Template Information</h3>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-2">Description</h4>
-                <p className="text-gray-700">{template.description}</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Template Information</h3>
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Description</h4>
+                <p className="text-gray-700 dark:text-gray-300">{template.description}</p>
               </div>
               
               {template.html_base && (
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">HTML Content</h4>
-                  <pre className="text-sm text-gray-700 bg-white p-3 rounded border overflow-x-auto">
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">HTML Content</h4>
+                  <pre className="text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 p-3 rounded border dark:border-gray-700 overflow-x-auto">
                     {template.html_base.substring(0, 500)}
                     {template.html_base.length > 500 && '...'}
                   </pre>
@@ -209,9 +164,9 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
               )}
               
               {template.css_base && (
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">CSS Content</h4>
-                  <pre className="text-sm text-gray-700 bg-white p-3 rounded border overflow-x-auto">
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">CSS Content</h4>
+                  <pre className="text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 p-3 rounded border dark:border-gray-700 overflow-x-auto">
                     {template.css_base.substring(0, 500)}
                     {template.css_base.length > 500 && '...'}
                   </pre>
@@ -222,20 +177,20 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+        <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="text-sm text-gray-600 dark:text-gray-400">
             {template.source_website_id ? 'Template preview from website' : 'Template preview'}
           </div>
           <div className="flex space-x-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={() => onSelect(template)}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="px-6 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-medium"
             >
               Use This Template
             </button>

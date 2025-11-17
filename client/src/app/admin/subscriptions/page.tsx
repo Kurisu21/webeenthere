@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardHeader from '../../_components/layout/DashboardHeader';
 import AdminSidebar from '../../_components/layout/AdminSidebar';
 import MainContentWrapper from '../../_components/layout/MainContentWrapper';
@@ -22,11 +22,7 @@ export default function AdminSubscriptionsPage() {
   const [isAssigning, setIsAssigning] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchSubscriptions();
-  }, [currentPage, searchTerm, planTypeFilter, statusFilter]);
-
-  const fetchSubscriptions = async () => {
+  const fetchSubscriptions = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -47,7 +43,11 @@ export default function AdminSubscriptionsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, planTypeFilter, statusFilter]);
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, [fetchSubscriptions]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

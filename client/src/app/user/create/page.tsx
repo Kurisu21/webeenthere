@@ -82,10 +82,31 @@ export default function CreateWebsitePage() {
       // Enforce plan limit before attempting creation
       if (!ensureCanCreate()) return;
 
+      // Generate a unique slug from template name
+      // Sanitize template name: replace special chars, spaces with hyphens, add timestamp
+      const sanitizeSlug = (text: string) => {
+        return text
+          .toLowerCase()
+          .trim()
+          .replace(/&/g, 'and')
+          .replace(/\+/g, 'plus')
+          .replace(/@/g, 'at')
+          .replace(/#/g, 'hash')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/[^a-z0-9-]/g, '')
+          .replace(/^-+|-+$/g, '')
+          .substring(0, 50); // Limit length
+      };
+
+      const baseSlug = sanitizeSlug(template.name);
+      const timestamp = Date.now();
+      const uniqueSlug = baseSlug ? `${baseSlug}-${timestamp}` : `website-${timestamp}`;
+
       // Create website in database immediately
       const websiteData = {
         title: `${template.name} Website`,
-        slug: `${template.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+        slug: uniqueSlug,
         template_id: template.id,
         html_content: '',
         css_content: '',

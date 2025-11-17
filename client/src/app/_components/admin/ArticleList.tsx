@@ -113,7 +113,7 @@ export default function ArticleList({ onEdit, onDelete, refreshTrigger }: Articl
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-white">Loading articles...</p>
+          <p className="text-primary">Loading articles...</p>
         </div>
       </div>
     );
@@ -128,8 +128,8 @@ export default function ArticleList({ onEdit, onDelete, refreshTrigger }: Articl
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <p className="text-white text-lg font-medium mb-2">Error Loading Articles</p>
-          <p className="text-gray-400">{error}</p>
+          <p className="text-primary text-lg font-medium mb-2">Error Loading Articles</p>
+          <p className="text-secondary">{error}</p>
         </div>
       </div>
     );
@@ -145,7 +145,7 @@ export default function ArticleList({ onEdit, onDelete, refreshTrigger }: Articl
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             placeholder="Search articles..."
           />
         </div>
@@ -153,7 +153,7 @@ export default function ArticleList({ onEdit, onDelete, refreshTrigger }: Articl
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           >
             <option value="">All Categories</option>
             {categories.map(category => (
@@ -172,38 +172,38 @@ export default function ArticleList({ onEdit, onDelete, refreshTrigger }: Articl
       </div>
 
       {/* Articles Table */}
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+      <div className="bg-surface-elevated rounded-lg border border-app overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-800 border-b border-gray-700">
+            <thead className="bg-surface border-b border-app">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Title
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Category
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Views
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Rating
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-700">
+            <tbody className="divide-y divide-app">
               {articles?.articles?.map((article) => (
-                <tr key={article.id} className="hover:bg-gray-800/50 transition-colors">
+                <tr key={article.id} className="hover:bg-surface transition-colors">
                   <td className="px-6 py-4">
                     <div>
-                      <div className="text-white font-medium">{article.title}</div>
-                      <div className="text-gray-400 text-sm mt-1">
+                      <div className="text-primary font-medium">{article.title}</div>
+                      <div className="text-secondary text-sm mt-1">
                         {article.content.substring(0, 100)}...
                       </div>
                       {article.tags && Array.isArray(article.tags) && article.tags.length > 0 && (
@@ -217,16 +217,16 @@ export default function ArticleList({ onEdit, onDelete, refreshTrigger }: Articl
                             </span>
                           ))}
                           {article.tags.length > 3 && (
-                            <span className="text-gray-500 text-xs">+{article.tags.length - 3} more</span>
+                            <span className="text-secondary text-xs">+{article.tags.length - 3} more</span>
                           )}
                         </div>
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-300">
+                  <td className="px-6 py-4 text-secondary">
                     {categories.find(c => c.id === article.category)?.name || article.category}
                   </td>
-                  <td className="px-6 py-4 text-gray-300">
+                  <td className="px-6 py-4 text-secondary">
                     {article.views.toLocaleString()}
                   </td>
                   <td className="px-6 py-4">
@@ -234,13 +234,13 @@ export default function ArticleList({ onEdit, onDelete, refreshTrigger }: Articl
                       <span className="text-green-400 text-sm">
                         {article.helpful}
                       </span>
-                      <span className="text-gray-500 mx-1">/</span>
+                      <span className="text-secondary mx-1">/</span>
                       <span className="text-red-400 text-sm">
                         {article.notHelpful}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-400 text-sm">
+                  <td className="px-6 py-4 text-secondary text-sm">
                     {formatDate(article.createdAt)}
                   </td>
                   <td className="px-6 py-4">
@@ -273,12 +273,12 @@ export default function ArticleList({ onEdit, onDelete, refreshTrigger }: Articl
 
         {articles?.articles?.length === 0 && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <p className="text-gray-400">No articles found</p>
+            <p className="text-secondary">No articles found</p>
           </div>
         )}
       </div>
@@ -286,24 +286,24 @@ export default function ArticleList({ onEdit, onDelete, refreshTrigger }: Articl
       {/* Pagination */}
       {articles && articles.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <div className="text-gray-400 text-sm">
+          <div className="text-secondary text-sm">
             Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, articles.total)} of {articles.total} articles
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 text-white rounded-lg transition-colors"
+              className="px-3 py-2 bg-surface-elevated hover:bg-surface disabled:bg-surface-elevated disabled:text-secondary text-primary rounded-lg transition-colors"
             >
               Previous
             </button>
-            <span className="text-gray-300">
+            <span className="text-secondary">
               Page {currentPage} of {articles.totalPages}
             </span>
             <button
               onClick={() => setCurrentPage(prev => Math.min(articles.totalPages, prev + 1))}
               disabled={currentPage === articles.totalPages}
-              className="px-3 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 text-white rounded-lg transition-colors"
+              className="px-3 py-2 bg-surface-elevated hover:bg-surface disabled:bg-surface-elevated disabled:text-secondary text-primary rounded-lg transition-colors"
             >
               Next
             </button>

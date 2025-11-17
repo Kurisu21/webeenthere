@@ -20,6 +20,8 @@ export const UrlEditModal: React.FC<UrlEditModalProps> = ({
   const [slug, setSlug] = useState(currentSlug);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [availabilityStatus, setAvailabilityStatus] = useState<{ available: boolean; message: string } | null>(null);
 
   // Debug log to help identify if modal is rendering
   console.log('UrlEditModal rendering:', { isOpen, currentSlug, websiteTitle });
@@ -51,12 +53,46 @@ export const UrlEditModal: React.FC<UrlEditModalProps> = ({
     return null;
   };
 
-  const handleSlugChange = (value: string) => {
+  const handleSlugChange = async (value: string) => {
     const normalizedValue = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
     setSlug(normalizedValue);
     
     const validationError = validateSlug(normalizedValue);
     setError(validationError);
+    setAvailabilityStatus(null);
+
+    // Check availability if slug is valid and different from current
+    if (!validationError && normalizedValue && normalizedValue !== currentSlug) {
+      setIsCheckingAvailability(true);
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/websites/check-slug?slug=${encodeURIComponent(normalizedValue)}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        const data = await response.json();
+        
+        if (data.success) {
+          setAvailabilityStatus({
+            available: data.available,
+            message: data.message
+          });
+          if (!data.available) {
+            setError(data.message || 'This URL is already taken');
+          }
+        }
+      } catch (err) {
+        console.error('Error checking slug availability:', err);
+        // Don't show error to user, just silently fail
+      } finally {
+        setIsCheckingAvailability(false);
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -156,7 +192,15 @@ export const UrlEditModal: React.FC<UrlEditModalProps> = ({
                           placeholder="my-website"
                         />
                       </div>
-                      {error && (
+                      {isCheckingAvailability && (
+                        <p className="mt-1 text-sm text-secondary">Checking availability...</p>
+                      )}
+                      {availabilityStatus && !isCheckingAvailability && (
+                        <p className={`mt-1 text-sm ${availabilityStatus.available ? 'text-green-600' : 'text-red-600'}`}>
+                          {availabilityStatus.message}
+                        </p>
+                      )}
+                      {error && !availabilityStatus && (
                         <p className="mt-1 text-sm text-red-600">{error}</p>
                       )}
                     </div>
@@ -177,7 +221,7 @@ export const UrlEditModal: React.FC<UrlEditModalProps> = ({
               type="button"
               className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleSave}
-              disabled={isLoading || !!error || slug === currentSlug}
+              disabled={isLoading || !!error || slug === currentSlug || (availabilityStatus && !availabilityStatus.available)}
             >
               {isLoading ? (
                 <>

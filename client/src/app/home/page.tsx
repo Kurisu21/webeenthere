@@ -1,9 +1,56 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Background from '@/app/_components/layout/Background';
 import Link from 'next/link';
+import { homeApi, PublicStats } from '@/lib/homeApi';
 
 export default function Home() {
+  const [stats, setStats] = useState<PublicStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const data = await homeApi.getPublicStats();
+      if (data && typeof data === 'object') {
+        setStats(data);
+      } else {
+        throw new Error('Invalid data format');
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch stats:', error);
+      
+      // Provide more helpful error message
+      if (error?.isNetworkError || error?.message?.includes('Network error') || error?.message?.includes('Failed to fetch')) {
+        console.error('⚠️ Backend server is not running or not accessible.');
+        console.error('💡 Make sure:');
+        console.error('   1. Backend server is running (cd server && npm run dev)');
+        console.error('   2. XAMPP MySQL is running');
+        console.error('   3. Database connection is configured correctly');
+      }
+      
+      // Set default values if API fails
+      setStats({
+        totalWebsites: 0,
+        publishedWebsites: 0,
+        totalUsers: 0,
+        totalTemplates: 0
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M+`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K+`;
+    return num.toString();
+  };
+
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Header/Navigation */}
@@ -19,7 +66,7 @@ export default function Home() {
           
           {/* Social Icons - Right side, absolute positioned (Desktop only) */}
           <div className="absolute right-4 hidden md:flex space-x-4">
-            <a href="#" className="text-white hover:text-gray-300 transition-colors">
+            <a href="https://github.com/Kurisu21/webeenthere" target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-300 transition-colors">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
               </svg>
@@ -43,57 +90,94 @@ export default function Home() {
         <section className="min-h-screen flex flex-col items-center justify-center px-6 relative overflow-hidden bg-gray-900">
           {/* Moving Templates Background */}
           <div className="absolute inset-0 overflow-hidden">
-            {/* Template 1 - Moving from left to right */}
+            {/* Template 1 - Moving from left to right - Website Preview */}
             <div className="absolute top-20 left-[-200px] w-64 h-80 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-lg border border-blue-500/30 backdrop-blur-sm animate-slideRight">
               <div className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+                  <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
+                  <div className="w-3 h-3 bg-pink-400 rounded-full"></div>
+                </div>
                 <div className="w-full h-4 bg-gray-300/30 rounded mb-3"></div>
                 <div className="w-3/4 h-3 bg-gray-300/30 rounded mb-2"></div>
                 <div className="w-1/2 h-3 bg-gray-300/30 rounded mb-4"></div>
-                <div className="w-full h-20 bg-gray-300/30 rounded mb-3"></div>
+                <div className="w-full h-20 bg-gradient-to-br from-blue-500/30 to-purple-500/30 rounded mb-3 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
                 <div className="w-2/3 h-3 bg-gray-300/30 rounded"></div>
               </div>
             </div>
 
-            {/* Template 2 - Moving from right to left */}
+            {/* Template 2 - Moving from right to left - Website Builder */}
             <div className="absolute top-40 right-[-200px] w-64 h-80 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-lg border border-purple-500/30 backdrop-blur-sm animate-slideLeft">
               <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-8 h-2 bg-purple-400/50 rounded"></div>
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-white/30 rounded-full"></div>
+                    <div className="w-2 h-2 bg-white/30 rounded-full"></div>
+                    <div className="w-2 h-2 bg-white/30 rounded-full"></div>
+                  </div>
+                </div>
                 <div className="w-full h-4 bg-gray-300/30 rounded mb-3"></div>
                 <div className="w-1/2 h-3 bg-gray-300/30 rounded mb-2"></div>
                 <div className="w-3/4 h-3 bg-gray-300/30 rounded mb-4"></div>
-                <div className="w-full h-16 bg-gray-300/30 rounded mb-3"></div>
+                <div className="w-full h-16 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded mb-3 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                  </svg>
+                </div>
                 <div className="w-1/2 h-3 bg-gray-300/30 rounded"></div>
               </div>
             </div>
 
-            {/* Template 3 - Floating up and down */}
+            {/* Template 3 - Floating up and down - Portfolio Site */}
             <div className="absolute bottom-20 left-1/4 w-56 h-72 bg-gradient-to-br from-green-600/20 to-blue-600/20 rounded-lg border border-green-500/30 backdrop-blur-sm animate-float">
               <div className="p-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-400/50 to-blue-400/50 rounded-full mx-auto mb-3 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
                 <div className="w-full h-3 bg-gray-300/30 rounded mb-3"></div>
                 <div className="w-2/3 h-3 bg-gray-300/30 rounded mb-2"></div>
                 <div className="w-full h-3 bg-gray-300/30 rounded mb-4"></div>
-                <div className="w-full h-12 bg-gray-300/30 rounded mb-3"></div>
-                <div className="w-1/2 h-3 bg-gray-300/30 rounded"></div>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div className="h-12 bg-gradient-to-br from-green-500/30 to-blue-500/30 rounded"></div>
+                  <div className="h-12 bg-gradient-to-br from-blue-500/30 to-green-500/30 rounded"></div>
+                </div>
+                <div className="w-1/2 h-3 bg-gray-300/30 rounded mx-auto"></div>
               </div>
             </div>
 
-            {/* Template 4 - Rotating slowly */}
+            {/* Template 4 - Rotating slowly - Business Site */}
             <div className="absolute top-1/2 right-1/4 w-48 h-64 bg-gradient-to-br from-yellow-600/20 to-orange-600/20 rounded-lg border border-yellow-500/30 backdrop-blur-sm animate-rotateSlow">
               <div className="p-4">
                 <div className="w-full h-4 bg-gray-300/30 rounded mb-3"></div>
                 <div className="w-1/2 h-3 bg-gray-300/30 rounded mb-2"></div>
                 <div className="w-3/4 h-3 bg-gray-300/30 rounded mb-4"></div>
-                <div className="w-full h-14 bg-gray-300/30 rounded mb-3"></div>
+                <div className="w-full h-14 bg-gradient-to-br from-yellow-500/30 to-orange-500/30 rounded mb-3 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
                 <div className="w-2/3 h-3 bg-gray-300/30 rounded"></div>
               </div>
             </div>
 
-            {/* Template 5 - Bouncing */}
+            {/* Template 5 - Bouncing - Landing Page */}
             <div className="absolute bottom-1/3 left-1/3 w-52 h-76 bg-gradient-to-br from-red-600/20 to-pink-600/20 rounded-lg border border-red-500/30 backdrop-blur-sm animate-bounce">
               <div className="p-4">
                 <div className="w-full h-3 bg-gray-300/30 rounded mb-3"></div>
                 <div className="w-3/4 h-3 bg-gray-300/30 rounded mb-2"></div>
                 <div className="w-1/2 h-3 bg-gray-300/30 rounded mb-4"></div>
-                <div className="w-full h-16 bg-gray-300/30 rounded mb-3"></div>
+                <div className="w-full h-16 bg-gradient-to-br from-red-500/30 to-pink-500/30 rounded mb-3 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
                 <div className="w-1/2 h-3 bg-gray-300/30 rounded"></div>
               </div>
             </div>
@@ -145,34 +229,55 @@ export default function Home() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            <div className="bg-gray-700 p-8 rounded-lg hover:bg-gray-600 transition-all duration-300 transform hover:scale-105">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-6">
+            <div className="bg-gray-700 p-8 rounded-lg hover:bg-gray-600 transition-all duration-300 transform hover:scale-105 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 rounded-full -mr-16 -mt-16"></div>
+              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-6 relative z-10">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-4">Drag & Drop Builder</h3>
-              <p className="text-gray-300">Intuitive drag-and-drop interface that makes website building effortless and fun.</p>
+              <h3 className="text-xl font-semibold text-white mb-4 relative z-10">Drag & Drop Builder</h3>
+              <p className="text-gray-300 relative z-10">Intuitive drag-and-drop interface powered by GrapesJS that makes website building effortless and fun. Build responsive websites without coding.</p>
+              <div className="mt-4 flex items-center gap-2 text-blue-400 text-sm relative z-10">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Real-time Preview</span>
+              </div>
             </div>
             
-            <div className="bg-gray-700 p-8 rounded-lg hover:bg-gray-600 transition-all duration-300 transform hover:scale-105">
-              <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mb-6">
+            <div className="bg-gray-700 p-8 rounded-lg hover:bg-gray-600 transition-all duration-300 transform hover:scale-105 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full -mr-16 -mt-16"></div>
+              <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mb-6 relative z-10">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-4">Beautiful Templates</h3>
-              <p className="text-gray-300">Choose from dozens of professionally designed templates to get started quickly.</p>
+              <h3 className="text-xl font-semibold text-white mb-4 relative z-10">Beautiful Templates</h3>
+              <p className="text-gray-300 relative z-10">Choose from {isLoading ? 'dozens' : formatNumber(stats?.totalTemplates || 0)}+ professionally designed templates to get started quickly. Templates for portfolios, businesses, and more.</p>
+              <div className="mt-4 flex items-center gap-2 text-purple-400 text-sm relative z-10">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>One-Click Apply</span>
+              </div>
             </div>
             
-            <div className="bg-gray-700 p-8 rounded-lg hover:bg-gray-600 transition-all duration-300 transform hover:scale-105">
-              <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mb-6">
+            <div className="bg-gray-700 p-8 rounded-lg hover:bg-gray-600 transition-all duration-300 transform hover:scale-105 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-green-600/10 rounded-full -mr-16 -mt-16"></div>
+              <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mb-6 relative z-10">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-4">Lightning Fast</h3>
-              <p className="text-gray-300">Optimized for speed with instant preview and fast publishing to the web.</p>
+              <h3 className="text-xl font-semibold text-white mb-4 relative z-10">Lightning Fast</h3>
+              <p className="text-gray-300 relative z-10">Optimized for speed with instant preview and fast publishing to the web. Export your website as clean HTML/CSS or publish directly.</p>
+              <div className="mt-4 flex items-center gap-2 text-green-400 text-sm relative z-10">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Instant Publishing</span>
+              </div>
             </div>
           </div>
         </div>
@@ -187,22 +292,58 @@ export default function Home() {
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold text-white">1</div>
-              <h3 className="text-xl font-semibold text-white mb-4">Sign Up & Choose Template</h3>
-              <p className="text-gray-300">Create your account and select from our beautiful template library or start from scratch.</p>
+            <div className="text-center relative">
+              <div className="absolute inset-0 bg-blue-600/5 rounded-lg transform rotate-3"></div>
+              <div className="relative bg-gray-800/50 p-6 rounded-lg border border-blue-500/20">
+                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold text-white relative z-10">
+                  1
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-4">Sign Up & Choose Template</h3>
+                <p className="text-gray-300 mb-4">Create your account and select from our beautiful template library or start from scratch.</p>
+                <div className="flex justify-center gap-2 mt-4">
+                  <div className="w-8 h-8 bg-blue-500/20 rounded border border-blue-500/30"></div>
+                  <div className="w-8 h-8 bg-purple-500/20 rounded border border-purple-500/30"></div>
+                  <div className="w-8 h-8 bg-green-500/20 rounded border border-green-500/30"></div>
+                </div>
+              </div>
             </div>
             
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold text-white">2</div>
-              <h3 className="text-xl font-semibold text-white mb-4">Customize Your Design</h3>
-              <p className="text-gray-300">Use our drag-and-drop builder to customize colors, fonts, content, and layout to match your brand.</p>
+            <div className="text-center relative">
+              <div className="absolute inset-0 bg-purple-600/5 rounded-lg transform -rotate-3"></div>
+              <div className="relative bg-gray-800/50 p-6 rounded-lg border border-purple-500/20">
+                <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold text-white relative z-10">
+                  2
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-4">Customize Your Design</h3>
+                <p className="text-gray-300 mb-4">Use our drag-and-drop builder to customize colors, fonts, content, and layout to match your brand.</p>
+                <div className="flex justify-center gap-2 mt-4">
+                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                  </svg>
+                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
             </div>
             
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold text-white">3</div>
-              <h3 className="text-xl font-semibold text-white mb-4">Publish & Share</h3>
-              <p className="text-gray-300">Publish your website instantly and share it with the world. Get your custom URL in seconds.</p>
+            <div className="text-center relative">
+              <div className="absolute inset-0 bg-green-600/5 rounded-lg transform rotate-3"></div>
+              <div className="relative bg-gray-800/50 p-6 rounded-lg border border-green-500/20">
+                <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold text-white relative z-10">
+                  3
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-4">Publish & Share</h3>
+                <p className="text-gray-300 mb-4">Publish your website instantly and share it with the world. Get your custom URL in seconds.</p>
+                <div className="flex justify-center gap-2 mt-4">
+                  <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                  <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -231,17 +372,24 @@ export default function Home() {
           </p>
           
           <div className="grid md:grid-cols-3 gap-8 mt-12">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-400 mb-2">10K+</div>
-              <div className="text-gray-300">Websites Created</div>
+            <div className="text-center bg-gray-700/30 p-6 rounded-lg border border-blue-500/20">
+              <div className="text-3xl font-bold text-blue-400 mb-2">
+                {isLoading ? '...' : formatNumber(stats?.publishedWebsites || 0)}
+              </div>
+              <div className="text-gray-300">Websites Published</div>
+              <div className="mt-2 text-sm text-gray-400">Live and active websites</div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-400 mb-2">50+</div>
+            <div className="text-center bg-gray-700/30 p-6 rounded-lg border border-purple-500/20">
+              <div className="text-3xl font-bold text-purple-400 mb-2">
+                {isLoading ? '...' : formatNumber(stats?.totalTemplates || 0)}+
+              </div>
               <div className="text-gray-300">Templates Available</div>
+              <div className="mt-2 text-sm text-gray-400">Professional designs ready to use</div>
             </div>
-            <div className="text-center">
+            <div className="text-center bg-gray-700/30 p-6 rounded-lg border border-green-500/20">
               <div className="text-3xl font-bold text-green-400 mb-2">99.9%</div>
               <div className="text-gray-300">Uptime Guarantee</div>
+              <div className="mt-2 text-sm text-gray-400">Reliable publishing platform</div>
             </div>
           </div>
         </div>
@@ -389,7 +537,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 WEBeenThere. All rights reserved.</p>
+            <p>&copy; 2025 WEBeenThere. All rights reserved.</p>
           </div>
         </div>
       </footer>

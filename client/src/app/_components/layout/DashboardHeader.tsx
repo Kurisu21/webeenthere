@@ -1,17 +1,22 @@
 'use client';
 
 import React, { memo, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSidebar } from './SidebarContext';
 import { useAuth } from '../auth/AuthContext';
 import ThemeToggle from '../theme/ThemeToggle';
 import SubscriptionBadge from '../subscription/SubscriptionBadge';
 import { subscriptionApi, Subscription } from '../../../lib/subscriptionApi';
+import LogoutConfirmationDialog from '../dialogs/LogoutConfirmationDialog';
+import { API_ENDPOINTS, apiPost } from '../../../lib/apiConfig';
 
 const DashboardHeader = memo(() => {
   const { isCollapsed } = useSidebar();
   const { user, logout } = useAuth();
+  const router = useRouter();
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -119,7 +124,7 @@ const DashboardHeader = memo(() => {
               </span>
             </div>
             <button
-              onClick={logout}
+              onClick={() => setShowLogoutConfirm(true)}
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
             >
               Logout
@@ -137,6 +142,28 @@ const DashboardHeader = memo(() => {
           </div>
         </div>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <LogoutConfirmationDialog
+        isOpen={showLogoutConfirm}
+        onConfirm={async () => {
+          try {
+            // Call logout API
+            await apiPost(`${API_ENDPOINTS.USERS}/logout`, {});
+          } catch (error) {
+            console.error('Logout API error:', error);
+            // Continue with logout even if API call fails
+          }
+          
+          // Clear local storage and state
+          logout();
+          
+          // Redirect to login
+          router.push('/login');
+        }}
+        onCancel={() => setShowLogoutConfirm(false)}
+        userType="user"
+      />
     </header>
   );
 });

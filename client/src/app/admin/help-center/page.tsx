@@ -78,7 +78,7 @@ export default function AdminHelpCenterPage() {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                <p className="text-white">Loading help center...</p>
+                <p className="text-primary">Loading help center...</p>
               </div>
             </div>
           ) : error ? (
@@ -89,8 +89,8 @@ export default function AdminHelpCenterPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
                 </div>
-                <p className="text-white text-lg font-medium mb-2">Error Loading Help Center</p>
-                <p className="text-gray-400">{error}</p>
+                <p className="text-primary text-lg font-medium mb-2">Error Loading Help Center</p>
+                <p className="text-secondary">{error}</p>
               </div>
             </div>
           ) : (
@@ -98,7 +98,7 @@ export default function AdminHelpCenterPage() {
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-white">Help Center Management</h1>
+                <h1 className="text-3xl font-bold text-primary">Help Center Management</h1>
                 <div className="flex items-center space-x-4">
                   <button
                     onClick={handleCreateArticle}
@@ -164,14 +164,14 @@ export default function AdminHelpCenterPage() {
 
             {/* Tabs */}
             <div className="mb-6">
-              <div className="border-b border-gray-700">
+              <div className="border-b border-app">
                 <nav className="-mb-px flex space-x-8">
                   <button
                     onClick={() => setActiveTab('articles')}
                     className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'articles'
                         ? 'border-purple-500 text-purple-400'
-                        : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+                        : 'border-transparent text-secondary hover:text-primary hover:border-app'
                     }`}
                   >
                     Articles
@@ -181,7 +181,7 @@ export default function AdminHelpCenterPage() {
                     className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'categories'
                         ? 'border-purple-500 text-purple-400'
-                        : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+                        : 'border-transparent text-secondary hover:text-primary hover:border-app'
                     }`}
                   >
                     Categories

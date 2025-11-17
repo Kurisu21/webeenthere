@@ -3,6 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
+// Trust proxy - important for getting real client IP addresses behind proxies/load balancers
+app.set('trust proxy', true);
+
 // Middleware
 // Increase body size limits to support saving HTML/CSS with embedded images (base64)
 app.use(express.json({ limit: '20mb' }));

@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from './AuthContext';
-import LoginRequired from './LoginRequired';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -16,6 +16,14 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
   countdownSeconds = 10
 }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      // Redirect immediately to login
+      router.push(redirectTo);
+    }
+  }, [isAuthenticated, isLoading, router, redirectTo]);
 
   // Show loading while checking authentication
   if (isLoading) {
@@ -29,14 +37,9 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
     );
   }
 
-  // Show login required page if not authenticated
+  // Redirect immediately if not authenticated
   if (!isAuthenticated) {
-    return (
-      <LoginRequired 
-        redirectTo={redirectTo} 
-        countdownSeconds={countdownSeconds}
-      />
-    );
+    return null; // Return null while redirecting
   }
 
   return <>{children}</>;

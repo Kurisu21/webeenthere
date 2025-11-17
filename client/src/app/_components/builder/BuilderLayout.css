@@ -8,6 +8,86 @@
   --gjs-thumb-bg: #f8fafc;
 }
 
+/* Smooth transitions for interactive elements */
+button,
+input,
+select,
+.gjs-block,
+.gjs-layer,
+.gjs-sm-sector {
+  transition-property: background-color, border-color, color, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Enhanced focus indicators */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Left Panel Tab Styling */
+[data-theme="light"] .left-panel-tab-active {
+  background-color: #ffffff;
+  color: #111827;
+  border-bottom: 2px solid #3b82f6;
+}
+
+[data-theme="dark"] .left-panel-tab-active {
+  background-color: #1f2937;
+  color: #ffffff;
+  border-bottom: 2px solid #60a5fa;
+}
+
+/* Canvas Controls Styling */
+.canvas-controls {
+  backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="dark"] .canvas-controls {
+  background-color: rgba(17, 24, 39, 0.9);
+}
+
+/* Enhanced hover states */
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Scrollbar styling for panels */
+.left-panel,
+.right-panel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.left-panel::-webkit-scrollbar,
+.right-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.left-panel::-webkit-scrollbar-track,
+.right-panel::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+.left-panel::-webkit-scrollbar-thumb,
+.right-panel::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+.left-panel::-webkit-scrollbar-thumb:hover,
+.right-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
 /* GrapesJS Canvas Styling */
 .gjs-cv-canvas {
   background-color: var(--surface);
@@ -77,29 +157,54 @@
   --gjs-thumb-bg: rgba(255,255,255,0.06);
 }
 
-/* GrapesJS Style Manager Styling */
-.gjs-sm-label {
-  color: var(--text-secondary) !important;
-  font-weight: 600 !important;
-}
-
-.gjs-sm-sector {
-  border: 1px solid var(--border) !important;
-  border-radius: 8px !important;
-  margin-bottom: 12px !important;
-  padding: 8px !important;
-}
-
-/* Style Manager section headers (right panel) */
+/* GrapesJS Style Manager Styling - Hidden by default */
+.gjs-sm-label,
+.gjs-sm-sector,
+.gjs-sm-properties,
 .gjs-sm-title {
-  background-color: var(--surface) !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 6px !important;
+  display: none !important;
 }
 
-.gjs-sm-properties {
-  background-color: var(--surface-elevated) !important;
+/* Hide default style manager UI */
+.styles-container:not([style*="display: none"]) {
+  display: none !important;
+}
+
+.traits-container:not([style*="display: none"]) {
+  display: none !important;
+}
+
+/* Style Manager section headers (right panel) - Clean design */
+.gjs-sm-title {
+  background-color: transparent !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 12px 0 !important;
+  margin-bottom: 8px !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.gjs-sm-title:hover {
+  color: var(--text-primary) !important;
+  opacity: 0.8 !important;
+}
+
+/* Light mode: Clean white for properties area */
+[data-theme="light"] .gjs-sm-properties {
+  background-color: #ffffff !important;
+  padding: 0 !important;
+  margin-top: 8px !important;
+}
+
+[data-theme="light"] .gjs-sm-sector .gjs-sm-properties {
+  background-color: #ffffff !important;
+  padding: 0 0 16px 0 !important;
+  margin-top: 8px !important;
 }
 
 .gjs-field {
@@ -175,27 +280,81 @@
   background-color: #111827 !important;
 }
 
-/* Right panel accordion headers (Typography, Dimensions, etc.) */
+/* Right panel accordion headers (Typography, Dimensions, etc.) - Clean design */
 .gjs-sm-sector .gjs-sm-title,
 .gjs-sm-sector .gjs-sm-title:hover {
+  background-color: transparent !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  padding: 12px 0 !important;
+  margin-bottom: 8px !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  cursor: pointer !important;
+  transition: opacity 0.15s ease !important;
+}
+
+/* Light mode: Clean, professional style sectors matching reference design */
+[data-theme="light"] .gjs-sm-sector {
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+}
+
+[data-theme="light"] .gjs-sm-sector > .gjs-sm-title {
+  background-color: transparent !important;
+  color: #111827 !important;
+  border: none !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  border-radius: 0 !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  padding: 12px 0 !important;
+  margin-bottom: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+[data-theme="light"] .gjs-sm-sector.gjs-open > .gjs-sm-title {
+  background-color: transparent !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  color: #111827 !important;
+}
+
+[data-theme="light"] .gjs-sm-sector > .gjs-sm-title:hover {
+  background-color: transparent !important;
+  color: #111827 !important;
+  opacity: 0.7 !important;
+}
+
+[data-theme="light"] .gjs-sm-sector > .gjs-sm-title svg,
+[data-theme="light"] .gjs-sm-sector > .gjs-sm-title .fa {
+  color: #6b7280 !important;
+  font-size: 10px !important;
+}
+
+/* Dark mode: Keep existing dark theme styling */
+[data-theme="dark"] .gjs-sm-sector {
+  background-color: var(--surface-elevated) !important;
+  border: 1px solid var(--border) !important;
+}
+
+[data-theme="dark"] .gjs-sm-sector > .gjs-sm-title {
   background-color: var(--surface) !important;
   color: var(--text-primary) !important;
   border: 1px solid var(--border) !important;
-  border-radius: 6px !important;
 }
 
-/* Force a neutral header style that reads well in both themes */
-.gjs-editor-parent .gjs-sm-sectors .gjs-sm-sector > .gjs-sm-title {
-  background-color: #f3f4f6 !important; /* neutral light gray */
-  color: #111827 !important;            /* slate-900 */
-  border: 1px solid #e5e7eb !important; /* gray-200 */
-  border-radius: 6px !important;
-}
-.gjs-editor-parent .gjs-sm-sectors .gjs-sm-sector.gjs-open > .gjs-sm-title {
-  background-color: #eef2f7 !important; /* slightly elevated */
-}
-.gjs-editor-parent .gjs-sm-sectors .gjs-sm-sector > .gjs-sm-title svg {
-  color: #374151 !important; /* slate-700 for chevron/icon */
+[data-theme="dark"] .gjs-sm-sector.gjs-open > .gjs-sm-title {
+  background-color: var(--surface-elevated) !important;
 }
 
 /* Override GrapesJS theme utility classes within the editor to ensure light mode */
@@ -213,7 +372,6 @@
 }
 
 /* Light mode: crisp white surfaces in right panel */
-[data-theme="light"] .gjs-sm-properties,
 [data-theme="light"] .gjs-trt-traits,
 [data-theme="light"] .gjs-trt-trait,
 [data-theme="light"] .gjs-layer,
@@ -222,19 +380,65 @@
 [data-theme="light"] .gjs-cmp-settings {
   background-color: #ffffff !important;
   color: var(--text-primary) !important;
-  border-color: var(--border) !important;
+  border-color: #e5e7eb !important;
 }
 [data-theme="light"] .gjs-field,
 [data-theme="light"] .gjs-trt-trait input,
 [data-theme="light"] .gjs-trt-trait select {
   background-color: #ffffff !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--border) !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  padding: 6px 10px !important;
+  font-size: 13px !important;
+  transition: all 0.15s ease !important;
+}
+
+[data-theme="light"] .gjs-field:focus,
+[data-theme="light"] .gjs-trt-trait input:focus,
+[data-theme="light"] .gjs-trt-trait select:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
+  outline: none !important;
+}
+
+[data-theme="light"] .gjs-field:hover,
+[data-theme="light"] .gjs-trt-trait input:hover,
+[data-theme="light"] .gjs-trt-trait select:hover {
+  border-color: #9ca3af !important;
 }
 [data-theme="light"] .gjs-layer-selected {
   background-color: #f3f4f6 !important;
-  color: var(--text-primary) !important;
-  outline: 2px solid var(--accent) !important;
+  color: #111827 !important;
+  outline: 2px solid #3b82f6 !important;
+}
+[data-theme="light"] .gjs-sm-label {
+  color: #374151 !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  margin-bottom: 6px !important;
+  display: block !important;
+}
+
+/* Ensure style sector text is always readable */
+[data-theme="light"] .gjs-sm-sector .gjs-sm-title,
+[data-theme="light"] .gjs-sm-sector .gjs-sm-title * {
+  color: #111827 !important;
+}
+
+[data-theme="light"] .gjs-sm-sector.gjs-open .gjs-sm-title,
+[data-theme="light"] .gjs-sm-sector.gjs-open .gjs-sm-title * {
+  color: #111827 !important;
+}
+
+/* Property rows styling */
+[data-theme="light"] .gjs-sm-property {
+  margin-bottom: 12px !important;
+  padding: 0 !important;
+}
+
+[data-theme="light"] .gjs-sm-property:last-child {
+  margin-bottom: 0 !important;
 }
 
 /* GrapesJS Panels Styling */
@@ -254,18 +458,37 @@
   outline-offset: -2px !important;
 }
 
-/* GrapesJS Trait Manager Styling */
+/* GrapesJS Trait Manager Styling - Clean design matching reference */
 .gjs-trt-traits {
-  background-color: var(--surface-elevated) !important;
+  background-color: transparent !important;
+  padding: 0 !important;
 }
 
 .gjs-trt-trait {
-  background-color: var(--surface) !important;
+  background-color: transparent !important;
   color: var(--text-primary) !important;
-  border: 1px solid var(--border) !important;
-  padding: 8px !important;
-  margin: 4px 0 !important;
-  border-radius: 4px !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 12px 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+[data-theme="light"] .gjs-trt-trait {
+  border-bottom: 1px solid #e5e7eb !important;
+  padding: 12px 0 !important;
+}
+
+[data-theme="light"] .gjs-trt-trait:last-child {
+  border-bottom: none !important;
+}
+
+[data-theme="light"] .gjs-trt-trait label {
+  color: #374151 !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  margin-bottom: 6px !important;
+  display: block !important;
 }
 
 /* GrapesJS Device Buttons */
@@ -288,50 +511,143 @@
   background-color: var(--surface-elevated) !important;
 }
 
-/* GrapesJS RTE (Rich Text Editor) Styling */
+/* GrapesJS RTE (Rich Text Editor) Styling - Professional Design */
 .gjs-rte-toolbar {
-  background-color: var(--surface-elevated) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 4px !important;
-  padding: 4px !important;
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%) !important;
+  border: 1px solid #374151 !important;
+  border-radius: 8px !important;
+  padding: 6px 8px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+[data-theme="light"] .gjs-rte-toolbar {
+  background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%) !important;
+  border-color: #e5e7eb !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
 }
 
 .gjs-rte-actionbar {
-  background-color: var(--surface-elevated) !important;
+  background: transparent !important;
   display: flex !important;
   flex-wrap: wrap !important;
-  gap: 4px !important;
+  gap: 2px !important;
   align-items: center !important;
 }
 
-/* Ensure RTE buttons and symbols are visible in light mode */
-.gjs-rte-toolbar, .gjs-rte-toolbar * {
-  color: var(--text-primary) !important;
-  fill: var(--text-primary) !important;
+/* RTE Button Groups with Separators */
+.gjs-rte-actionbar::before {
+  content: '';
+  display: none;
 }
 
-/* Hover/focus for RTE actions */
+/* Ensure RTE buttons and symbols are visible */
+.gjs-rte-toolbar, .gjs-rte-toolbar * {
+  color: #e5e7eb !important;
+  fill: #e5e7eb !important;
+}
+
+[data-theme="light"] .gjs-rte-toolbar,
+[data-theme="light"] .gjs-rte-toolbar * {
+  color: #111827 !important;
+  fill: #111827 !important;
+}
+
+/* Professional RTE Button Styling */
 .gjs-rte-action, .gjs-rte-btn {
-  color: var(--text-secondary) !important;
+  color: #9ca3af !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  min-width: 26px !important;
-  height: 26px !important;
-  padding: 0 6px !important;
-  border-radius: 4px !important;
-}
-.gjs-rte-action:hover, .gjs-rte-btn:hover,
-.gjs-rte-active {
-  color: var(--text-primary) !important;
-  background-color: var(--surface) !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  padding: 0 8px !important;
+  border-radius: 6px !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  transition: all 0.15s ease !important;
+  cursor: pointer !important;
+  position: relative !important;
 }
 
+[data-theme="light"] .gjs-rte-action,
+[data-theme="light"] .gjs-rte-btn {
+  color: #6b7280 !important;
+}
+
+/* Hover State */
+.gjs-rte-action:hover, .gjs-rte-btn:hover {
+  color: #ffffff !important;
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  transform: translateY(-1px) !important;
+}
+
+[data-theme="light"] .gjs-rte-action:hover,
+[data-theme="light"] .gjs-rte-btn:hover {
+  color: #111827 !important;
+  background-color: #f3f4f6 !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Active State */
+.gjs-rte-active {
+  color: #ffffff !important;
+  background-color: #3b82f6 !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3) !important;
+}
+
+[data-theme="light"] .gjs-rte-active {
+  color: #ffffff !important;
+  background-color: #2563eb !important;
+  border-color: #1d4ed8 !important;
+}
+
+/* SVG Icons in RTE */
+.gjs-rte-action svg,
+.gjs-rte-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke-width: 2 !important;
+}
+
+/* RTE Toolbar Inputs and Selects */
 .gjs-rte-toolbar select,
 .gjs-rte-toolbar input {
-  background-color: var(--input) !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--border) !important;
+  background-color: #111827 !important;
+  color: #e5e7eb !important;
+  border: 1px solid #374151 !important;
+  border-radius: 6px !important;
+  padding: 6px 10px !important;
+  font-size: 13px !important;
+  transition: all 0.15s ease !important;
+}
+
+[data-theme="light"] .gjs-rte-toolbar select,
+[data-theme="light"] .gjs-rte-toolbar input {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+}
+
+.gjs-rte-toolbar select:focus,
+.gjs-rte-toolbar input:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* RTE Separator (for grouping buttons) */
+.gjs-rte-separator {
+  width: 1px !important;
+  height: 20px !important;
+  background-color: #374151 !important;
+  margin: 0 4px !important;
+}
+
+[data-theme="light"] .gjs-rte-separator {
+  background-color: #e5e7eb !important;
 }
 
 /* GrapesJS Modal Styling */

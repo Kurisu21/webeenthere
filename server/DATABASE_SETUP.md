@@ -52,6 +52,15 @@ The database includes the following tables:
 - **custom_blocks** - Reusable content blocks
 - **plans** - Subscription plans
 - **user_plan** - User subscription data
+- **forum_categories** - Forum category definitions
+- **forum_threads** - Forum discussion threads
+- **forum_replies** - Replies to forum threads
+- **support_tickets** - User support tickets
+- **support_messages** - Messages within support tickets
+- **help_categories** - Help center article categories
+- **help_articles** - Help center articles
+- **feedback** - User feedback submissions
+- **feedback_responses** - Admin responses to feedback
 
 ## Dummy Data
 
@@ -198,5 +207,35 @@ server/
 │   └── YYYY-MM-DD/    # Date-based backup folders
 └── DATABASE_SETUP.md  # This file
 ```
+
+## Community & Support Modules - Future Enhancements
+
+The following database enhancements are planned for future implementation to improve functionality of the Forum, Support, Help Center, and Feedback modules:
+
+### Forum Module
+- [ ] Add `tags` JSON column to `forum_threads` table for better categorization
+- [ ] Add `is_featured` BOOLEAN column to `forum_threads` for highlighting important threads
+- [ ] Add `moderator_id` INT column to `forum_categories` for category-specific moderators (FOREIGN KEY to users.id)
+- [ ] Add `forum_thread_likes` junction table for tracking user likes on threads (user_id, thread_id, created_at)
+- [ ] Add `forum_reply_likes` junction table for tracking user likes on replies (user_id, reply_id, created_at)
+
+### Support Module
+- [ ] Add `attachments` JSON column to `support_tickets` table for file uploads
+- [ ] Add `attachments` JSON column to `support_messages` table for file attachments in messages
+- [ ] Add `sla_due_date` DATETIME column to `support_tickets` for SLA tracking
+- [ ] Add `tags` JSON column to `support_tickets` for categorization
+- [ ] Add `satisfaction_rating` INT column to `support_tickets` for user feedback after closure (1-5 scale)
+
+### Help Center Module
+- [ ] Add `tags` JSON column to `help_articles` table for better searchability
+- [ ] Add `featured_image` VARCHAR(255) column to `help_articles` for visual content
+- [ ] Add `reading_time` INT column to `help_articles` (calculated field in minutes)
+- [ ] Add `help_article_ratings` table for detailed rating tracking (id, user_id, article_id, helpful BOOLEAN, created_at)
+
+### Feedback Module
+- [ ] Add `attachments` JSON column to `feedback` table for screenshots/files
+- [ ] Add `tags` JSON column to `feedback` table for categorization
+- [ ] Add `related_ticket_id` INT column to `feedback` table for linking feedback to support tickets (FOREIGN KEY to support_tickets.id, nullable)
+- [ ] Add `satisfaction_score` INT column to `feedback` table after admin response (1-5 scale)
 
 

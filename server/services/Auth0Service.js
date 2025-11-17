@@ -5,6 +5,15 @@ const SubscriptionService = require('./SubscriptionService');
 const jwt = require('jsonwebtoken');
 const databaseActivityLogger = require('./DatabaseActivityLogger');
 
+// Helper to decode JWT without verification (for id_token from Auth0)
+function decodeJWT(token) {
+  try {
+    return jwt.decode(token);
+  } catch (error) {
+    return null;
+  }
+}
+
 class Auth0Service {
   constructor() {
     this.db = getDatabaseConnection();
@@ -175,6 +184,20 @@ class Auth0Service {
           return session;
         }
         
+        // Helper function to safely redirect and prevent further middleware processing
+        const safeRedirect = (url) => {
+          if (!res.headersSent && !res.finished) {
+            // Mark response as handled to prevent middleware from continuing
+            res.locals.oauthHandled = true;
+            // Redirect - this will end the response automatically
+            res.redirect(url);
+            // Ensure response is finished
+            if (!res.finished) {
+              res.end();
+            }
+          }
+        };
+        
         // Check for Auth0 errors in query params
         if (req.query?.error) {
           console.error('❌ Auth0 callback error:', req.query.error);
@@ -196,27 +219,45 @@ class Auth0Service {
             errorMessage = 'You denied access to your account.';
           }
           
-          if (!res.headersSent) {
-            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=${errorType}&details=${encodeURIComponent(errorMessage)}`);
-          }
+          safeRedirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=${errorType}&details=${encodeURIComponent(errorMessage)}`);
           return null;
         }
         
         try {
-          // Get user profile from session
-          const profile = session?.user || req.oidc?.user;
+          // Get user profile from session - decode from id_token if user not available
+          let profile = session?.user || req.oidc?.user;
+          
+          // If profile is not available but we have an id_token, decode it
+          if (!profile && session?.id_token) {
+            try {
+              // Decode the JWT id_token to get user profile
+              const decoded = decodeJWT(session.id_token);
+              if (decoded) {
+                // Map decoded token to profile format
+                profile = {
+                  sub: decoded.sub,
+                  email: decoded.email,
+                  name: decoded.name || decoded.nickname || (decoded.given_name && decoded.family_name ? `${decoded.given_name} ${decoded.family_name}` : decoded.given_name),
+                  picture: decoded.picture,
+                  email_verified: decoded.email_verified || false,
+                  given_name: decoded.given_name,
+                  family_name: decoded.family_name,
+                  nickname: decoded.nickname
+                };
+                console.log('✅ Decoded user profile from id_token:', profile.email);
+              }
+            } catch (decodeError) {
+              console.error('Failed to decode id_token:', decodeError);
+            }
+          }
           
           if (profile) {
             // Find or create user from Auth0 profile
             const { user, token } = await auth0Service.findOrCreateUser(profile);
             
             // Log successful OAuth login
-            const ipAddress = req.ip || 
-              req.connection.remoteAddress || 
-              req.socket.remoteAddress ||
-              (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
-              req.headers['x-forwarded-for']?.split(',')[0] ||
-              'unknown';
+            const { extractClientIP } = require('../utils/ipExtractor');
+            const ipAddress = extractClientIP(req);
             const userAgent = req.headers['user-agent'] || 'unknown';
             
             await databaseActivityLogger.logActivity({
@@ -236,22 +277,22 @@ class Auth0Service {
             
             // Redirect to frontend with token
             const redirectURL = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/callback?token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify(user))}`;
-            res.redirect(redirectURL);
+            safeRedirect(redirectURL);
             // Return null to prevent middleware from doing additional redirects
             return null;
           } else {
-            // No profile available
+            // No profile available - this can happen after database reset
             console.error('OAuth authentication failed - no user profile available');
-            if (!res.headersSent) {
-              res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_failed&reason=no_user_profile`);
-            }
+            console.error('Session data:', JSON.stringify(session, null, 2));
+            console.error('req.oidc data:', JSON.stringify(req.oidc, null, 2));
+            
+            safeRedirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_failed&reason=no_user_profile`);
             return null;
           }
         } catch (error) {
           console.error('afterCallback error:', error);
-          if (!res.headersSent) {
-            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_error&details=${encodeURIComponent(error.message)}`);
-          }
+          console.error('Error stack:', error.stack);
+          safeRedirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_error&details=${encodeURIComponent(error.message)}`);
           return null;
         }
       }

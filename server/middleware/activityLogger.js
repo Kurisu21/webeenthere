@@ -1,4 +1,5 @@
 const databaseActivityLogger = require('../services/DatabaseActivityLogger');
+const { extractClientIP } = require('../utils/ipExtractor');
 
 /**
  * Middleware to automatically log admin actions
@@ -8,12 +9,7 @@ const activityLoggerMiddleware = (actionType = 'unknown') => {
   return async (req, res, next) => {
     try {
       // Get client IP address
-      const ipAddress = req.ip || 
-        req.connection.remoteAddress || 
-        req.socket.remoteAddress ||
-        (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
-        req.headers['x-forwarded-for']?.split(',')[0] ||
-        'unknown';
+      const ipAddress = extractClientIP(req);
 
       // Get user agent
       const userAgent = req.headers['user-agent'] || 'unknown';
@@ -63,13 +59,7 @@ const logSystemAction = activityLoggerMiddleware('system_action');
  */
 const logFailedLogin = async (req, res, next) => {
   try {
-    const ipAddress = req.ip || 
-      req.connection.remoteAddress || 
-      req.socket.remoteAddress ||
-      (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
-      req.headers['x-forwarded-for']?.split(',')[0] ||
-      'unknown';
-
+    const ipAddress = extractClientIP(req);
     const userAgent = req.headers['user-agent'] || 'unknown';
 
     const details = {
@@ -101,13 +91,7 @@ const logFailedLogin = async (req, res, next) => {
  */
 const logAdminLogin = async (req, res, next) => {
   try {
-    const ipAddress = req.ip || 
-      req.connection.remoteAddress || 
-      req.socket.remoteAddress ||
-      (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
-      req.headers['x-forwarded-for']?.split(',')[0] ||
-      'unknown';
-
+    const ipAddress = extractClientIP(req);
     const userAgent = req.headers['user-agent'] || 'unknown';
 
     const details = {

@@ -1,0 +1,124 @@
+/* Layer Panel Styling - Tree Structure */
+
+.layer-panel {
+  padding: 8px;
+  font-size: 13px;
+}
+
+.layer-panel.dark {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+.layer-panel.light {
+  background-color: #ffffff;
+  color: #111827;
+}
+
+.layer-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.layer-item {
+  padding: 6px 8px;
+  margin: 2px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  user-select: none;
+}
+
+.layer-panel.dark .layer-item {
+  color: #e5e7eb;
+}
+
+.layer-panel.dark .layer-item:hover {
+  background-color: #374151;
+}
+
+.layer-panel.light .layer-item {
+  color: #111827;
+}
+
+.layer-panel.light .layer-item:hover {
+  background-color: #f3f4f6;
+}
+
+.layer-item-selected {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  border-radius: 6px;
+}
+
+.layer-item-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.layer-toggle {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+.layer-toggle-placeholder {
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.layer-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.layer-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+}
+
+.layer-children {
+  margin-left: 0;
+}
+
+.layer-panel-empty {
+  padding: 24px;
+  text-align: center;
+}
+
+/* Scrollbar */
+.layer-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.layer-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.layer-panel::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 3px;
+}
+
+.layer-panel::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+

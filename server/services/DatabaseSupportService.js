@@ -12,7 +12,9 @@ class DatabaseSupportService {
   // Tickets
   async getAllTickets(filters = {}) {
     const connection = await getDatabaseConnection();
-    let query = `SELECT t.*, u.username as user_name, a.username as assigned_to_name 
+    let query = `SELECT t.*, 
+                 COALESCE(u.username, u.email, 'Unknown User') as user_name, 
+                 COALESCE(a.username, a.email, NULL) as assigned_to_name 
                  FROM support_tickets t 
                  LEFT JOIN users u ON t.user_id = u.id 
                  LEFT JOIN users a ON t.assigned_to = a.id 
@@ -50,7 +52,9 @@ class DatabaseSupportService {
   async getTicketById(id) {
     const connection = await getDatabaseConnection();
     const [rows] = await connection.execute(
-      `SELECT t.*, u.username as user_name, a.username as assigned_to_name 
+      `SELECT t.*, 
+       COALESCE(u.username, u.email, 'Unknown User') as user_name, 
+       COALESCE(a.username, a.email, NULL) as assigned_to_name 
        FROM support_tickets t 
        LEFT JOIN users u ON t.user_id = u.id 
        LEFT JOIN users a ON t.assigned_to = a.id 
@@ -64,7 +68,9 @@ class DatabaseSupportService {
   async getTicketByNumber(ticketNumber) {
     const connection = await getDatabaseConnection();
     const [rows] = await connection.execute(
-      `SELECT t.*, u.username as user_name, a.username as assigned_to_name 
+      `SELECT t.*, 
+       COALESCE(u.username, u.email, 'Unknown User') as user_name, 
+       COALESCE(a.username, a.email, NULL) as assigned_to_name 
        FROM support_tickets t 
        LEFT JOIN users u ON t.user_id = u.id 
        LEFT JOIN users a ON t.assigned_to = a.id 
@@ -191,7 +197,9 @@ class DatabaseSupportService {
   // User tickets
   async getUserTickets(userId, status = null) {
     const connection = await getDatabaseConnection();
-    let query = `SELECT t.*, u.username as user_name, a.username as assigned_to_name 
+    let query = `SELECT t.*, 
+                 COALESCE(u.username, u.email, 'Unknown User') as user_name, 
+                 COALESCE(a.username, a.email, NULL) as assigned_to_name 
                  FROM support_tickets t 
                  LEFT JOIN users u ON t.user_id = u.id 
                  LEFT JOIN users a ON t.assigned_to = a.id 
@@ -213,7 +221,8 @@ class DatabaseSupportService {
   async getUnassignedTickets() {
     const connection = await getDatabaseConnection();
     const [rows] = await connection.execute(
-      `SELECT t.*, u.username as user_name 
+      `SELECT t.*, 
+       COALESCE(u.username, u.email, 'Unknown User') as user_name 
        FROM support_tickets t 
        LEFT JOIN users u ON t.user_id = u.id 
        WHERE t.assigned_to IS NULL AND t.status != 'closed' 
@@ -225,7 +234,8 @@ class DatabaseSupportService {
   async getAssignedTickets(adminId) {
     const connection = await getDatabaseConnection();
     const [rows] = await connection.execute(
-      `SELECT t.*, u.username as user_name 
+      `SELECT t.*, 
+       COALESCE(u.username, u.email, 'Unknown User') as user_name 
        FROM support_tickets t 
        LEFT JOIN users u ON t.user_id = u.id 
        WHERE t.assigned_to = ? AND t.status != 'closed' 

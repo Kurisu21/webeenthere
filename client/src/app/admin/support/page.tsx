@@ -62,7 +62,7 @@ export default function AdminSupportPage() {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                <p className="text-white">Loading support...</p>
+                <p className="text-primary">Loading support...</p>
               </div>
             </div>
           ) : error ? (
@@ -73,8 +73,8 @@ export default function AdminSupportPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
                 </div>
-                <p className="text-white text-lg font-medium mb-2">Error Loading Support</p>
-                <p className="text-gray-400">{error}</p>
+                <p className="text-primary text-lg font-medium mb-2">Error Loading Support</p>
+                <p className="text-secondary">{error}</p>
               </div>
             </div>
           ) : (
@@ -82,17 +82,17 @@ export default function AdminSupportPage() {
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-white">Support Tickets</h1>
+                <h1 className="text-3xl font-bold text-primary">Support Tickets</h1>
                 <div className="flex items-center space-x-4">
-                  <span className="text-sm text-gray-400">Last updated:</span>
-                  <span className="text-sm text-gray-300">{new Date().toLocaleTimeString()}</span>
+                  <span className="text-sm text-secondary">Last updated:</span>
+                  <span className="text-sm text-secondary">{new Date().toLocaleTimeString()}</span>
                 </div>
               </div>
             </div>
 
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,12 +101,12 @@ export default function AdminSupportPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-white mb-2">{stats?.total || 0}</p>
-                  <p className="text-gray-400 text-sm">Total Tickets</p>
+                  <p className="text-3xl font-bold text-primary mb-2">{stats?.total || 0}</p>
+                  <p className="text-secondary text-sm">Total Tickets</p>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,12 +115,12 @@ export default function AdminSupportPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-white mb-2">{stats?.open || 0}</p>
-                  <p className="text-gray-400 text-sm">Open</p>
+                  <p className="text-3xl font-bold text-primary mb-2">{stats?.open || 0}</p>
+                  <p className="text-secondary text-sm">Open</p>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,12 +129,12 @@ export default function AdminSupportPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-white mb-2">{stats?.inProgress || 0}</p>
-                  <p className="text-gray-400 text-sm">In Progress</p>
+                  <p className="text-3xl font-bold text-primary mb-2">{stats?.inProgress || 0}</p>
+                  <p className="text-secondary text-sm">In Progress</p>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,8 +143,8 @@ export default function AdminSupportPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-white mb-2">{stats?.closed || 0}</p>
-                  <p className="text-gray-400 text-sm">Closed</p>
+                  <p className="text-3xl font-bold text-primary mb-2">{stats?.closed || 0}</p>
+                  <p className="text-secondary text-sm">Closed</p>
                 </div>
               </div>
             </div>
@@ -153,7 +153,7 @@ export default function AdminSupportPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Tickets List */}
               <div>
-                <h2 className="text-xl font-semibold text-white mb-4">Ticket Queue</h2>
+                <h2 className="text-xl font-semibold text-primary mb-4">Ticket Queue</h2>
                 <TicketList
                   onAssign={handleAssign}
                   onClose={handleClose}
@@ -164,7 +164,7 @@ export default function AdminSupportPage() {
 
               {/* Message Interface */}
               <div>
-                <h2 className="text-xl font-semibold text-white mb-4">Messages</h2>
+                <h2 className="text-xl font-semibold text-primary mb-4">Messages</h2>
                 <MessageInterface
                   ticket={selectedTicket}
                   onMessageSent={handleMessageSent}
@@ -174,8 +174,8 @@ export default function AdminSupportPage() {
 
             {/* Quick Actions */}
             <div className="mt-8">
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
+                <h3 className="text-lg font-semibold text-primary mb-4">Quick Actions</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <button className="text-left px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded-lg transition-colors">
                     Assign Tickets

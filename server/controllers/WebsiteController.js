@@ -93,17 +93,10 @@ class WebsiteController {
         });
       }
 
-      // Generate slug if not provided
-      const websiteSlug = slug || title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      
-      // Check if slug is unique
-      const existingWebsite = await this.websiteModel.findBySlug(websiteSlug);
-      if (existingWebsite) {
-        return res.status(400).json({
-          success: false,
-          message: 'Website URL already exists'
-        });
-      }
+      // Generate unique slug
+      const { generateUniqueSlug, sanitizeSlug } = require('../utils/slugGenerator');
+      const baseSlug = slug || title;
+      const websiteSlug = await generateUniqueSlug(this.websiteModel, baseSlug);
 
       // If template_id is provided, get template content
       let htmlContent = html_content || '';
@@ -157,10 +150,11 @@ class WebsiteController {
       const websiteId = await this.websiteModel.create(websiteData);
       
       // Log website creation activity
+      const { extractClientIP } = require('../utils/ipExtractor');
       await databaseActivityLogger.logWebsiteCreated(
         userId,
         websiteId,
-        req.ip,
+        extractClientIP(req),
         req.get('User-Agent'),
         {
           title,
@@ -208,15 +202,19 @@ class WebsiteController {
         });
       }
 
-      // If slug is being updated, check uniqueness
+      // If slug is being updated, generate unique slug if needed
       if (updateData.slug && updateData.slug !== website.slug) {
-        const existingWebsite = await this.websiteModel.findBySlug(updateData.slug);
-        if (existingWebsite && existingWebsite.id !== parseInt(id)) {
+        const { generateUniqueSlug, sanitizeSlug } = require('../utils/slugGenerator');
+        // Sanitize the slug first
+        const sanitizedSlug = sanitizeSlug(updateData.slug);
+        if (!sanitizedSlug) {
           return res.status(400).json({
             success: false,
-            message: 'Website URL already exists'
+            message: 'Invalid website URL. Please use only letters, numbers, and hyphens.'
           });
         }
+        // Generate unique slug (will use the same slug if available, or append number if duplicate)
+        updateData.slug = await generateUniqueSlug(this.websiteModel, sanitizedSlug, parseInt(id));
       }
 
       // Generate preview if HTML content is being updated
@@ -238,10 +236,11 @@ class WebsiteController {
       await this.websiteModel.update(id, updateData);
       
       // Log website update activity
+      const { extractClientIP } = require('../utils/ipExtractor');
       await databaseActivityLogger.logWebsiteUpdated(
         userId,
         id,
-        req.ip,
+        extractClientIP(req),
         req.get('User-Agent'),
         {
           fields_updated: Object.keys(updateData),
@@ -423,10 +422,19 @@ class WebsiteController {
       const { slug } = req.params;
       const website = await this.websiteModel.findBySlug(slug);
       
-      if (!website || !website.is_published) {
+      if (!website) {
         return res.status(404).json({
           success: false,
-          message: 'Website not found'
+          message: 'Website not found',
+          details: 'No website exists with this slug. Please check the URL and try again.'
+        });
+      }
+
+      if (!website.is_published) {
+        return res.status(404).json({
+          success: false,
+          message: 'Website not found',
+          details: 'This website exists but is not published. Only published websites can be viewed publicly.'
         });
       }
 
@@ -533,6 +541,51 @@ class WebsiteController {
     }
   }
 
+  // Check if slug is available
+  async checkSlugAvailability(req, res) {
+    try {
+      const { slug } = req.query;
+      const { excludeId } = req.query; // Optional: exclude a website ID (for updates)
+      
+      if (!slug) {
+        return res.status(400).json({
+          success: false,
+          message: 'Slug is required'
+        });
+      }
+
+      const { isSlugAvailable, sanitizeSlug } = require('../utils/slugGenerator');
+      const sanitized = sanitizeSlug(slug);
+      
+      if (!sanitized) {
+        return res.json({
+          success: true,
+          available: false,
+          message: 'Invalid slug format'
+        });
+      }
+
+      const available = await isSlugAvailable(
+        this.websiteModel, 
+        sanitized, 
+        excludeId ? parseInt(excludeId) : null
+      );
+
+      res.json({
+        success: true,
+        available,
+        sanitizedSlug: sanitized,
+        message: available ? 'Slug is available' : 'Slug is already taken'
+      });
+    } catch (error) {
+      console.error('Error checking slug availability:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error checking slug availability'
+      });
+    }
+  }
+
   // Admin: Update website slug
   async updateWebsiteSlug(req, res) {
     try {
@@ -546,15 +599,6 @@ class WebsiteController {
         });
       }
       
-      // Validate slug format
-      const slugRegex = /^[a-z0-9-]+$/;
-      if (!slugRegex.test(slug)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Slug must contain only lowercase letters, numbers, and hyphens'
-        });
-      }
-      
       // Check if website exists
       const website = await this.websiteModel.findById(id);
       if (!website) {
@@ -563,29 +607,34 @@ class WebsiteController {
           message: 'Website not found'
         });
       }
+
+      const { generateUniqueSlug, sanitizeSlug } = require('../utils/slugGenerator');
+      const sanitizedSlug = sanitizeSlug(slug);
       
-      // Check if slug is unique (excluding current website)
-      const existingWebsite = await this.websiteModel.findBySlug(slug);
-      if (existingWebsite && existingWebsite.id !== parseInt(id)) {
+      if (!sanitizedSlug) {
         return res.status(400).json({
           success: false,
-          message: 'Website URL already exists'
+          message: 'Invalid website URL. Please use only letters, numbers, and hyphens.'
         });
       }
+
+      // Generate unique slug (will use the same slug if available, or append number if duplicate)
+      const finalSlug = await generateUniqueSlug(this.websiteModel, sanitizedSlug, parseInt(id));
       
-      await this.websiteModel.update(id, { slug });
+      await this.websiteModel.update(id, { slug: finalSlug });
       
       // Log activity
+      const { extractClientIP } = require('../utils/ipExtractor');
       await databaseActivityLogger.logActivity({
         userId: req.user.id,
         action: 'website_slug_updated',
         entityType: 'website',
         entityId: id,
-        ipAddress: req.ip,
+        ipAddress: extractClientIP(req),
         userAgent: req.get('User-Agent'),
         details: {
           old_slug: website.slug,
-          new_slug: slug,
+          new_slug: finalSlug,
           title: website.title
         }
       });
@@ -593,7 +642,7 @@ class WebsiteController {
       res.json({
         success: true,
         message: 'Website URL updated successfully',
-        data: { slug }
+        data: { slug: finalSlug }
       });
     } catch (error) {
       console.error('Error updating website slug:', error);
@@ -818,6 +867,42 @@ class WebsiteController {
       res.status(500).json({
         success: false,
         message: 'Error fetching hosting statistics'
+      });
+    }
+  }
+
+  // Get public statistics (no auth required)
+  async getPublicStats(req, res) {
+    try {
+      const Template = require('../models/Template');
+      const templateModel = new Template(this.db);
+      
+      // Get website stats
+      const [totalWebsites] = await this.db.execute('SELECT COUNT(*) as count FROM websites WHERE is_active = 1');
+      const [publishedWebsites] = await this.db.execute('SELECT COUNT(*) as count FROM websites WHERE is_published = 1 AND is_active = 1');
+      
+      // Get user stats
+      const [totalUsers] = await this.db.execute('SELECT COUNT(*) as count FROM users WHERE is_active = 1');
+      
+      // Get template stats
+      const templates = await templateModel.findAll();
+      const totalTemplates = templates.length;
+      
+      res.json({
+        success: true,
+        data: {
+          totalWebsites: totalWebsites[0].count,
+          publishedWebsites: publishedWebsites[0].count,
+          totalUsers: totalUsers[0].count,
+          totalTemplates: totalTemplates
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching public stats:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error fetching statistics',
+        error: error.message
       });
     }
   }

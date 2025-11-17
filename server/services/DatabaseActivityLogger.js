@@ -93,6 +93,8 @@ class DatabaseActivityLogger {
       return {
         ...row,
         userId: row.user_id, // Map user_id to userId for frontend
+        ipAddress: row.ip_address || row.ipAddress, // Map ip_address to ipAddress
+        userAgent: row.user_agent || row.userAgent, // Map user_agent to userAgent
         details: parsedDetails
       };
     });
@@ -194,6 +196,8 @@ class DatabaseActivityLogger {
       return {
         ...row,
         userId: row.user_id, // Map user_id to userId for frontend
+        ipAddress: row.ip_address || row.ipAddress, // Map ip_address to ipAddress
+        userAgent: row.user_agent || row.userAgent, // Map user_agent to userAgent
         details: parsedDetails
       };
     });

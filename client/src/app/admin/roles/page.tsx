@@ -108,11 +108,11 @@ export default function RoleManagementPage() {
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-white">Role Management</h1>
+                <h1 className="text-3xl font-bold text-primary">Role Management</h1>
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
-                    <div className="text-sm text-gray-400">Role Distribution</div>
-                    <div className="text-lg font-semibold text-white">{stats.adminUsers} Admin, {stats.regularUsers} User</div>
+                    <div className="text-sm text-secondary">Role Distribution</div>
+                    <div className="text-lg font-semibold text-primary">{stats.adminUsers} Admin, {stats.regularUsers} User</div>
                   </div>
                 </div>
               </div>
@@ -120,7 +120,7 @@ export default function RoleManagementPage() {
 
             {/* Role Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-gray-700 p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="bg-surface-elevated rounded-xl border border-app p-6 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
                     <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,22 +128,22 @@ export default function RoleManagementPage() {
                     </svg>
                   </div>
                   <div className="text-right">
-                    <p className="text-gray-400 text-sm font-medium">Total Users</p>
+                    <p className="text-secondary text-sm font-medium">Total Users</p>
                   </div>
                 </div>
                 
                 <div className="mb-4">
-                  <p className="text-5xl font-bold text-white mb-2">{stats.totalUsers}</p>
-                  <p className="text-gray-500 text-sm">All registered users</p>
+                  <p className="text-5xl font-bold text-primary mb-2">{stats.totalUsers}</p>
+                  <p className="text-secondary text-sm">All registered users</p>
                 </div>
 
                 {/* Progress Bar */}
                 <div className="mb-4">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs text-gray-400">Growth</span>
-                    <span className="text-xs text-gray-300">92%</span>
+                    <span className="text-xs text-secondary">Growth</span>
+                    <span className="text-xs text-secondary">92%</span>
                   </div>
-                  <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div className="w-full bg-surface rounded-full h-2">
                     <div className="bg-blue-500 h-2 rounded-full transition-all duration-500" style={{width: '92%'}}></div>
                   </div>
                 </div>
@@ -159,7 +159,7 @@ export default function RoleManagementPage() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-gray-700 p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="bg-surface-elevated rounded-xl border border-app p-6 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
                     <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,22 +167,22 @@ export default function RoleManagementPage() {
                     </svg>
                   </div>
                   <div className="text-right">
-                    <p className="text-gray-400 text-sm font-medium">Admin Users</p>
+                    <p className="text-secondary text-sm font-medium">Admin Users</p>
                   </div>
                 </div>
                 
                 <div className="mb-4">
-                  <p className="text-5xl font-bold text-white mb-2">{stats.adminUsers}</p>
-                  <p className="text-gray-500 text-sm">Administrative access</p>
+                  <p className="text-5xl font-bold text-primary mb-2">{stats.adminUsers}</p>
+                  <p className="text-secondary text-sm">Administrative access</p>
                 </div>
 
                 {/* Progress Bar */}
                 <div className="mb-4">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs text-gray-400">Security</span>
-                    <span className="text-xs text-gray-300">100%</span>
+                    <span className="text-xs text-secondary">Security</span>
+                    <span className="text-xs text-secondary">100%</span>
                   </div>
-                  <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div className="w-full bg-surface rounded-full h-2">
                     <div className="bg-purple-500 h-2 rounded-full transition-all duration-500" style={{width: '100%'}}></div>
                   </div>
                 </div>
@@ -198,7 +198,7 @@ export default function RoleManagementPage() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-gray-700 p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="bg-surface-elevated rounded-xl border border-app p-6 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
                     <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,22 +206,22 @@ export default function RoleManagementPage() {
                     </svg>
                   </div>
                   <div className="text-right">
-                    <p className="text-gray-400 text-sm font-medium">Regular Users</p>
+                    <p className="text-secondary text-sm font-medium">Regular Users</p>
                   </div>
                 </div>
                 
                 <div className="mb-4">
-                  <p className="text-5xl font-bold text-white mb-2">{stats.regularUsers}</p>
-                  <p className="text-gray-500 text-sm">Standard users</p>
+                  <p className="text-5xl font-bold text-primary mb-2">{stats.regularUsers}</p>
+                  <p className="text-secondary text-sm">Standard users</p>
                 </div>
 
                 {/* Progress Bar */}
                 <div className="mb-4">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs text-gray-400">Engagement</span>
-                    <span className="text-xs text-gray-300">78%</span>
+                    <span className="text-xs text-secondary">Engagement</span>
+                    <span className="text-xs text-secondary">78%</span>
                   </div>
-                  <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div className="w-full bg-surface rounded-full h-2">
                     <div className="bg-green-500 h-2 rounded-full transition-all duration-500" style={{width: '78%'}}></div>
                   </div>
                 </div>
@@ -239,11 +239,11 @@ export default function RoleManagementPage() {
             </div>
 
             {/* Search and Filters */}
-            <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 mb-6">
+            <div className="bg-surface-elevated rounded-lg border border-app p-6 mb-6">
               <form onSubmit={handleSearch} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="md:col-span-2">
-                    <label htmlFor="search" className="block text-sm font-medium text-gray-300 mb-2">
+                    <label htmlFor="search" className="block text-sm font-medium text-secondary mb-2">
                       Search Users
                     </label>
                     <div className="relative">
@@ -253,23 +253,23 @@ export default function RoleManagementPage() {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search by username or email..."
-                        className="w-full px-4 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 pl-10 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
-                      <svg className="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 absolute left-3 top-2.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-300 mb-2">
+                    <label htmlFor="role" className="block text-sm font-medium text-secondary mb-2">
                       Filter by Role
                     </label>
                     <select
                       id="role"
                       value={roleFilter}
                       onChange={(e) => setRoleFilter(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     >
                       <option value="">All Roles</option>
                       <option value="user">User</option>
@@ -293,7 +293,7 @@ export default function RoleManagementPage() {
                       setRoleFilter('');
                       setCurrentPage(1);
                     }}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    className="text-secondary hover:text-primary transition-colors"
                   >
                     Clear Filters
                   </button>
@@ -304,7 +304,7 @@ export default function RoleManagementPage() {
             {/* Results Summary */}
             {pagination && (
               <div className="mb-4">
-                <p className="text-gray-400 text-sm">
+                <p className="text-secondary text-sm">
                   Showing {users.length} of {pagination.totalUsers} users
                   {searchTerm && ` matching "${searchTerm}"`}
                   {roleFilter && ` with role "${roleFilter}"`}
@@ -313,31 +313,31 @@ export default function RoleManagementPage() {
             )}
 
             {/* Users Table */}
-            <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+            <div className="bg-surface-elevated rounded-lg border border-app overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-700/50">
+                  <thead className="bg-surface/50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                         User
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                         Current Role
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                         Permissions
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-700">
+                  <tbody className="divide-y divide-app">
                     {users.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-700/30 transition-colors">
+                      <tr key={user.id} className="hover:bg-surface/30 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mr-4">
@@ -346,8 +346,8 @@ export default function RoleManagementPage() {
                               </span>
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-white">{user.username}</div>
-                              <div className="text-sm text-gray-400">{user.email}</div>
+                              <div className="text-sm font-medium text-primary">{user.username}</div>
+                              <div className="text-sm text-secondary">{user.email}</div>
                             </div>
                           </div>
                         </td>
@@ -358,7 +358,7 @@ export default function RoleManagementPage() {
                           <StatusBadge isActive={user.is_active} isVerified={user.is_verified} size="sm" />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-300">
+                          <div className="text-sm text-secondary">
                             <div className="flex items-center space-x-2">
                               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                 user.is_active 
@@ -380,13 +380,13 @@ export default function RoleManagementPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
                             {user.role === 'admin' ? (
-                              <span className="text-gray-500 text-xs">Admin role protected</span>
+                              <span className="text-secondary text-xs">Admin role protected</span>
                             ) : (
                               <select
                                 value={user.role}
                                 onChange={(e) => handleRoleChange(user, e.target.value as 'user' | 'admin')}
                                 disabled={isSaving}
-                                className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                className="px-2 py-1 bg-input border border-app rounded text-primary text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
                               >
                                 <option value="user">User</option>
                                 <option value="admin" disabled>Admin (Protected)</option>
@@ -430,7 +430,7 @@ export default function RoleManagementPage() {
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={!pagination.hasPrev}
-                    className="px-3 py-2 text-sm font-medium text-gray-300 bg-gray-800 border border-gray-700 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-2 text-sm font-medium text-secondary bg-surface-elevated border border-app rounded-lg hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Previous
                   </button>
@@ -446,7 +446,7 @@ export default function RoleManagementPage() {
                         className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                           isCurrentPage
                             ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
-                            : 'text-gray-300 bg-gray-800 border border-gray-700 hover:bg-gray-700'
+                            : 'text-secondary bg-surface-elevated border border-app hover:bg-surface'
                         }`}
                       >
                         {page}
@@ -457,7 +457,7 @@ export default function RoleManagementPage() {
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={!pagination.hasNext}
-                    className="px-3 py-2 text-sm font-medium text-gray-300 bg-gray-800 border border-gray-700 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-2 text-sm font-medium text-secondary bg-surface-elevated border border-app rounded-lg hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Next
                   </button>

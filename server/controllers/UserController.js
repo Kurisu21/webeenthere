@@ -97,12 +97,8 @@ class UserController {
       const trimmedEmail = email ? email.trim() : '';
       
       // Get IP address and user agent for logging
-      const ipAddress = req.ip || 
-        req.connection.remoteAddress || 
-        req.socket.remoteAddress ||
-        (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
-        req.headers['x-forwarded-for']?.split(',')[0] ||
-        'unknown';
+      const { extractClientIP } = require('../utils/ipExtractor');
+      const ipAddress = extractClientIP(req);
       const userAgent = req.headers['user-agent'] || 'unknown';
       
       // Try to find user by email first, then by username if not found

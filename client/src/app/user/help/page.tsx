@@ -135,7 +135,7 @@ export default function HelpCenterPage() {
           {/* Article Content */}
           <div className="bg-surface rounded-lg border border-app p-8 mb-8">
             <div className="prose prose-invert max-w-none">
-              <div className="text-gray-300 whitespace-pre-wrap leading-relaxed">
+              <div className="text-secondary whitespace-pre-wrap leading-relaxed">
                 {selectedArticle.content}
               </div>
             </div>
@@ -347,7 +347,7 @@ export default function HelpCenterPage() {
                       {article.content.substring(0, 150)}...
                     </p>
                     
-                    <div className="flex items-center justify-between text-xs text-gray-500">
+                    <div className="flex items-center justify-between text-xs text-secondary">
                       <span>{formatDate(article.createdAt)}</span>
                       <div className="flex items-center gap-3">
                         <span>{article.views} views</span>
@@ -379,7 +379,7 @@ export default function HelpCenterPage() {
                   >
                     Previous
                   </button>
-                  <span className="text-gray-300">
+                  <span className="text-secondary">
                     Page {currentPage} of {articles.totalPages}
                   </span>
                   <button

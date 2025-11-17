@@ -25,7 +25,11 @@ export default function PublicWebsiteViewer() {
         if (response.success) {
           setWebsite(response.data);
         } else {
-          setError(response.message || 'Website not found');
+          // Show detailed error message if available
+          const errorMsg = response.details 
+            ? `${response.message}: ${response.details}` 
+            : response.message || 'Website not found';
+          setError(errorMsg);
         }
       } catch (error) {
         console.error('Error loading website:', error);
@@ -116,17 +120,31 @@ export default function PublicWebsiteViewer() {
   if (error || !website) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md px-4">
           <h1 className="text-2xl font-bold text-white mb-4">Website Not Found</h1>
-          <p className="text-gray-400 mb-6">
+          <p className="text-gray-400 mb-2">
             {error || 'The website you are looking for does not exist or is not published.'}
           </p>
-          <a 
-            href="/" 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300"
-          >
-            Go Home
-          </a>
+          <p className="text-gray-500 text-sm mb-6">
+            This could mean:
+            <br />• The website doesn't exist
+            <br />• The website hasn't been published yet
+            <br />• The URL might be incorrect
+          </p>
+          <div className="flex gap-4 justify-center">
+            <a 
+              href="/" 
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300"
+            >
+              Go Home
+            </a>
+            <a 
+              href="/login" 
+              className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300"
+            >
+              Login to Create
+            </a>
+          </div>
         </div>
       </div>
     );

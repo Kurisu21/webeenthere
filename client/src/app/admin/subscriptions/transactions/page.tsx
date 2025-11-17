@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardHeader from '../../../_components/layout/DashboardHeader';
 import AdminSidebar from '../../../_components/layout/AdminSidebar';
 import MainContentWrapper from '../../../_components/layout/MainContentWrapper';
@@ -21,11 +21,7 @@ export default function AdminTransactionsPage() {
   });
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    fetchTransactions();
-  }, [currentPage, filters]);
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -49,7 +45,12 @@ export default function AdminTransactionsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, filters.userId, filters.status, filters.startDate, filters.endDate, filters.minAmount, filters.maxAmount]);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
 
   const handleFilterChange = (field: string, value: string) => {
     setFilters(prev => ({

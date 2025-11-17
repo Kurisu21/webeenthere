@@ -1,0 +1,376 @@
+/* Properties Panel Styling - Matching Reference Design */
+
+.properties-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #1f2937;
+  color: #ffffff;
+}
+
+.properties-panel.light {
+  background-color: #ffffff;
+  color: #111827;
+}
+
+/* Search Bar */
+.properties-search {
+  padding: 16px;
+  border-bottom: 1px solid #374151;
+}
+
+.properties-panel.light .properties-search {
+  border-bottom-color: #e5e7eb;
+}
+
+/* Content Area */
+.properties-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Section Styling */
+.properties-section {
+  border-bottom: 1px solid #374151;
+  padding: 0;
+}
+
+.properties-panel.light .properties-section {
+  border-bottom-color: #e5e7eb;
+}
+
+.properties-section:last-child {
+  border-bottom: none;
+}
+
+/* Section Content */
+.properties-section-content {
+  padding-bottom: 16px;
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Property Row */
+.property-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.property-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #d1d5db;
+  text-transform: none;
+  margin-bottom: 4px;
+}
+
+.properties-panel.light .property-label {
+  color: #374151;
+}
+
+/* Empty State */
+.properties-panel-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+}
+
+/* Scrollbar Styling */
+.properties-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.properties-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.properties-content::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 3px;
+}
+
+.properties-content::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Input Field Styling */
+.properties-panel input[type="text"],
+.properties-panel input[type="number"],
+.properties-panel input[type="url"] {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+.properties-panel.light input[type="text"],
+.properties-panel.light input[type="number"],
+.properties-panel.light input[type="url"] {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+.properties-panel input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Select Dropdown Styling */
+.properties-panel select {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 32px;
+}
+
+.properties-panel.light select {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+.properties-panel select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Button Styling */
+.properties-panel button {
+  transition: all 0.15s ease;
+}
+
+.properties-panel button:hover {
+  opacity: 0.9;
+}
+
+/* Section Header Styling */
+.properties-section > button.section-header {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 12px 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+}
+
+.properties-section > button.section-header.dark {
+  color: #e5e7eb;
+}
+
+.properties-section > button.section-header.light {
+  color: #374151;
+}
+
+.properties-section > button.section-header:hover {
+  opacity: 0.7;
+}
+
+/* Section title text - darker when expanded, lighter when collapsed */
+.properties-section > button.section-header.dark .section-title {
+  color: #e5e7eb;
+}
+
+.properties-section > button.section-header.light.collapsed .section-title {
+  color: #9ca3af; /* Lighter gray for collapsed sections in light mode */
+}
+
+.properties-section > button.section-header.light.expanded .section-title {
+  color: #374151; /* Darker gray for expanded sections in light mode */
+}
+
+.properties-section > button.section-header.dark .section-toggle {
+  color: #6b7280;
+}
+
+.properties-section > button.section-header.light .section-toggle {
+  color: #9ca3af;
+}
+
+.properties-section > button.section-header span:last-child {
+  font-size: 16px;
+  font-weight: 300;
+}
+
+/* Color Picker Button */
+.properties-panel .color-picker-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.properties-panel.light .color-picker-button {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+}
+
+.properties-panel .color-picker-button:hover {
+  background-color: #374151;
+}
+
+.properties-panel.light .color-picker-button:hover {
+  background-color: #f9fafb;
+}
+
+/* Text Color Input with Preview */
+.properties-panel .text-color-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.properties-panel .text-color-preview {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid #4b5563;
+  flex-shrink: 0;
+}
+
+.properties-panel.light .text-color-preview {
+  border-color: #d1d5db;
+}
+
+/* Segmented Control Styling */
+.properties-panel .segmented-control {
+  display: flex;
+  background-color: #111827;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.properties-panel.light .segmented-control {
+  background-color: #f3f4f6;
+}
+
+.properties-panel .segmented-control button {
+  flex: 1;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.properties-panel .segmented-control button.active {
+  background-color: #374151;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.properties-panel.light .segmented-control button.active {
+  background-color: #ffffff;
+  color: #111827;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.properties-panel .segmented-control button:hover:not(.active) {
+  color: #d1d5db;
+}
+
+/* Input with Clear Button */
+.properties-panel .input-with-clear {
+  position: relative;
+}
+
+.properties-panel .input-with-clear input {
+  padding-right: 32px;
+}
+
+.properties-panel .input-with-clear .clear-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.properties-panel .input-with-clear .clear-button:hover {
+  color: #ffffff;
+}
+
+.properties-panel.light .input-with-clear .clear-button:hover {
+  color: #111827;
+}
+
+/* Color Picker Button Styling */
+.properties-panel .color-picker-wrapper {
+  position: relative;
+}
+
+.properties-panel .color-picker-popup {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+.properties-panel.light .color-picker-popup {
+  background-color: #ffffff;
+  border-color: #e5e7eb;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .properties-content {
+    padding: 12px;
+  }
+
+  .property-row {
+    gap: 6px;
+  }
+}
+

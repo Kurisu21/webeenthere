@@ -703,24 +703,24 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
             console.warn('RTE set actions error', e);
           }
         });
-        // Headings
+        // Headings with professional icons
         rte.add('h1', {
-          icon: '<b>H1</b>',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h8M4 18h16"/></svg>',
           attributes: { title: 'Heading 1' },
           result: (r: any) => r.exec('formatBlock', 'H1'),
         });
         rte.add('h2', {
-          icon: '<b>H2</b>',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h12M4 18h16"/></svg>',
           attributes: { title: 'Heading 2' },
           result: (r: any) => r.exec('formatBlock', 'H2'),
         });
         rte.add('p', {
-          icon: '<span style="font-weight:600">P</span>',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h7"/></svg>',
           attributes: { title: 'Paragraph' },
           result: (r: any) => r.exec('formatBlock', 'P'),
         });
         rte.add('pre', {
-          icon: '<span>&lt;/&gt;</span>',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>',
           attributes: { title: 'Code block' },
           result: (r: any) => r.exec('formatBlock', 'PRE'),
         });
@@ -732,7 +732,7 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
         };
 
         safeAdd('align-left', {
-          icon: '⟸',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="7" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="7" y2="18"></line></svg>',
           attributes: { title: 'Align left' },
           result: () => {
             const sel = (editor as any).getSelected?.();
@@ -740,7 +740,7 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
           },
         });
         safeAdd('align-center', {
-          icon: '↔',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="10" x2="6" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="18" y1="18" x2="6" y2="18"></line></svg>',
           attributes: { title: 'Align center' },
           result: () => {
             const sel = (editor as any).getSelected?.();
@@ -748,7 +748,7 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
           },
         });
         safeAdd('align-right', {
-          icon: '⟹',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>',
           attributes: { title: 'Align right' },
           result: () => {
             const sel = (editor as any).getSelected?.();
@@ -756,7 +756,7 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
           },
         });
         safeAdd('align-justify', {
-          icon: '≡',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>',
           attributes: { title: 'Justify' },
           result: () => {
             const sel = (editor as any).getSelected?.();
@@ -766,50 +766,50 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
 
         // Lists
         safeAdd('ul', {
-          icon: '•',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
           attributes: { title: 'Unordered list' },
           result: (r: any) => r.exec('insertUnorderedList'),
         });
         safeAdd('ol', {
-          icon: '1.',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="6" x2="21" y2="6"></line><line x1="10" y1="12" x2="21" y2="12"></line><line x1="10" y1="18" x2="21" y2="18"></line><line x1="4" y1="6" x2="4.01" y2="6"></line><line x1="4" y1="12" x2="4.01" y2="12"></line><line x1="4" y1="18" x2="4.01" y2="18"></line></svg>',
           attributes: { title: 'Ordered list' },
           result: (r: any) => r.exec('insertOrderedList'),
         });
 
         // Indent / Outdent
         safeAdd('indent', {
-          icon: '→',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>',
           attributes: { title: 'Indent' },
           result: (r: any) => r.exec('indent'),
         });
         safeAdd('outdent', {
-          icon: '←',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>',
           attributes: { title: 'Outdent' },
           result: (r: any) => r.exec('outdent'),
         });
 
         // Sub/Superscript
         safeAdd('subscript', {
-          icon: 'x₂',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19l8-8m0 0l4 4m-4-4l4-4M4 19h16"></path></svg>',
           attributes: { title: 'Subscript' },
           result: (r: any) => r.exec('subscript'),
         });
         safeAdd('superscript', {
-          icon: 'x²',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5l8 8m0-8l-8 8M20 19h-4M20 5h-4"></path></svg>',
           attributes: { title: 'Superscript' },
           result: (r: any) => r.exec('superscript'),
         });
 
         // Unlink
         safeAdd('unlink', {
-          icon: '⨂',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>',
           attributes: { title: 'Remove link' },
           result: (r: any) => r.exec('unlink'),
         });
 
         // Text color / highlight via prompt for simplicity
         safeAdd('color', {
-          icon: 'A',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>',
           attributes: { title: 'Text color' },
           result: (r: any) => {
             const color = typeof window !== 'undefined' ? window.prompt('Text color (e.g. #111827 or red):', '#111827') : null;
@@ -821,7 +821,7 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
           },
         });
         safeAdd('highlight', {
-          icon: '▇',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>',
           attributes: { title: 'Highlight color' },
           result: (r: any) => {
             const color = typeof window !== 'undefined' ? window.prompt('Highlight color (e.g. #fff59d or yellow):', '#fff59d') : null;

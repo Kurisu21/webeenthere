@@ -1,5 +1,45 @@
 const databaseSupportService = require('../services/DatabaseSupportService');
 
+// Helper function to transform ticket from snake_case to camelCase
+function transformTicket(ticket) {
+  if (!ticket) return null;
+  
+  return {
+    id: ticket.id?.toString() || ticket.id,
+    ticketNumber: ticket.ticket_number || ticket.ticketNumber,
+    userId: ticket.user_id?.toString() || ticket.userId,
+    userName: ticket.user_name || ticket.userName || 'Unknown User',
+    subject: ticket.subject,
+    description: ticket.description,
+    priority: ticket.priority,
+    attachments: ticket.attachments || [],
+    status: ticket.status,
+    assignedTo: ticket.assigned_to?.toString() || ticket.assignedTo || null,
+    assignedToName: ticket.assigned_to_name || ticket.assignedToName || null,
+    createdAt: ticket.created_at || ticket.createdAt || null,
+    updatedAt: ticket.updated_at || ticket.updatedAt || null,
+    closedAt: ticket.closed_at || ticket.closedAt || null,
+    resolution: ticket.resolution || null
+  };
+}
+
+// Helper function to transform message from snake_case to camelCase
+function transformMessage(message) {
+  if (!message) return null;
+  
+  return {
+    id: message.id?.toString() || message.id,
+    ticketId: message.ticket_id?.toString() || message.ticketId,
+    message: message.message,
+    senderId: message.sender_id?.toString() || message.senderId,
+    senderType: message.sender_type || message.senderType,
+    senderName: message.sender_name || message.senderName || null,
+    attachments: message.attachments || [],
+    isInternal: message.is_internal || message.isInternal || false,
+    createdAt: message.created_at || message.createdAt || null
+  };
+}
+
 class SupportController {
   // Create ticket
   async createTicket(req, res) {
@@ -34,7 +74,7 @@ class SupportController {
       res.status(201).json({
         success: true,
         message: 'Ticket created successfully',
-        data: ticket
+        data: transformTicket(ticket)
       });
     } catch (error) {
       console.error('Error creating ticket:', error);
@@ -57,7 +97,7 @@ class SupportController {
       res.json({
         success: true,
         message: 'Ticket updated successfully',
-        data: ticket
+        data: transformTicket(ticket)
       });
     } catch (error) {
       console.error('Error updating ticket:', error);
@@ -87,7 +127,7 @@ class SupportController {
       res.json({
         success: true,
         message: 'Ticket assigned successfully',
-        data: ticket
+        data: transformTicket(ticket)
       });
     } catch (error) {
       console.error('Error assigning ticket:', error);
@@ -110,7 +150,7 @@ class SupportController {
       res.json({
         success: true,
         message: 'Ticket closed successfully',
-        data: ticket
+        data: transformTicket(ticket)
       });
     } catch (error) {
       console.error('Error closing ticket:', error);
@@ -138,7 +178,7 @@ class SupportController {
 
       res.json({
         success: true,
-        data: tickets
+        data: tickets.map(ticket => transformTicket(ticket))
       });
     } catch (error) {
       console.error('Error getting tickets:', error);
@@ -158,9 +198,10 @@ class SupportController {
       const userRole = req.user?.role;
 
       const ticket = await databaseSupportService.getTicketById(id);
+      const transformedTicket = transformTicket(ticket);
 
       // For regular users, only allow access to their own tickets
-      if (userRole !== 'admin' && ticket.userId !== userId) {
+      if (userRole !== 'admin' && transformedTicket.userId !== userId?.toString()) {
         return res.status(403).json({
           success: false,
           message: 'Access denied. You can only view your own tickets.'
@@ -169,7 +210,7 @@ class SupportController {
 
       res.json({
         success: true,
-        data: ticket
+        data: transformedTicket
       });
     } catch (error) {
       console.error('Error getting ticket:', error);
@@ -198,7 +239,8 @@ class SupportController {
 
       // Check if ticket exists and is not closed
       const ticket = await databaseSupportService.getTicketById(id);
-      if (ticket.status === 'closed') {
+      const transformedTicket = transformTicket(ticket);
+      if (transformedTicket.status === 'closed') {
         return res.status(400).json({
           success: false,
           message: 'Cannot add messages to closed tickets'
@@ -238,9 +280,10 @@ class SupportController {
 
       // First get the ticket to check ownership
       const ticket = await databaseSupportService.getTicketById(id);
+      const transformedTicket = transformTicket(ticket);
 
       // For regular users, only allow access to their own tickets
-      if (userRole !== 'admin' && ticket.userId !== userId) {
+      if (userRole !== 'admin' && transformedTicket.userId !== userId?.toString()) {
         return res.status(403).json({
           success: false,
           message: 'Access denied. You can only view messages for your own tickets.'
@@ -251,7 +294,7 @@ class SupportController {
 
       res.json({
         success: true,
-        data: messages
+        data: messages.map(message => transformMessage(message))
       });
     } catch (error) {
       console.error('Error getting ticket messages:', error);
@@ -291,7 +334,7 @@ class SupportController {
 
       res.json({
         success: true,
-        data: tickets
+        data: tickets.map(ticket => transformTicket(ticket))
       });
     } catch (error) {
       console.error('Error getting recent tickets:', error);
@@ -339,7 +382,7 @@ class SupportController {
       const updatedTickets = [];
       for (const id of ticketIds) {
         const ticket = await databaseSupportService.updateTicket(id, updateData);
-        updatedTickets.push(ticket);
+        updatedTickets.push(transformTicket(ticket));
       }
 
       res.json({

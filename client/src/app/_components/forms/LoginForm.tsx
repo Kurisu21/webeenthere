@@ -81,8 +81,12 @@ const LoginForm: React.FC = () => {
           localStorage.removeItem('rememberMe');
         }
         
-        // Redirect to dashboard
-        router.push('/user');
+        // Redirect based on user role
+        if (response.user.role === 'admin') {
+          router.push('/admin/dashboard');
+        } else {
+          router.push('/user');
+        }
       }
     } catch (error: any) {
       // Display the specific error message from backend

@@ -122,7 +122,7 @@ export default function AdminSettingsPage() {
                   <div className="flex space-x-2">
                     <button
                       onClick={handleCancel}
-                      className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                      className="bg-surface-elevated hover:bg-surface border border-app text-primary px-4 py-2 rounded-lg font-medium transition-colors"
                     >
                       Cancel
                     </button>
@@ -163,11 +163,11 @@ export default function AdminSettingsPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Profile Information */}
-              <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Profile Information</h3>
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
+                <h3 className="text-lg font-semibold text-primary mb-4">Profile Information</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Username
                     </label>
                     {isEditing ? (
@@ -175,15 +175,15 @@ export default function AdminSettingsPage() {
                         type="text"
                         value={formData.username}
                         onChange={(e) => handleInputChange('username', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
                     ) : (
-                      <p className="text-white">{user?.username}</p>
+                      <p className="text-primary">{user?.username}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Email
                     </label>
                     {isEditing ? (
@@ -191,15 +191,15 @@ export default function AdminSettingsPage() {
                         type="email"
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
                     ) : (
-                      <p className="text-white">{user?.email}</p>
+                      <p className="text-primary">{user?.email}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Role
                     </label>
                     <div className="flex items-center">
@@ -213,31 +213,31 @@ export default function AdminSettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Theme Mode
                     </label>
                     {isEditing ? (
                       <select
                         value={formData.theme_mode}
                         onChange={(e) => handleInputChange('theme_mode', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       >
                         <option value="light">Light</option>
                         <option value="dark">Dark</option>
                       </select>
                     ) : (
-                      <p className="text-white capitalize">Dark</p>
+                      <p className="text-primary capitalize">Dark</p>
                     )}
                   </div>
                 </div>
               </div>
 
               {/* Security Settings */}
-              <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Security Settings</h3>
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
+                <h3 className="text-lg font-semibold text-primary mb-4">Security Settings</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Current Password
                     </label>
                     <input
@@ -245,12 +245,12 @@ export default function AdminSettingsPage() {
                       value={formData.currentPassword}
                       onChange={(e) => handleInputChange('currentPassword', e.target.value)}
                       placeholder="Enter current password"
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       New Password
                     </label>
                     <input
@@ -258,12 +258,12 @@ export default function AdminSettingsPage() {
                       value={formData.newPassword}
                       onChange={(e) => handleInputChange('newPassword', e.target.value)}
                       placeholder="Enter new password"
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Confirm New Password
                     </label>
                     <input
@@ -271,7 +271,7 @@ export default function AdminSettingsPage() {
                       value={formData.confirmPassword}
                       onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                       placeholder="Confirm new password"
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                   </div>
 
@@ -287,20 +287,20 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* Account Status */}
-            <div className="mt-6 bg-gray-800 rounded-lg border border-gray-700 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Account Status</h3>
+            <div className="mt-6 bg-surface-elevated rounded-lg border border-app p-6">
+              <h3 className="text-lg font-semibold text-primary mb-4">Account Status</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center space-x-3">
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-white">Account Active</span>
+                  <span className="text-primary">Account Active</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-white">Email Verified</span>
+                  <span className="text-primary">Email Verified</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                  <span className="text-white">Admin Privileges</span>
+                  <span className="text-primary">Admin Privileges</span>
                 </div>
               </div>
             </div>

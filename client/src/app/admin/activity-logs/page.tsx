@@ -16,7 +16,7 @@ import {
   downloadBlob,
   createDateFilter
 } from '../../../lib/activityApi';
-import { formatActivityDetails, getActionDescription, formatActivityTimestamp, getActivityPriority } from '../../../lib/activityFormatters';
+import { formatActivityDetails, getActionDescription, formatActivityTimestamp } from '../../../lib/activityFormatters';
 import { adminApi } from '../../../lib/adminApi';
 
 export default function AdminActivityLogsPage() {
@@ -396,7 +396,6 @@ export default function AdminActivityLogsPage() {
                     </thead>
                     <tbody className="divide-y divide-app">
                       {logs.map((log) => {
-                        const priority = getActivityPriority(log.action || '');
                         const timestamp = formatActivityTimestamp(log.timestamp || '');
                         const formattedDetails = formatActivityDetails(log.action || '', log.details);
                         const actionDescription = getActionDescription(log.action || '');
@@ -405,37 +404,31 @@ export default function AdminActivityLogsPage() {
                           <tr key={log.id || Math.random()} className="hover:bg-surface-elevated/30 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <span className="text-lg mr-2">{getActionIcon(log.action || '')}</span>
-                                <div>
-                                  <span className={`text-sm font-medium ${getActionColor(log.action || '')}`}>
-                                    {actionDescription}
-                                  </span>
-                                  <div className="text-xs text-gray-400 mt-1">
-                                    {priority === 'critical' && '🔴 Critical'}
-                                    {priority === 'high' && '🟡 High Priority'}
-                                    {priority === 'medium' && '🔵 Medium'}
-                                    {priority === 'low' && '⚪ Low'}
-                                  </div>
-                                </div>
+                                <span className="text-lg mr-3">{getActionIcon(log.action || '')}</span>
+                                <span className={`text-sm font-medium ${getActionColor(log.action || '')}`}>
+                                  {actionDescription}
+                                </span>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-primary">{log.username || 'Unknown User'}</div>
+                              <div className="text-sm text-primary font-medium">{log.username || 'Unknown User'}</div>
                               <div className="text-xs text-secondary">ID: {log.userId || 'N/A'}</div>
                             </td>
                             <td className="px-6 py-4">
-                              <div className="text-sm text-primary max-w-md">
-                                {formattedDetails}
+                              <div className="text-sm text-primary max-w-lg">
+                                <div className="font-medium">{formattedDetails}</div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
-                              {log.ipAddress || 'N/A'}
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-mono text-secondary">
+                                {log.ipAddress && log.ipAddress !== 'unknown' ? log.ipAddress : 'N/A'}
+                              </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-secondary">
-                                <div>{timestamp.date}</div>
-                                <div className="text-xs">{timestamp.time}</div>
-                                <div className="text-xs">{timestamp.relative}</div>
+                                <div className="font-medium">{timestamp.date}</div>
+                                <div className="text-xs text-secondary mt-0.5">{timestamp.time}</div>
+                                <div className="text-xs text-secondary mt-0.5">{timestamp.relative}</div>
                               </div>
                             </td>
                           </tr>

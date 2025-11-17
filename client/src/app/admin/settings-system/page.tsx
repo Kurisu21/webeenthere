@@ -177,7 +177,7 @@ export default function AdminSystemSettingsPage() {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                <p className="text-white">Loading settings...</p>
+                <p className="text-primary">Loading settings...</p>
               </div>
             </div>
           </MainContentWrapper>
@@ -195,8 +195,8 @@ export default function AdminSystemSettingsPage() {
           <div className="p-6">
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">System Settings</h1>
-              <p className="text-gray-400">Configure system-wide settings and features</p>
+              <h1 className="text-3xl font-bold text-primary mb-2">System Settings</h1>
+              <p className="text-secondary">Configure system-wide settings and features</p>
             </div>
 
             {/* Messages */}
@@ -254,7 +254,7 @@ export default function AdminSystemSettingsPage() {
                       className={`py-2 px-1 border-b-2 font-medium text-sm ${
                         activeTab === tab.id
                           ? 'border-purple-500 text-purple-400'
-                          : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+                          : 'border-transparent text-secondary hover:text-primary hover:border-app'
                       }`}
                     >
                       <span className="mr-2">{tab.icon}</span>
@@ -267,59 +267,59 @@ export default function AdminSystemSettingsPage() {
 
             {/* System Settings Tab */}
             {activeTab === 'system' && (
-              <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
-                <h2 className="text-xl font-semibold text-white mb-6">System Configuration</h2>
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
+                <h2 className="text-xl font-semibold text-primary mb-6">System Configuration</h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Application Name
                     </label>
                     <input
                       type="text"
                       value={systemSettings.appName}
                       onChange={(e) => setSystemSettings({ ...systemSettings, appName: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="WEBeenThere"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Max Upload Size (MB)
                     </label>
                     <input
                       type="number"
                       value={systemSettings.maxUploadSizeMB}
                       onChange={(e) => setSystemSettings({ ...systemSettings, maxUploadSizeMB: parseInt(e.target.value) || 10 })}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       min="1"
                       max="1000"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Site Description
                     </label>
                     <input
                       type="text"
                       value={systemSettings.siteDescription || ''}
                       onChange={(e) => setSystemSettings({ ...systemSettings, siteDescription: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="Professional Website Builder Platform"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Contact Email
                     </label>
                     <input
                       type="email"
                       value={systemSettings.contactEmail || ''}
                       onChange={(e) => setSystemSettings({ ...systemSettings, contactEmail: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="admin@webeenthere.com"
                     />
                   </div>
@@ -332,9 +332,9 @@ export default function AdminSystemSettingsPage() {
                       id="maintenanceMode"
                       checked={systemSettings.maintenanceMode}
                       onChange={(e) => setSystemSettings({ ...systemSettings, maintenanceMode: e.target.checked })}
-                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-600 rounded bg-gray-700"
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-app rounded bg-input"
                     />
-                    <label htmlFor="maintenanceMode" className="ml-2 text-sm text-gray-300">
+                    <label htmlFor="maintenanceMode" className="ml-2 text-sm text-secondary">
                       Maintenance Mode
                     </label>
                   </div>
@@ -345,9 +345,9 @@ export default function AdminSystemSettingsPage() {
                       id="registrationEnabled"
                       checked={systemSettings.registrationEnabled}
                       onChange={(e) => setSystemSettings({ ...systemSettings, registrationEnabled: e.target.checked })}
-                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-600 rounded bg-gray-700"
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-app rounded bg-input"
                     />
-                    <label htmlFor="registrationEnabled" className="ml-2 text-sm text-gray-300">
+                    <label htmlFor="registrationEnabled" className="ml-2 text-sm text-secondary">
                       Enable User Registration
                     </label>
                   </div>
@@ -367,8 +367,8 @@ export default function AdminSystemSettingsPage() {
 
             {/* Feature Flags Tab */}
             {activeTab === 'features' && (
-              <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
-                <h2 className="text-xl font-semibold text-white mb-6">Feature Flags</h2>
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
+                <h2 className="text-xl font-semibold text-primary mb-6">Feature Flags</h2>
                 
                 <div className="space-y-4">
                   {[
@@ -381,10 +381,10 @@ export default function AdminSystemSettingsPage() {
                     { key: 'socialLogin', label: 'Social Login', description: 'Enable social media login' },
                     { key: 'twoFactorAuth', label: 'Two-Factor Authentication', description: 'Enable 2FA for users' }
                   ].map((feature) => (
-                    <div key={feature.key} className="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
+                    <div key={feature.key} className="flex items-center justify-between p-4 bg-surface/50 rounded-lg">
                       <div>
-                        <h3 className="text-white font-medium">{feature.label}</h3>
-                        <p className="text-gray-400 text-sm">{feature.description}</p>
+                        <h3 className="text-primary font-medium">{feature.label}</h3>
+                        <p className="text-secondary text-sm">{feature.description}</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -393,7 +393,7 @@ export default function AdminSystemSettingsPage() {
                           onChange={(e) => setFeatureFlags({ ...featureFlags, [feature.key]: e.target.checked })}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        <div className="w-11 h-6 bg-surface peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-app after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                       </label>
                     </div>
                   ))}
@@ -413,85 +413,85 @@ export default function AdminSystemSettingsPage() {
 
             {/* Email Configuration Tab */}
             {activeTab === 'email' && (
-              <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
-                <h2 className="text-xl font-semibold text-white mb-6">Email Configuration</h2>
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
+                <h2 className="text-xl font-semibold text-primary mb-6">Email Configuration</h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       SMTP Host
                     </label>
                     <input
                       type="text"
                       value={emailConfig.smtpHost}
                       onChange={(e) => setEmailConfig({ ...emailConfig, smtpHost: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="smtp.gmail.com"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       SMTP Port
                     </label>
                     <input
                       type="number"
                       value={emailConfig.smtpPort}
                       onChange={(e) => setEmailConfig({ ...emailConfig, smtpPort: parseInt(e.target.value) || 587 })}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       min="1"
                       max="65535"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       SMTP Username
                     </label>
                     <input
                       type="text"
                       value={emailConfig.smtpUser}
                       onChange={(e) => setEmailConfig({ ...emailConfig, smtpUser: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="your-email@gmail.com"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       SMTP Password
                     </label>
                     <input
                       type="password"
                       value={emailConfig.smtpPassword}
                       onChange={(e) => setEmailConfig({ ...emailConfig, smtpPassword: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="••••••••"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       From Email
                     </label>
                     <input
                       type="email"
                       value={emailConfig.fromEmail}
                       onChange={(e) => setEmailConfig({ ...emailConfig, fromEmail: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="noreply@webeenthere.com"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       From Name
                     </label>
                     <input
                       type="text"
                       value={emailConfig.fromName}
                       onChange={(e) => setEmailConfig({ ...emailConfig, fromName: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="WEBeenThere"
                     />
                   </div>

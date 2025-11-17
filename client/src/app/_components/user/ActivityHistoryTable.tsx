@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ActivityLog, formatActivityDate, getActionIcon, getActionColor } from '../../../lib/activityApi';
-import { formatActivityDetails, getActionDescription, formatActivityTimestamp, getActivityPriority } from '../../../lib/activityFormatters';
+import { formatActivityDetails, getActionDescription, formatActivityTimestamp } from '../../../lib/activityFormatters';
 
 interface ActivityHistoryTableProps {
   logs: ActivityLog[];
@@ -66,16 +66,12 @@ const ActivityHistoryTable: React.FC<ActivityHistoryTableProps> = ({ logs, isLoa
                 IP Address
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
-                User Agent
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 Timestamp
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-app">
             {logs.map((log, index) => {
-              const priority = getActivityPriority(log.action || '');
               const timestamp = formatActivityTimestamp(log.timestamp || '');
               const formattedDetails = formatActivityDetails(log.action || '', log.details);
               const actionDescription = getActionDescription(log.action || '');
@@ -84,38 +80,27 @@ const ActivityHistoryTable: React.FC<ActivityHistoryTableProps> = ({ logs, isLoa
                 <tr key={log.id || index} className="hover:bg-surface-elevated transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <span className="text-lg mr-2">{getActionIcon(log.action || '')}</span>
-                      <div>
-                        <span className={`text-sm font-medium ${getActionColor(log.action || '')}`}>
-                          {actionDescription}
-                        </span>
-                        <div className="text-xs text-secondary mt-1">
-                          {priority === 'critical' && '🔴 Critical'}
-                          {priority === 'high' && '🟡 High Priority'}
-                          {priority === 'medium' && '🔵 Medium'}
-                          {priority === 'low' && '⚪ Low'}
-                        </div>
-                      </div>
+                      <span className="text-lg mr-3">{getActionIcon(log.action || '')}</span>
+                      <span className={`text-sm font-medium ${getActionColor(log.action || '')}`}>
+                        {actionDescription}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-primary max-w-md">
-                      {formattedDetails}
+                    <div className="text-sm text-primary max-w-lg">
+                      <div className="font-medium mb-1">{formattedDetails}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
-                    {log.ipAddress || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-secondary max-w-xs truncate">
-                      {log.userAgent || 'N/A'}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-mono text-secondary">
+                      {log.ipAddress && log.ipAddress !== 'unknown' ? log.ipAddress : 'N/A'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-secondary">
-                      <div>{timestamp.date}</div>
-                      <div className="text-xs text-secondary">{timestamp.time}</div>
-                      <div className="text-xs text-secondary">{timestamp.relative}</div>
+                      <div className="font-medium">{timestamp.date}</div>
+                      <div className="text-xs text-secondary mt-0.5">{timestamp.time}</div>
+                      <div className="text-xs text-secondary mt-0.5">{timestamp.relative}</div>
                     </div>
                   </td>
                 </tr>
@@ -128,34 +113,32 @@ const ActivityHistoryTable: React.FC<ActivityHistoryTableProps> = ({ logs, isLoa
       {/* Mobile View */}
       <div className="md:hidden divide-y divide-app">
         {logs.map((log, index) => {
-          const priority = getActivityPriority(log.action || '');
           const timestamp = formatActivityTimestamp(log.timestamp || '');
           const formattedDetails = formatActivityDetails(log.action || '', log.details);
           const actionDescription = getActionDescription(log.action || '');
           
           return (
             <div key={log.id || index} className="p-4 hover:bg-surface-elevated transition-colors">
-              <div className="flex items-center mb-2">
-                <span className="text-lg mr-2">{getActionIcon(log.action || '')}</span>
-                <div className="flex-1">
-                  <span className={`text-sm font-medium ${getActionColor(log.action || '')}`}>
-                    {actionDescription}
-                  </span>
-                  <div className="text-xs text-secondary">
-                    {priority === 'critical' && '🔴 Critical'}
-                    {priority === 'high' && '🟡 High Priority'}
-                    {priority === 'medium' && '🔵 Medium'}
-                    {priority === 'low' && '⚪ Low'}
-                  </div>
+              <div className="flex items-center mb-3">
+                <span className="text-lg mr-3">{getActionIcon(log.action || '')}</span>
+                <span className={`text-sm font-medium ${getActionColor(log.action || '')}`}>
+                  {actionDescription}
+                </span>
+              </div>
+              <div className="text-sm text-primary mb-3">
+                <div className="font-medium">{formattedDetails}</div>
+              </div>
+              <div className="text-xs text-secondary space-y-1.5">
+                <div>
+                  <span className="font-medium text-secondary/70">IP Address:</span>{' '}
+                  <span className="font-mono">{log.ipAddress && log.ipAddress !== 'unknown' ? log.ipAddress : 'N/A'}</span>
                 </div>
-              </div>
-              <div className="text-sm text-primary mb-2">
-                {formattedDetails}
-              </div>
-              <div className="text-xs text-secondary space-y-1">
-                <div><span className="font-medium">IP:</span> {log.ipAddress || 'N/A'}</div>
-                <div><span className="font-medium">Date:</span> {timestamp.date}</div>
-                <div><span className="font-medium">Time:</span> {timestamp.time} ({timestamp.relative})</div>
+                <div>
+                  <span className="font-medium text-secondary/70">Date:</span> {timestamp.date}
+                </div>
+                <div>
+                  <span className="font-medium text-secondary/70">Time:</span> {timestamp.time} ({timestamp.relative})
+                </div>
               </div>
             </div>
           );

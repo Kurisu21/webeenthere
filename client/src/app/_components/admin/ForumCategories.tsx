@@ -118,7 +118,7 @@ export default function ForumCategories({ onCategoryChange }: ForumCategoriesPro
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-white">Loading categories...</p>
+          <p className="text-primary">Loading categories...</p>
         </div>
       </div>
     );
@@ -128,7 +128,7 @@ export default function ForumCategories({ onCategoryChange }: ForumCategoriesPro
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-semibold text-white">Forum Categories</h3>
+        <h3 className="text-xl font-semibold text-primary">Forum Categories</h3>
         <button
           onClick={() => setIsCreating(true)}
           className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200"
@@ -145,35 +145,35 @@ export default function ForumCategories({ onCategoryChange }: ForumCategoriesPro
 
       {/* Create/Edit Form */}
       {isCreating && (
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
-          <h4 className="text-lg font-medium text-white mb-4">
+        <div className="bg-surface-elevated rounded-lg border border-app p-6">
+          <h4 className="text-lg font-medium text-primary mb-4">
             {editingCategory ? 'Edit Category' : 'Create New Category'}
           </h4>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-secondary mb-2">
                   Name
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="Category name"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-secondary mb-2">
                   Color
                 </label>
                 <select
                   value={formData.color}
                   onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   {colorOptions.map(option => (
                     <option key={option.value} value={option.value}>
@@ -185,27 +185,27 @@ export default function ForumCategories({ onCategoryChange }: ForumCategoriesPro
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-secondary mb-2">
                 Description
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
+                className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
                 placeholder="Category description"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-secondary mb-2">
                 Icon
               </label>
               <select
                 value={formData.icon}
                 onChange={(e) => setFormData(prev => ({ ...prev, icon: e.target.value }))}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               >
                 {iconOptions.map(option => (
                   <option key={option.value} value={option.value}>
@@ -226,7 +226,7 @@ export default function ForumCategories({ onCategoryChange }: ForumCategoriesPro
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-6 py-2 text-gray-400 hover:text-white transition-colors"
+                className="px-6 py-2 text-secondary hover:text-primary transition-colors"
               >
                 Cancel
               </button>
@@ -236,28 +236,28 @@ export default function ForumCategories({ onCategoryChange }: ForumCategoriesPro
       )}
 
       {/* Categories List */}
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+      <div className="bg-surface-elevated rounded-lg border border-app overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-800 border-b border-gray-700">
+            <thead className="bg-surface border-b border-app">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Category
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Threads
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Last Activity
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-700">
+            <tbody className="divide-y divide-app">
               {categories.map((category) => (
-                <tr key={category.id} className="hover:bg-gray-800/50 transition-colors">
+                <tr key={category.id} className="hover:bg-surface transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-4 ${
@@ -280,15 +280,15 @@ export default function ForumCategories({ onCategoryChange }: ForumCategoriesPro
                         </svg>
                       </div>
                       <div>
-                        <div className="text-white font-medium">{category.name}</div>
-                        <div className="text-gray-400 text-sm">{category.description}</div>
+                        <div className="text-primary font-medium">{category.name}</div>
+                        <div className="text-secondary text-sm">{category.description}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-300">
+                  <td className="px-6 py-4 text-secondary">
                     {category.threadCount}
                   </td>
-                  <td className="px-6 py-4 text-gray-400 text-sm">
+                  <td className="px-6 py-4 text-secondary text-sm">
                     {category.lastActivity 
                       ? new Date(category.lastActivity).toLocaleDateString('en-US', {
                           year: 'numeric',
@@ -328,12 +328,12 @@ export default function ForumCategories({ onCategoryChange }: ForumCategoriesPro
 
         {categories.length === 0 && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
               </svg>
             </div>
-            <p className="text-gray-400">No categories found</p>
+            <p className="text-secondary">No categories found</p>
           </div>
         )}
       </div>

@@ -75,14 +75,21 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Invalid Date';
+    }
   };
 
   if (isLoading) {
@@ -90,7 +97,7 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-white">Loading tickets...</p>
+          <p className="text-primary">Loading tickets...</p>
         </div>
       </div>
     );
@@ -105,8 +112,8 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <p className="text-white text-lg font-medium mb-2">Error Loading Tickets</p>
-          <p className="text-gray-400">{error}</p>
+          <p className="text-primary text-lg font-medium mb-2">Error Loading Tickets</p>
+          <p className="text-secondary">{error}</p>
         </div>
       </div>
     );
@@ -120,7 +127,7 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
           <select
             value={filters.status}
             onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           >
             <option value="">All Status</option>
             <option value="open">Open</option>
@@ -133,7 +140,7 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
           <select
             value={filters.priority}
             onChange={(e) => setFilters(prev => ({ ...prev, priority: e.target.value }))}
-            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           >
             <option value="">All Priorities</option>
             <option value="high">High</option>
@@ -144,50 +151,50 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
       </div>
 
       {/* Tickets Table */}
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+      <div className="bg-surface-elevated rounded-lg border border-app overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-800 border-b border-gray-700">
+            <thead className="bg-surface border-b border-app">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Ticket
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Priority
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Assigned To
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-700">
+            <tbody className="divide-y divide-app">
               {tickets.map((ticket) => (
-                <tr key={ticket.id} className="hover:bg-gray-800/50 transition-colors">
+                <tr key={ticket.id} className="hover:bg-surface transition-colors">
                   <td className="px-6 py-4">
                     <div>
-                      <div className="text-white font-medium">{ticket.ticketNumber}</div>
-                      <div className="text-gray-400 text-sm mt-1">
+                      <div className="text-primary font-medium">{ticket.ticketNumber}</div>
+                      <div className="text-secondary text-sm mt-1">
                         {ticket.subject}
                       </div>
-                      <div className="text-gray-500 text-xs mt-1">
+                      <div className="text-secondary text-xs mt-1">
                         {ticket.description.substring(0, 80)}...
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-gray-300 text-sm">
+                    <div className="text-secondary text-sm">
                       {ticket.userName || 'Unknown User'}
                     </div>
                   </td>
@@ -201,10 +208,10 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
                       {ticket.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-300 text-sm">
+                  <td className="px-6 py-4 text-secondary text-sm">
                     {ticket.assignedTo || 'Unassigned'}
                   </td>
-                  <td className="px-6 py-4 text-gray-400 text-sm">
+                  <td className="px-6 py-4 text-secondary text-sm">
                     {formatDate(ticket.createdAt)}
                   </td>
                   <td className="px-6 py-4">
@@ -241,12 +248,12 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
 
         {tickets.length === 0 && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </div>
-            <p className="text-gray-400">No tickets found</p>
+            <p className="text-secondary">No tickets found</p>
           </div>
         )}
       </div>
@@ -254,17 +261,17 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
       {/* Close Ticket Modal */}
       {isClosing && selectedTicket && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-2xl">
-            <div className="p-6 border-b border-gray-700">
+          <div className="bg-surface-elevated rounded-xl border border-app w-full max-w-2xl">
+            <div className="p-6 border-b border-app">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-white">Close Ticket</h3>
+                <h3 className="text-xl font-bold text-primary">Close Ticket</h3>
                 <button
                   onClick={() => {
                     setIsClosing(false);
                     setSelectedTicket(null);
                     setResolution('');
                   }}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="text-secondary hover:text-primary transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -275,21 +282,21 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
 
             <div className="p-6">
               <div className="mb-4">
-                <h4 className="text-white font-medium mb-2">Ticket: {selectedTicket.ticketNumber}</h4>
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <p className="text-gray-300">{selectedTicket.subject}</p>
+                <h4 className="text-primary font-medium mb-2">Ticket: {selectedTicket.ticketNumber}</h4>
+                <div className="bg-surface rounded-lg p-4">
+                  <p className="text-secondary">{selectedTicket.subject}</p>
                 </div>
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-secondary mb-2">
                   Resolution (Optional)
                 </label>
                 <textarea
                   value={resolution}
                   onChange={(e) => setResolution(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
+                  className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
                   placeholder="Describe how the issue was resolved..."
                 />
               </div>
@@ -307,7 +314,7 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
                     setSelectedTicket(null);
                     setResolution('');
                   }}
-                  className="px-6 py-2 text-gray-400 hover:text-white transition-colors"
+                  className="px-6 py-2 text-secondary hover:text-primary transition-colors"
                 >
                   Cancel
                 </button>

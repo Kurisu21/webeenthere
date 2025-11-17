@@ -53,7 +53,7 @@ export default function AdminForumPage() {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                <p className="text-white">Loading forum...</p>
+                <p className="text-primary">Loading forum...</p>
               </div>
             </div>
           ) : error ? (
@@ -64,8 +64,8 @@ export default function AdminForumPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
                 </div>
-                <p className="text-white text-lg font-medium mb-2">Error Loading Forum</p>
-                <p className="text-gray-400">{error}</p>
+                <p className="text-primary text-lg font-medium mb-2">Error Loading Forum</p>
+                <p className="text-secondary">{error}</p>
               </div>
             </div>
           ) : (
@@ -73,10 +73,10 @@ export default function AdminForumPage() {
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-white">Forum Management</h1>
+                <h1 className="text-3xl font-bold text-primary">Forum Management</h1>
                 <div className="flex items-center space-x-4">
-                  <span className="text-sm text-gray-400">Last updated:</span>
-                  <span className="text-sm text-gray-300">{new Date().toLocaleTimeString()}</span>
+                  <span className="text-sm text-secondary">Last updated:</span>
+                  <span className="text-sm text-secondary">{new Date().toLocaleTimeString()}</span>
                 </div>
               </div>
             </div>
@@ -135,14 +135,14 @@ export default function AdminForumPage() {
 
             {/* Tabs */}
             <div className="mb-6">
-              <div className="border-b border-gray-700">
+              <div className="border-b border-app">
                 <nav className="-mb-px flex space-x-8">
                   <button
                     onClick={() => setActiveTab('categories')}
                     className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'categories'
                         ? 'border-purple-500 text-purple-400'
-                        : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+                        : 'border-transparent text-secondary hover:text-primary hover:border-app'
                     }`}
                   >
                     Categories
@@ -152,7 +152,7 @@ export default function AdminForumPage() {
                     className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'threads'
                         ? 'border-purple-500 text-purple-400'
-                        : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+                        : 'border-transparent text-secondary hover:text-primary hover:border-app'
                     }`}
                   >
                     Threads
@@ -175,22 +175,22 @@ export default function AdminForumPage() {
 
             {/* Additional Stats */}
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Community Engagement</h3>
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
+                <h3 className="text-lg font-semibold text-primary mb-4">Community Engagement</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Total Likes</span>
-                    <span className="text-white font-medium">{stats?.totalLikes || 0}</span>
+                    <span className="text-secondary">Total Likes</span>
+                    <span className="text-primary font-medium">{stats?.totalLikes || 0}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Avg Replies per Thread</span>
-                    <span className="text-white font-medium">{stats?.averageRepliesPerThread || 0}</span>
+                    <span className="text-secondary">Avg Replies per Thread</span>
+                    <span className="text-primary font-medium">{stats?.averageRepliesPerThread || 0}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
+                <h3 className="text-lg font-semibold text-primary mb-4">Quick Actions</h3>
                 <div className="space-y-3">
                   <button className="w-full text-left px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded-lg transition-colors">
                     Create New Category

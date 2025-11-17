@@ -6,28 +6,24 @@ import AdminSidebar from '../../../_components/layout/AdminSidebar';
 import MainContentWrapper from '../../../_components/layout/MainContentWrapper';
 import AssignPlanModal from '../../../_components/admin/AssignPlanModal';
 import { adminSubscriptionApi, UserSubscriptionDetails, SubscriptionLog, PaymentTransaction } from '../../../../lib/adminSubscriptionApi';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
-interface UserSubscriptionDetailsPageProps {
-  params: {
-    userId: string;
-  };
-}
-
-export default function UserSubscriptionDetailsPage({ params }: UserSubscriptionDetailsPageProps) {
+export default function UserSubscriptionDetailsPage() {
   const [userDetails, setUserDetails] = useState<UserSubscriptionDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
   const router = useRouter();
-
-  const userId = parseInt(params.userId);
+  const params = useParams();
+  
+  const userId = params?.userId ? parseInt(params.userId as string) : null;
 
   useEffect(() => {
     if (userId) {
       fetchUserDetails();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const fetchUserDetails = async () => {
@@ -178,7 +174,7 @@ export default function UserSubscriptionDetailsPage({ params }: UserSubscription
                 <div className="flex space-x-3">
                   <button
                     onClick={() => router.back()}
-                    className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                    className="bg-surface-elevated hover:bg-surface border border-app text-primary px-4 py-2 rounded-lg font-medium transition-colors"
                   >
                     Back
                   </button>
