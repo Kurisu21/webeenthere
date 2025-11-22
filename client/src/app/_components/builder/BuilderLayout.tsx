@@ -8,6 +8,7 @@ import { useGrapesJS } from './hooks/useGrapesJS';
 import { API_ENDPOINTS, apiPut } from '../../../lib/apiConfig';
 import LeftPanel from './LeftPanel';
 import { PropertiesPanel } from './PropertiesPanel';
+import WebeenthereAIAssistant from './ai-assistant/WebeenthereAIAssistant';
 import './BuilderLayout.css';
 import type { Editor } from 'grapesjs';
 
@@ -134,13 +135,15 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
       
       if (response.success) {
         console.log('Website saved successfully');
-        alert('Website saved successfully!');
+        // Only show alert for manual saves (not auto-saves)
+        // Auto-saves are handled by the AI Assistant component
       } else {
         throw new Error(response.message || 'Failed to save website');
       }
     } catch (error) {
       console.error('Error saving website:', error);
-      alert('Failed to save website. Please try again.');
+      // Re-throw error for auto-save to handle gracefully
+      throw error;
     } finally {
       setIsSaving(false);
     }
@@ -481,12 +484,21 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
 
         {/* Right Panel - Properties Inspector */}
         <div className={`right-panel w-80 ${bgSecondary} border-l ${borderColor} flex flex-col overflow-hidden`}>
-          <PropertiesPanel editor={editor} isDark={isDark} />
+          <PropertiesPanel editor={editor} isDark={isDark} websiteId={websiteId} />
           {/* Hidden containers for GrapesJS to attach to (but UI is hidden) */}
           <div className="styles-container" style={{ display: 'none' }} />
           <div className="traits-container" style={{ display: 'none' }} />
         </div>
       </div>
+
+      {/* AI Assistant Component */}
+      <WebeenthereAIAssistant 
+        editor={editor} 
+        isDark={isDark} 
+        websiteId={websiteId}
+        onAutoSave={handleSave}
+      />
     </div>
   );
 }
+

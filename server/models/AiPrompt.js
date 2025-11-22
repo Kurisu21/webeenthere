@@ -4,10 +4,10 @@ class AiPrompt {
     this.db = db;
   }
 
-  async create({ user_id, prompt_type, prompt_text, response_html, used_on_site }) {
+  async create({ user_id, prompt_type, prompt_text, response_html, used_on_site, website_id, conversation_id, message_type, execution_status }) {
     const [result] = await this.db.execute(
-      'INSERT INTO ai_prompts (user_id, prompt_type, prompt_text, response_html, used_on_site) VALUES (?, ?, ?, ?, ?)',
-      [user_id, prompt_type, prompt_text, response_html, used_on_site]
+      'INSERT INTO ai_prompts (user_id, prompt_type, prompt_text, response_html, used_on_site, website_id, conversation_id, message_type, execution_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [user_id, prompt_type, prompt_text, response_html, used_on_site || false, website_id || null, conversation_id || null, message_type || 'user', execution_status || 'pending']
     );
     return result.insertId;
   }
@@ -43,6 +43,29 @@ class AiPrompt {
 
   async delete(id) {
     await this.db.execute('DELETE FROM ai_prompts WHERE id = ?', [id]);
+  }
+
+  async findByWebsiteId(websiteId) {
+    const [rows] = await this.db.execute(
+      'SELECT * FROM ai_prompts WHERE website_id = ? ORDER BY created_at ASC',
+      [websiteId]
+    );
+    return rows;
+  }
+
+  async findByConversationId(conversationId) {
+    const [rows] = await this.db.execute(
+      'SELECT * FROM ai_prompts WHERE conversation_id = ? ORDER BY created_at ASC',
+      [conversationId]
+    );
+    return rows;
+  }
+
+  async updateExecutionStatus(id, status) {
+    await this.db.execute(
+      'UPDATE ai_prompts SET execution_status = ? WHERE id = ?',
+      [status, id]
+    );
   }
 }
 

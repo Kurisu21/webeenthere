@@ -7,6 +7,27 @@ import { ENV_CONFIG } from './envConfig';
 
 // Determine the API base URL based on environment
 const getApiBaseUrl = (): string => {
+  // Check for explicit environment variable override (highest priority)
+  if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
+  // Check hostname-based detection (client-side)
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    
+    // Production hostname
+    if (hostname === 'webeenthere-1.onrender.com' || hostname.includes('onrender.com')) {
+      return ENV_CONFIG.PRODUCTION_API_URL;
+    }
+    
+    // Local hostname
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
+      return ENV_CONFIG.LOCAL_API_URL;
+    }
+  }
+  
+  // Server-side detection
   if (ENV_CONFIG.isProduction()) {
     return ENV_CONFIG.PRODUCTION_API_URL;
   }
@@ -15,7 +36,7 @@ const getApiBaseUrl = (): string => {
     return ENV_CONFIG.LOCAL_API_URL;
   }
   
-  // Default to local development
+  // Default to local development (safest fallback)
   return ENV_CONFIG.LOCAL_API_URL;
 };
 
@@ -27,6 +48,8 @@ export const API_ENDPOINTS = {
   GENERATE_TEMPLATE: `${API_BASE_URL}/api/ai/generate-template`,
   GENERATE_SECTION: `${API_BASE_URL}/api/ai/generate-section`,
   IMPROVE_CANVAS: `${API_BASE_URL}/api/ai/improve-canvas`,
+  AI_ASSISTANT: `${API_BASE_URL}/api/ai/assistant`,
+  AI_ASSISTANT_HISTORY: `${API_BASE_URL}/api/ai/assistant/history`,
   
   // User endpoints
   USERS: `${API_BASE_URL}/api/users`,
@@ -44,6 +67,10 @@ export const API_ENDPOINTS = {
   SUBSCRIPTIONS: `${API_BASE_URL}/api/subscriptions`,
   SUBSCRIPTION_USAGE: `${API_BASE_URL}/api/subscriptions/usage`,
   ADMIN_SUBSCRIPTIONS: `${API_BASE_URL}/api/admin/subscriptions`,
+  
+  // Media endpoints
+  MEDIA_UPLOAD: `${API_BASE_URL}/api/media/upload`,
+  MEDIA_IMAGES: `${API_BASE_URL}/api/media/images`,
 } as const;
 
 // Helper function to get authentication token
@@ -82,15 +109,34 @@ export const apiCall = async (
     const response = await fetch(fullUrl, defaultOptions);
     
     if (!response.ok) {
-      // Handle 401 specifically
+      // Handle 401 specifically - but be more careful about when to log out
       if (response.status === 401) {
-        // Clear stored tokens and redirect to login
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          sessionStorage.removeItem('token');
-          window.location.href = '/login';
+        // Only log out if:
+        // 1. We have a token (meaning we tried to authenticate)
+        // 2. The endpoint is not a new/optional feature endpoint
+        const isOptionalEndpoint = endpoint.includes('/media/') || endpoint.includes('/ai/assistant');
+        
+        if (token && !isOptionalEndpoint) {
+          // Try to read response to see if it's a real auth error
+          try {
+            const responseText = await response.clone().text();
+            // Only log out on clear auth errors, not on missing endpoints
+            if (responseText.includes('Authentication') || responseText.includes('token') || responseText.includes('unauthorized') || responseText.includes('Not authenticated')) {
+              // Clear stored tokens and redirect to login
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                sessionStorage.removeItem('token');
+                window.location.href = '/login';
+              }
+              throw new Error('Authentication required');
+            }
+          } catch (e) {
+            // If we can't read response, don't log out - just throw error
+          }
         }
+        
+        // For optional endpoints or when no token, just throw error without logging out
         throw new Error('Authentication required');
       }
       
@@ -127,12 +173,22 @@ export const apiCall = async (
 // Helper function for POST requests
 export const apiPost = async (
   endpoint: string,
-  data: any
+  data: any,
+  options?: { signal?: AbortSignal; headers?: Record<string, string>; isFormData?: boolean }
 ): Promise<any> => {
   try {
+    const isFormData = data instanceof FormData || options?.isFormData;
+    const headers: Record<string, string> = { ...options?.headers };
+    
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
+    
     const response = await apiCall(endpoint, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
+      headers,
+      signal: options?.signal,
     });
     
     return response.json();

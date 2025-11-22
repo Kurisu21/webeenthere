@@ -8,13 +8,15 @@ interface WebsitePreviewImageProps {
   alt?: string;
   className?: string;
   style?: React.CSSProperties;
+  refreshKey?: string | number; // Add refresh key to force re-fetch (e.g., updated_at timestamp)
 }
 
 export const WebsitePreviewImage: React.FC<WebsitePreviewImageProps> = ({
   websiteId,
   alt = 'Website preview',
   className = '',
-  style = {}
+  style = {},
+  refreshKey // Accept refresh key to force re-fetch
 }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState(false);
@@ -33,8 +35,14 @@ export const WebsitePreviewImage: React.FC<WebsitePreviewImageProps> = ({
           headers['Authorization'] = `Bearer ${token}`;
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/websites/preview/${websiteId}`, {
+        // Add cache-busting query parameter if refreshKey is provided
+        const url = refreshKey 
+          ? `${API_BASE_URL}/api/websites/preview/${websiteId}?t=${refreshKey}`
+          : `${API_BASE_URL}/api/websites/preview/${websiteId}`;
+
+        const response = await fetch(url, {
           headers,
+          cache: 'no-cache', // Always fetch fresh preview
         });
 
         if (!response.ok) {
@@ -42,9 +50,15 @@ export const WebsitePreviewImage: React.FC<WebsitePreviewImageProps> = ({
           return;
         }
 
+        // Revoke old blob URL if it exists
+        if (imageUrl) {
+          URL.revokeObjectURL(imageUrl);
+        }
+
         const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        setImageUrl(url);
+        const newUrl = URL.createObjectURL(blob);
+        setImageUrl(newUrl);
+        setError(false); // Reset error on successful fetch
       } catch (err) {
         console.error('Error fetching preview:', err);
         setError(true);
@@ -55,13 +69,13 @@ export const WebsitePreviewImage: React.FC<WebsitePreviewImageProps> = ({
       fetchPreview();
     }
 
-    // Cleanup blob URL on unmount
+    // Cleanup blob URL on unmount or when refreshKey changes
     return () => {
       if (imageUrl) {
         URL.revokeObjectURL(imageUrl);
       }
     };
-  }, [websiteId]);
+  }, [websiteId, refreshKey]); // Include refreshKey in dependencies
 
   if (error || !imageUrl) {
     return (

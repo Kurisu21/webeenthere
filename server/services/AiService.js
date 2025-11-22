@@ -2,8 +2,10 @@
 class AiService {
   constructor() {
     this.apiKey = process.env.OPENROUTER_API_KEY;
-    // Use DeepSeek V3.1 (free) model
-    this.model = 'deepseek/deepseek-chat-v3.1:free';
+    // Use Grok 4.1 Fast (free) model
+    this.model = 'x-ai/grok-4.1-fast:free';
+    // Previous model (commented out):
+    // this.model = 'deepseek/deepseek-chat-v3.1:free';
   }
 
   // Generate complete website template using OpenRoute API
@@ -366,14 +368,42 @@ ${css || ''}`;
     };
   }
 
-  // Build enhanced prompt prioritizing user input
+  // Build enhanced prompt prioritizing user input with professional design guidelines
   buildTemplatePrompt(params) {
     const { description, websiteType, style, colorScheme, includeSections, tailwindMode = false } = params;
     const sections = Array.isArray(includeSections) && includeSections.length > 0
       ? includeSections.join(', ')
       : 'header, hero, 2-3 content sections, footer';
     
-    return `You are a premium web designer and developer. Create a complete, professional website template as STRICT JSON.
+    // Color scheme mappings for professional palettes
+    const colorPalettes = {
+      blue: { primary: '#2563eb', secondary: '#1e40af', accent: '#3b82f6', bg: '#f8fafc', text: '#1e293b', muted: '#64748b' },
+      purple: { primary: '#7c3aed', secondary: '#6d28d9', accent: '#8b5cf6', bg: '#faf5ff', text: '#581c87', muted: '#a78bfa' },
+      green: { primary: '#059669', secondary: '#047857', accent: '#10b981', bg: '#f0fdf4', text: '#064e3b', muted: '#6ee7b7' },
+      red: { primary: '#dc2626', secondary: '#b91c1c', accent: '#ef4444', bg: '#fef2f2', text: '#991b1b', muted: '#fca5a5' },
+      dark: { primary: '#1f2937', secondary: '#111827', accent: '#374151', bg: '#0f172a', text: '#f9fafb', muted: '#6b7280' },
+      orange: { primary: '#ea580c', secondary: '#c2410c', accent: '#f97316', bg: '#fff7ed', text: '#9a3412', muted: '#fdba74' },
+      teal: { primary: '#0d9488', secondary: '#0f766e', accent: '#14b8a6', bg: '#f0fdfa', text: '#134e4a', muted: '#5eead4' }
+    };
+    
+    const palette = colorPalettes[colorScheme] || colorPalettes.blue;
+    
+    return `You are an expert web designer and frontend developer specializing in creating premium, professional website templates. Your task is to generate a complete, production-ready website template that is visually stunning, modern, and highly functional.
+
+CRITICAL REQUIREMENTS:
+- Return ONLY valid JSON in this exact format. No markdown code blocks, no extra text, no commentary.
+- The template must be immediately usable and professional-looking
+- All code must be clean, semantic, and follow modern web standards
+- **NEVER include the user's prompt text in the website content** - create appropriate content based on the prompt's intent
+- **Generate realistic, professional content** that matches what the user requested, not placeholder text or the prompt itself
+
+OUTPUT FORMAT (STRICT JSON):
+{
+  "html": "Complete HTML body content (no <html> or <head> tags)",
+  "css": "Complete CSS with variables, responsive design, and animations",
+  "slots": [{"id":"slot_id","type":"image|text|button","description":"Description"}],
+  "meta": {"title":"Template Title", "colorScheme":"${colorScheme}", "style":"${style}"}${tailwindMode ? ',\n  "tailwind_html": "..."' : ''}
+}
 
 USER REQUEST: "${description}"
 WEBSITE TYPE: ${websiteType}
@@ -381,25 +411,197 @@ DESIGN STYLE: ${style}
 COLOR SCHEME: ${colorScheme}
 REQUIRED SECTIONS: ${sections}
 
-CONSTRAINTS:
-- Return ONLY valid JSON. No markdown or commentary.
-- Keys: html, css, slots, meta${tailwindMode ? ', tailwind_html' : ''}.
-- HTML: body content only (no <html> or <head>), semantic, accessible, premium look.
-- CSS: mobile-first, uses CSS variables, smooth transitions, keyframe animations where tasteful.
-- Use BEM-like class names. Avoid inline styles. No external assets/URLs, no @import.
-- Mark replaceable parts with data-slot attributes (e.g., data-slot="logo", "hero_image", "primary_cta").
+**CRITICAL CONTENT GENERATION RULES:**
+1. **Understand the user's intent** from their prompt and create appropriate content
+2. **For portfolio requests**: Create sections for "About Me", "My Work/Projects", "Skills", "Education", "Contact" with realistic content
+3. **For business requests**: Create sections for "Services", "About Us", "Testimonials", "Contact" with professional content
+4. **For blog requests**: Create article layouts, category navigation, author sections
+5. **For landing pages**: Create compelling hero sections, feature highlights, testimonials, CTAs
+6. **NEVER use the user's exact prompt text as content** - interpret it and create appropriate website content
+7. **Use professional, realistic text** that matches the website type and user's intent
+8. **Example**: If user says "portfolio for someone who just graduated", create content like "Recent Graduate", "Education", "Projects", "Skills", "Get In Touch" - NOT the prompt text itself
 
-JSON SHAPE EXAMPLE (do not include comments):
+DESIGN GUIDELINES - PROFESSIONAL TEMPLATE REQUIREMENTS:
+
+**Visual Design:**
+- Modern, clean aesthetic with excellent visual hierarchy
+- Professional typography: Use system fonts (Inter, -apple-system, Segoe UI, Roboto) or web-safe alternatives
+- Generous white space and proper spacing (use consistent spacing scale: 4px, 8px, 16px, 24px, 32px, 48px, 64px)
+- Subtle shadows and depth for modern look (box-shadow: 0 1px 3px rgba(0,0,0,0.1) for cards, 0 4px 6px for elevated elements)
+- Smooth transitions and micro-interactions (hover effects, focus states)
+- Professional color palette with proper contrast ratios (WCAG AA minimum)
+- Use gradients tastefully for modern appeal (linear-gradient for buttons, radial-gradient for backgrounds)
+
+**Color Palette to Use:**
+Primary: ${palette.primary}
+Secondary: ${palette.secondary}
+Accent: ${palette.accent}
+Background: ${palette.bg}
+Text: ${palette.text}
+Muted Text: ${palette.muted}
+
+**Layout & Structure:**
+- Mobile-first responsive design (design for mobile, enhance for desktop)
+- Use CSS Grid and Flexbox for modern layouts
+- Maximum content width: 1200px (use .container class with max-width)
+- Proper section spacing: 64px-96px between major sections on desktop, 48px-64px on mobile
+- Sticky header with backdrop blur for modern feel
+- Footer with proper spacing and organization
+
+**Typography:**
+- Heading hierarchy: h1 (48-56px desktop, 32-40px mobile), h2 (36-40px desktop, 28-32px mobile), h3 (24-28px), h4 (20-24px)
+- Body text: 16-18px with 1.6-1.8 line height
+- Font weights: 400 (regular), 500 (medium), 600 (semibold), 700 (bold)
+- Proper text contrast: minimum 4.5:1 for body text, 3:1 for large text
+
+**Components to Include:**
+1. **Header/Navigation:**
+   - Sticky positioning with backdrop blur
+   - Logo/brand area (data-slot="logo")
+   - Navigation menu (horizontal on desktop, hamburger on mobile)
+   - Clean, minimal design
+
+2. **Hero Section:**
+   - Compelling headline (data-slot="headline")
+   - Supporting subheadline (data-slot="subheadline")
+   - Hero image/visual area (data-slot="hero_image")
+   - Primary CTA button (data-slot="primary_cta")
+   - Secondary CTA button (optional, data-slot="secondary_cta")
+   - Modern layout with proper spacing
+
+3. **Content Sections:**
+   - Feature sections with icons/images (data-slot="feature_icon_X", "feature_title_X", "feature_desc_X")
+   - About/Description section
+   - Services/Products section (if applicable)
+   - Testimonials or social proof (if applicable)
+   - Use cards with subtle borders and shadows
+
+4. **Footer:**
+   - Footer logo (data-slot="footer_logo")
+   - Footer links or content
+   - Copyright text (data-slot="footer_text")
+   - Clean, organized layout
+
+**CSS Requirements:**
+- Use CSS custom properties (variables) for colors, spacing, and typography
+- Example: :root { --brand: ${palette.primary}; --bg: ${palette.bg}; --text: ${palette.text}; --spacing-xs: 4px; --spacing-sm: 8px; --spacing-md: 16px; --spacing-lg: 24px; --spacing-xl: 32px; --spacing-2xl: 48px; --spacing-3xl: 64px; }
+- Mobile-first media queries: @media (min-width: 640px), @media (min-width: 768px), @media (min-width: 1024px)
+- Smooth transitions: transition: all 0.2s ease or transition: transform 0.2s ease, opacity 0.2s ease
+- Subtle animations: Use @keyframes for loading states, hover effects, or entrance animations
+- Professional button styles: rounded corners (8-12px), proper padding, hover states with transform or shadow changes
+- Card components: border-radius: 12-16px, subtle shadow, padding: 24-32px
+
+**HTML Requirements:**
+- Semantic HTML5: <header>, <nav>, <main>, <section>, <article>, <footer>
+- Proper heading hierarchy (h1 → h2 → h3)
+- Accessibility: aria-labels where needed, alt text placeholders
+- Use data-slot attributes for all replaceable content
+- Clean, readable class names (BEM-like: .site-header, .hero-section, .feature-card)
+- No inline styles (except data attributes)
+- Proper indentation and structure
+
+**Responsive Design:**
+- Mobile: Single column, stacked layout, hamburger menu
+- Tablet: 2-column grids where appropriate
+- Desktop: Multi-column layouts, full navigation
+- Breakpoints: 640px (sm), 768px (md), 1024px (lg), 1280px (xl)
+
+**Performance & Best Practices:**
+- No external resources (images, fonts, scripts)
+- Use CSS for visual elements (gradients, shapes, patterns)
+- Optimize CSS (group related rules, use shorthand)
+- No JavaScript required (pure HTML/CSS)
+- Fast loading, minimal CSS
+
+**Style-Specific Guidelines:**
+
+${style === 'modern' ? `- Clean lines, minimal design, lots of white space
+- Subtle shadows and depth
+- Modern typography with good hierarchy
+- Smooth animations and transitions
+- Card-based layouts` : ''}
+
+${style === 'minimal' ? `- Extremely clean, maximum white space
+- Minimal color usage (mostly monochrome with one accent)
+- Simple typography, no decorative elements
+- Focus on content and readability` : ''}
+
+${style === 'bold' ? `- Strong colors and high contrast
+- Large, impactful typography
+- Bold geometric shapes
+- Strong visual hierarchy
+- Eye-catching design elements` : ''}
+
+${style === 'elegant' ? `- Sophisticated color palette
+- Refined typography with serif or elegant sans-serif
+- Subtle decorative elements
+- Premium feel with attention to detail
+- Classic layouts with modern touches` : ''}
+
+${style === 'creative' ? `- Unique layouts and compositions
+- Creative use of space and typography
+- Artistic elements and patterns
+- Bold color combinations
+- Experimental but functional design` : ''}
+
+**Website Type Considerations:**
+
+${websiteType === 'portfolio' ? `- **Hero Section**: Compelling headline like "Welcome to My Portfolio" or "Hi, I'm [Name]" with a professional tagline
+- **About Section**: Personal introduction, background, education, skills, and career goals (for recent graduates, emphasize education, projects, and aspirations)
+- **Projects/Work Section**: Showcase portfolio items, projects, or work samples with descriptions
+- **Skills Section**: List relevant skills, technologies, or expertise areas
+- **Education Section** (especially for recent graduates): Highlight education, degrees, certifications, coursework
+- **Contact Section**: Professional contact information and social links
+- **Content should be**: Professional, authentic, and tailored to the user's situation (e.g., recent graduate = emphasize education, projects, learning journey)
+- **NEVER include the user's prompt text** - create appropriate portfolio content based on their request` : ''}
+
+${websiteType === 'business' ? `- Professional header with navigation
+- Services/products section
+- About/company section
+- Testimonials or social proof
+- Contact/CTA sections
+- Trust indicators` : ''}
+
+${websiteType === 'blog' ? `- Article/blog post layout
+- Category navigation
+- Author information
+- Reading-friendly typography
+- Related posts section` : ''}
+
+${websiteType === 'landing' ? `- Strong hero with clear value proposition
+- Multiple benefit/feature sections
+- Social proof (testimonials, stats)
+- Multiple CTAs throughout
+- Conversion-focused design` : ''}
+
+**Slots to Include:**
+All replaceable content must have data-slot attributes:
+- logo, hero_image, headline, subheadline, primary_cta, secondary_cta
+- feature_icon_1, feature_title_1, feature_desc_1 (and 2, 3 if applicable)
+- footer_logo, footer_text
+- Any other content that should be editable
+
+**Example JSON Structure (for reference only - generate your own):**
 {
-  "html": "<header class=\"site-header\"><div class=\"brand\" data-slot=\"logo\"></div>...</header><main id=\"hero\" data-slot=\"hero_image\">...</main>...",
-  "css": ":root{--brand:#2563eb;--bg:#0b1220;--text:#0f172a}/* base + sections + animations */\n@media(max-width:768px){/* responsive adjustments */}",
+  "html": "<header class=\"site-header\">...</header><main>...</main><footer>...</footer>",
+  "css": ":root{--brand:${palette.primary};--bg:${palette.bg};--text:${palette.text}}body{...}@media(min-width:768px){...}",
   "slots": [
-    {"id":"logo","type":"image","description":"Brand logo image"},
-    {"id":"hero_image","type":"image","description":"Hero visual"},
-    {"id":"primary_cta","type":"text","description":"Primary call to action label"}
+    {"id":"logo","type":"image","description":"Brand logo"},
+    {"id":"headline","type":"text","description":"Main hero headline"},
+    {"id":"hero_image","type":"image","description":"Hero section image"},
+    {"id":"primary_cta","type":"text","description":"Primary call-to-action button text"}
   ],
-  "meta": {"title":"${websiteType} - ${style}", "colorScheme":"${colorScheme}"}${tailwindMode ? ',\n  "tailwind_html": "<header class=\\"flex items-center\\" ...>..."' : ''}
-}`;
+  "meta": {"title":"${websiteType} - ${style}","colorScheme":"${colorScheme}","style":"${style}"}
+}
+
+**CRITICAL:**
+- Return ONLY the JSON object, no markdown, no code blocks, no explanations
+- HTML must be complete and valid
+- CSS must be complete with all necessary styles
+- All slots must be properly marked with data-slot attributes
+- Template must look professional and modern
+- Must be fully responsive
+- Must follow all design guidelines above`;
   }
 
   // Call OpenRoute API

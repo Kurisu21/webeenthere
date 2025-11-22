@@ -1,0 +1,78 @@
+// routes/mediaRoutes.js
+const express = require('express');
+const router = express.Router();
+const { authMiddleware } = require('../middleware/auth');
+
+module.exports = (db) => {
+  const MediaController = require('../controllers/MediaController');
+  const mediaController = new MediaController(db);
+
+  // Upload image
+  router.post('/upload', authMiddleware, mediaController.getUploadMiddleware(), async (req, res) => {
+    await mediaController.uploadImage(req, res);
+  });
+
+  // Get user's images
+  router.get('/images', authMiddleware, async (req, res) => {
+    await mediaController.getUserImages(req, res);
+  });
+
+  // Delete image
+  router.delete('/images/:id', authMiddleware, async (req, res) => {
+    await mediaController.deleteImage(req, res);
+  });
+
+  // Serve uploaded images
+  router.get('/uploads/user_:userId/:filename', async (req, res) => {
+    try {
+      const { userId, filename } = req.params;
+      const path = require('path');
+      const fs = require('fs').promises;
+      
+      const filePath = path.join(__dirname, '../uploads', `user_${userId}`, filename);
+      
+      console.log('[MediaRoutes] Serving image:', { userId, filename, filePath });
+      
+      // Check if file exists
+      try {
+        await fs.access(filePath);
+      } catch (err) {
+        console.error('[MediaRoutes] File not found:', filePath, err.message);
+        return res.status(404).json({ success: false, error: 'Image not found' });
+      }
+      
+      // Set proper content type
+      const ext = path.extname(filename).toLowerCase();
+      const contentTypes = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+        '.svg': 'image/svg+xml'
+      };
+      const contentType = contentTypes[ext] || 'application/octet-stream';
+      
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+      res.sendFile(filePath, (err) => {
+        if (err) {
+          console.error('[MediaRoutes] Error sending file:', err);
+          if (!res.headersSent) {
+            res.status(500).json({ success: false, error: 'Error serving image' });
+          }
+        } else {
+          console.log('[MediaRoutes] Successfully served image:', filename);
+        }
+      });
+    } catch (error) {
+      console.error('[MediaRoutes] Serve image error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ success: false, error: 'Error serving image' });
+      }
+    }
+  });
+
+  return router;
+};
+

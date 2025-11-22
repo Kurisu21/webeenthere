@@ -77,13 +77,13 @@ export default function LeftPanel({ isDark, editor }: LeftPanelProps) {
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto">
-        {activeTab === 'layers' ? (
+        {/* Always render both containers so GrapesJS can find them during initialization */}
+        <div className={activeTab === 'layers' ? 'block' : 'hidden'}>
           <LayerPanel editor={editor || null} isDark={isDark} />
-        ) : (
-          <div className="p-3">
-            <div className="blocks-container" />
-          </div>
-        )}
+        </div>
+        <div className={activeTab === 'blocks' ? 'block p-3' : 'hidden'}>
+          <div className="blocks-container" style={{ minHeight: '200px' }} />
+        </div>
       </div>
     </div>
   );

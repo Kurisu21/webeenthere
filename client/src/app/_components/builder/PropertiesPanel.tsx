@@ -6,22 +6,27 @@ import { SectionHeader } from './properties/SectionHeader';
 import { SegmentedControl } from './properties/SegmentedControl';
 import { InputWithClear } from './properties/InputWithClear';
 import { ColorPickerButton } from './properties/ColorPickerButton';
+import ImageLibrary from './ImageLibrary';
 import './PropertiesPanel.css';
 
 interface PropertiesPanelProps {
   editor: Editor | null;
   isDark?: boolean;
+  websiteId?: string;
 }
 
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   editor,
   isDark = true,
+  websiteId,
 }) => {
   const [selectedComponent, setSelectedComponent] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['layout', 'typography', 'style'])
   );
+  const [showImageLibrary, setShowImageLibrary] = useState(false);
+  const [imageLibraryMode, setImageLibraryMode] = useState<'src' | 'background'>('src');
 
   // Get computed styles from selected component
   const getStyleValue = (property: string): string => {
@@ -51,6 +56,40 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   const updateAttribute = (attr: string, value: string) => {
     if (!selectedComponent) return;
     selectedComponent.addAttributes({ [attr]: value });
+    editor?.trigger('component:update');
+  };
+
+  // Handle image selection from library
+  const handleImageSelect = (imageUrl: string) => {
+    if (!selectedComponent || !editor) return;
+    
+    if (imageLibraryMode === 'src') {
+      // For image components, set src attribute
+      if (selectedComponent.get('type') === 'image' || selectedComponent.get('tagName') === 'img') {
+        updateAttribute('src', imageUrl);
+        updateAttribute('alt', selectedComponent.getAttributes()['alt'] || 'Image');
+      }
+    } else if (imageLibraryMode === 'background') {
+      // For background images, set background-image style
+      updateStyle('background-image', `url(${imageUrl})`);
+    }
+    
+    setShowImageLibrary(false);
+  };
+
+  // Get image src for image components
+  const getImageSrc = (): string => {
+    if (!selectedComponent) return '';
+    if (selectedComponent.get('type') === 'image' || selectedComponent.get('tagName') === 'img') {
+      return getAttribute('src') || '';
+    }
+    return '';
+  };
+
+  // Check if selected component is an image
+  const isImageComponent = (): boolean => {
+    if (!selectedComponent) return false;
+    return selectedComponent.get('type') === 'image' || selectedComponent.get('tagName') === 'img';
   };
 
   // Toggle section expansion
@@ -208,6 +247,54 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       </div>
 
       <div className="properties-content">
+        {/* Image Section - Show for image components */}
+        {isImageComponent() && filterSection('image', ['src', 'alt']) && (
+          <div className="properties-section">
+            <SectionHeader
+              title="Image"
+              isExpanded={expandedSections.has('image')}
+              onToggle={() => toggleSection('image')}
+              isDark={isDark}
+            />
+            {expandedSections.has('image') && (
+              <div className="properties-section-content">
+                <div className="property-row">
+                  <label className="property-label">Image Source</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageLibraryMode('src');
+                      setShowImageLibrary(true);
+                    }}
+                    className="flex items-center gap-2 w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md hover:bg-gray-750 transition-colors text-left"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-sm text-gray-300">Choose from Library</span>
+                  </button>
+                </div>
+                {getImageSrc() && (
+                  <div className="property-row">
+                    <label className="property-label">Current Image</label>
+                    <div className="w-full aspect-video bg-gray-800 rounded-md overflow-hidden border border-gray-700">
+                      <img src={getImageSrc()} alt="Preview" className="w-full h-full object-contain" />
+                    </div>
+                  </div>
+                )}
+                <div className="property-row">
+                  <label className="property-label">Alt Text</label>
+                  <InputWithClear
+                    value={getAttribute('alt') || ''}
+                    onChange={(value) => updateAttribute('alt', value)}
+                    placeholder="Image description"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Link Section */}
         {filterSection('link', ['href', 'target']) && (
           <div className="properties-section">
@@ -462,15 +549,15 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      const url = prompt('Enter image URL:');
-                      if (url) {
-                        updateStyle('background-image', `url(${url})`);
-                      }
+                      setImageLibraryMode('background');
+                      setShowImageLibrary(true);
                     }}
                     className="flex items-center gap-2 w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md hover:bg-gray-750 transition-colors text-left"
                   >
-                    <div className="w-5 h-5 rounded-full bg-gray-600 border border-gray-500 flex-shrink-0" />
-                    <span className="text-sm text-gray-300">Set Background</span>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-sm text-gray-300">Choose from Library</span>
                   </button>
                 </div>
               </div>
@@ -478,6 +565,17 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </div>
         )}
       </div>
+
+      {/* Image Library Modal - Only render when needed */}
+      {showImageLibrary && (
+        <ImageLibrary
+          isOpen={showImageLibrary}
+          onClose={() => setShowImageLibrary(false)}
+          onSelectImage={handleImageSelect}
+          websiteId={websiteId}
+          isDark={isDark}
+        />
+      )}
     </div>
   );
 };

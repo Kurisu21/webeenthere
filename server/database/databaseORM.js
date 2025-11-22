@@ -152,12 +152,20 @@ class DatabaseORM {
         CREATE TABLE IF NOT EXISTS ai_prompts (
           id INT AUTO_INCREMENT PRIMARY KEY,
           user_id INT NOT NULL,
-          prompt_type ENUM('title', 'hero', 'about', 'full') NOT NULL,
+          prompt_type ENUM('title', 'hero', 'about', 'full', 'assistant_request') NOT NULL,
           prompt_text TEXT NOT NULL,
           response_html LONGTEXT,
           used_on_site BOOLEAN DEFAULT FALSE,
+          website_id INT NULL,
+          conversation_id VARCHAR(50) NULL,
+          message_type ENUM('user', 'assistant') DEFAULT 'user',
+          execution_status ENUM('pending', 'success', 'failed') DEFAULT 'pending',
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (user_id) REFERENCES users(id)
+          FOREIGN KEY (user_id) REFERENCES users(id),
+          FOREIGN KEY (website_id) REFERENCES websites(id) ON DELETE SET NULL,
+          INDEX idx_website_id (website_id),
+          INDEX idx_conversation_id (conversation_id),
+          INDEX idx_message_type (message_type)
         )
       `,
       media_assets: `

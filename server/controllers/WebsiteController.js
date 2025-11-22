@@ -943,7 +943,20 @@ class WebsiteController {
       // If preview exists, return it
       if (website.preview_url) {
         res.setHeader('Content-Type', 'image/png');
-        res.setHeader('Cache-Control', 'public, max-age=3600');
+        // Use updated_at timestamp for cache-busting - allows browser to revalidate
+        // but still cache the image if it hasn't changed
+        const cacheMaxAge = 300; // 5 minutes - shorter cache for more frequent updates
+        res.setHeader('Cache-Control', `public, max-age=${cacheMaxAge}, must-revalidate`);
+        // Add ETag based on updated_at for better cache control
+        if (website.updated_at) {
+          const etag = `"${new Date(website.updated_at).getTime()}"`;
+          res.setHeader('ETag', etag);
+          // Check if client has cached version
+          const ifNoneMatch = req.headers['if-none-match'];
+          if (ifNoneMatch === etag) {
+            return res.status(304).end(); // Not Modified
+          }
+        }
         return res.send(website.preview_url);
       }
 
@@ -966,7 +979,8 @@ class WebsiteController {
           await this.websiteModel.update(id, { preview_url: previewBuffer });
           
           res.setHeader('Content-Type', 'image/png');
-          res.setHeader('Cache-Control', 'public, max-age=3600');
+          // Shorter cache time for dynamically generated previews
+          res.setHeader('Cache-Control', 'public, max-age=300, must-revalidate');
           return res.send(previewBuffer);
         }
       } catch (error) {

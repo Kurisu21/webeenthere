@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd server && node server.js",
-    "client": "cd client && set NODE_OPTIONS=--max-old-space-size=4096 && npm run dev",
+    "client": "cd client && npm run dev",
     "start": "npm run dev",
     "build": "npm run install-all && npm run build-client",
     "build-client": "cd client && npm run build",

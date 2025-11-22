@@ -75,28 +75,36 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
                 <div className="bg-white dark:bg-gray-800 rounded border shadow-sm min-h-[300px] relative overflow-hidden">
                   {/* Real HTML preview with CSS */}
                   <div className="w-full h-full">
-                    <style dangerouslySetInnerHTML={{ __html: template.css_base || '' }} />
+                    <style dangerouslySetInnerHTML={{ __html: template.css || template.css_base || '' }} />
                     <div className="template-preview" style={{ 
                       width: '100%', 
                       height: '100%', 
                       overflow: 'auto',
-                      fontSize: '12px' // Scale down for preview
+                      fontSize: '12px', // Scale down for preview
+                      transform: 'scale(0.5)',
+                      transformOrigin: 'top left',
+                      width: '200%',
+                      height: '200%'
                     }}>
-                      {template.elements?.map((element: any, index: number) => (
-                        <div
-                          key={element.id || index}
-                          style={{
-                            position: element.position ? 'absolute' : 'relative',
-                            left: element.position?.x || 'auto',
-                            top: element.position?.y || 'auto',
-                            width: element.size?.width || 'auto',
-                            height: element.size?.height || 'auto',
-                            ...element.styles
-                          }}
-                          dangerouslySetInnerHTML={{ __html: element.content || '' }}
-                        />
-                      ))}
-                      {(!template.elements || template.elements.length === 0) && (
+                      {/* Render HTML directly if available, otherwise render elements */}
+                      {template.html ? (
+                        <div dangerouslySetInnerHTML={{ __html: template.html }} />
+                      ) : template.elements && template.elements.length > 0 ? (
+                        template.elements.map((element: any, index: number) => (
+                          <div
+                            key={element.id || index}
+                            style={{
+                              position: element.position ? 'absolute' : 'relative',
+                              left: element.position?.x || 'auto',
+                              top: element.position?.y || 'auto',
+                              width: element.size?.width || 'auto',
+                              height: element.size?.height || 'auto',
+                              ...element.styles
+                            }}
+                            dangerouslySetInnerHTML={{ __html: element.content || '' }}
+                          />
+                        ))
+                      ) : (
                         <div className="text-center text-gray-500 py-8">
                           No elements to preview
                         </div>
@@ -110,8 +118,12 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500 dark:text-gray-400">Elements:</span>
-                  <span className="text-gray-900 dark:text-white">
-                    {template.elements?.length || 0}
+                  <span className={`font-medium ${
+                    (template.html || (template.elements && template.elements.length > 0)) 
+                      ? 'text-green-600 dark:text-green-400' 
+                      : 'text-gray-900 dark:text-white'
+                  }`}>
+                    {template.html ? 'HTML Template' : (template.elements?.length || 0)}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -147,8 +159,16 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Design Reasoning
                   </h4>
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                  <div className={`border rounded-lg p-4 ${
+                    (template.html || (template.elements && template.elements.length > 0))
+                      ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                      : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                  }`}>
+                    <p className={`text-sm ${
+                      (template.html || (template.elements && template.elements.length > 0))
+                        ? 'text-green-800 dark:text-green-200'
+                        : 'text-blue-800 dark:text-blue-200'
+                    }`}>
                       {reasoning}
                     </p>
                   </div>

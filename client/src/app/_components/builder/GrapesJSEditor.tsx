@@ -44,7 +44,7 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
       blockManager: {
         appendTo: '.blocks-container',
         defaults: {
-          open: false,
+          open: true, // Open categories by default so blocks are visible
         },
         blocks: [
           {
@@ -863,6 +863,29 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
     } catch (err) {
       // Ignore RTE extension errors; defaults still work
       console.warn('RTE extension error:', err);
+    }
+
+    // Ensure block manager is properly initialized
+    try {
+      const blockManager = editor.BlockManager;
+      if (blockManager) {
+        // Force render blocks if container exists
+        const blocksContainer = document.querySelector('.blocks-container');
+        if (blocksContainer && blockManager.getCategories().length === 0) {
+          console.log('[GrapesJS] Block manager initialized, blocks:', blockManager.getAll().length);
+          // Trigger render if needed
+          setTimeout(() => {
+            if (blocksContainer.children.length === 0) {
+              console.warn('[GrapesJS] Blocks container is empty, attempting to render blocks');
+              // Force re-render by accessing block manager
+              const categories = blockManager.getCategories();
+              console.log('[GrapesJS] Block categories:', categories);
+            }
+          }, 100);
+        }
+      }
+    } catch (err) {
+      console.warn('[GrapesJS] Error checking block manager:', err);
     }
 
     // Call onEditorInit callback

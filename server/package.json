@@ -25,6 +25,7 @@
     "express-openid-connect": "^2.19.2",
     "express-validator": "^7.0.1",
     "jsonwebtoken": "^9.0.0",
+    "multer": "^1.4.5-lts.1",
     "mysql2": "^3.6.0",
     "next-auth": "^4.24.11",
     "node-cron": "^3.0.3",

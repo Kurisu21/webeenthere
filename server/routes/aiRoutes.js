@@ -17,6 +17,16 @@ module.exports = (db) => {
     await aiController.improveCanvas(req, res);
   });
 
+  // AI Assistant endpoint for real-time suggestions and user prompts
+  router.post('/assistant', authMiddleware, async (req, res) => {
+    await aiController.handleAssistantRequest(req, res);
+  });
+
+  // Get AI Assistant chat history for a website
+  router.get('/assistant/history/:websiteId', authMiddleware, async (req, res) => {
+    await aiController.getChatHistory(req, res);
+  });
+
   return router;
 };
 

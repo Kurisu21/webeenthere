@@ -107,6 +107,7 @@ export const WebsiteCard: React.FC<WebsiteCardProps> = ({
               alt={`${website.title} preview`}
               className="w-full h-full"
               style={{ objectFit: 'cover' }}
+              refreshKey={website.updated_at} // Pass updated_at to force refresh when website is updated
             />
           ) : (
             <div className="preview-placeholder text-center flex flex-col items-center justify-center w-full h-full bg-gray-50 dark:bg-gray-800">

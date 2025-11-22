@@ -97,12 +97,17 @@ CREATE TABLE websites (
 CREATE TABLE ai_prompts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    prompt_type ENUM('title', 'hero', 'about', 'full') NOT NULL,
+    prompt_type ENUM('title', 'hero', 'about', 'full', 'assistant_request') NOT NULL,
     prompt_text TEXT NOT NULL,
     response_html LONGTEXT,
     used_on_site BOOLEAN DEFAULT FALSE,
+    website_id INT NULL, -- NEW: Links chat to specific website for AI Assistant conversations
+    conversation_id VARCHAR(50) NULL, -- NEW: Groups messages in conversations for AI Assistant
+    message_type ENUM('user', 'assistant') DEFAULT 'user', -- NEW: Distinguishes user prompts from AI responses
+    execution_status ENUM('pending', 'success', 'failed') DEFAULT 'pending', -- NEW: Tracks if AI-generated code was executed successfully
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (website_id) REFERENCES websites(id) ON DELETE SET NULL
 );
 
 CREATE TABLE media_assets (
