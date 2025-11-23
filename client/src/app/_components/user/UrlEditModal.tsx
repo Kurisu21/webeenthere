@@ -66,8 +66,9 @@ export const UrlEditModal: React.FC<UrlEditModalProps> = ({
       setIsCheckingAvailability(true);
       try {
         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const { API_BASE_URL } = await import('@/lib/apiConfig');
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/websites/check-slug?slug=${encodeURIComponent(normalizedValue)}`,
+          `${API_BASE_URL}/api/websites/check-slug?slug=${encodeURIComponent(normalizedValue)}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,

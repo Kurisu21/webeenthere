@@ -66,7 +66,8 @@ export const userActivityApi = {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}${url}`, {
+      const { API_BASE_URL } = await import('./apiConfig');
+      const response = await fetch(`${API_BASE_URL}${url}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

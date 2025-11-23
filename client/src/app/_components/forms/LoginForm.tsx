@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { API_ENDPOINTS, apiPost } from '@/lib/apiConfig';
+import { API_ENDPOINTS, apiPost, API_BASE_URL } from '@/lib/apiConfig';
 import { useAuth } from '../auth/AuthContext';
 
 const LoginForm: React.FC = () => {
@@ -215,7 +215,7 @@ const LoginForm: React.FC = () => {
 
         <div className="space-y-3">
           <a 
-            href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/login/google`}
+            href={`${API_BASE_URL}/api/auth/login/google`}
             className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-3 block"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -227,7 +227,7 @@ const LoginForm: React.FC = () => {
             Sign in with Google
           </a>
           <a 
-            href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/login/github`}
+            href={`${API_BASE_URL}/api/auth/login/github`}
             className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-3 block"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

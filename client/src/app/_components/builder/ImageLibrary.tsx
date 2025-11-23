@@ -81,13 +81,10 @@ export default function ImageLibrary({ isOpen, onClose, onSelectImage, websiteId
 
       // Use fetch directly for FormData
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const { API_BASE_URL } = await import('@/lib/apiConfig');
       const apiUrl = API_ENDPOINTS.MEDIA_UPLOAD.replace('/api/', '').startsWith('http') 
         ? API_ENDPOINTS.MEDIA_UPLOAD 
-        : `${typeof window !== 'undefined' 
-            ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'http://localhost:5000'
-                : 'https://webeenthere.onrender.com')
-            : 'http://localhost:5000'}/api/media/upload`;
+        : `${API_BASE_URL}/api/media/upload`;
 
       const response = await fetch(apiUrl, {
         method: 'POST',

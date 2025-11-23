@@ -1,7 +1,5 @@
 // lib/adminApi.ts
-import { API_ENDPOINTS } from './apiConfig';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { API_ENDPOINTS, API_BASE_URL } from './apiConfig';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
