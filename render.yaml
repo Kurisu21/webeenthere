@@ -20,7 +20,7 @@ services:
       - key: DB_PASSWORD
         sync: false
       - key: DB_NAME
-        value: webeenthere
+        value: u875409848_jumaoas
       - key: DB_PORT
         value: 3306
       - key: JWT_SECRET
