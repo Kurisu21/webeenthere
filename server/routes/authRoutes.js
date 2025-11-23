@@ -1,18 +1,29 @@
 // routes/authRoutes.js
 const express = require('express');
-const { auth } = require('express-openid-connect');
 const router = express.Router();
 const Auth0Service = require('../services/Auth0Service');
 const databaseActivityLogger = require('../services/DatabaseActivityLogger');
 
 const auth0Service = new Auth0Service();
 
-// Configure Auth0 middleware
+// Check if Auth0 is configured before setting up middleware
 const auth0Config = auth0Service.getAuth0Config();
-router.use(auth(auth0Config));
+const isAuth0Configured = !!(auth0Config.clientID && auth0Config.issuerBaseURL && auth0Config.clientSecret);
+
+if (isAuth0Configured) {
+  // Only configure Auth0 middleware if Auth0 is properly configured
+  const { auth } = require('express-openid-connect');
+  router.use(auth(auth0Config));
+} else {
+  console.warn('⚠️  Auth0 is not configured. OAuth routes will be disabled.');
+  console.warn('   To enable Auth0, set: AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET');
+}
 
 // Auth0 login route - redirects to Auth0
 router.get('/login', (req, res) => {
+  if (!isAuth0Configured) {
+    return res.status(503).json({ error: 'Auth0 is not configured. OAuth login is disabled.' });
+  }
   // Don't set returnTo - afterCallback and our callback route will handle the redirect
   res.oidc.login({
     authorizationParams: {
@@ -23,6 +34,9 @@ router.get('/login', (req, res) => {
 
 // Google login route
 router.get('/login/google', (req, res) => {
+  if (!isAuth0Configured) {
+    return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_not_configured`);
+  }
   try {
     // Don't set returnTo - afterCallback and our callback route will handle the redirect
     res.oidc.login({
@@ -38,6 +52,9 @@ router.get('/login/google', (req, res) => {
 
 // GitHub login route
 router.get('/login/github', (req, res) => {
+  if (!isAuth0Configured) {
+    return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_not_configured`);
+  }
   try {
     // GitHub connection identifier - matches Auth0 standard naming (same pattern as 'google-oauth2')
     // Default to 'github-oauth2' to match Auth0's standard naming convention
@@ -81,9 +98,12 @@ router.get('/login/github', (req, res) => {
 
 // Auth0 logout route
 router.get('/logout', async (req, res) => {
+  if (!isAuth0Configured) {
+    return res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
+  }
   try {
     // Clear session token from database if user is logged in
-    if (req.oidc.user) {
+    if (req.oidc && req.oidc.user) {
       const user = await auth0Service.userModel.findByEmail(req.oidc.user.email);
       if (user) {
         try {
@@ -126,7 +146,10 @@ router.get('/logout', async (req, res) => {
 
 // Get current user (if authenticated via Auth0)
 router.get('/user', (req, res) => {
-  if (req.oidc.user) {
+  if (!isAuth0Configured) {
+    return res.status(503).json({ error: 'Auth0 is not configured' });
+  }
+  if (req.oidc && req.oidc.user) {
     res.json({ user: req.oidc.user });
   } else {
     res.status(401).json({ error: 'Not authenticated' });

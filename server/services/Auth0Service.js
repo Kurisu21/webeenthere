@@ -156,13 +156,17 @@ class Auth0Service {
     // Store reference to this for use in afterCallback
     const auth0Service = this;
     
+    // Use a proper secret - required by express-openid-connect
+    // If Auth0 is not configured, use JWT_SECRET or generate a fallback
+    const secret = process.env.AUTH0_SECRET || process.env.JWT_SECRET || 'fallback-secret-change-in-production';
+    
     const config = {
       authRequired: false,
       auth0Logout: true,
       baseURL: baseURL,
       clientID: clientID,
       issuerBaseURL: domain ? `https://${domain}` : undefined,
-      secret: clientSecret || process.env.JWT_SECRET || 'secret',
+      secret: secret,
       clientSecret: clientSecret,
       authorizationParams: {
         response_type: 'code',

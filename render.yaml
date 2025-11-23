@@ -15,20 +15,33 @@ services:
         value: 153.92.15.31
       - key: DB_USER
         value: u875409848_jumaoas
+      # Database password - Set in Render dashboard (Environment tab)
+      # Value: WahzAyD@2
       - key: DB_PASSWORD
-        value: WahzAyD@2
+        sync: false
       - key: DB_NAME
         value: webeenthere
       - key: DB_PORT
         value: 3306
       - key: JWT_SECRET
         generateValue: true
-      # Option 1: Set API key directly in YAML (replace with your actual key)
+      # Auth0 Configuration - Set these in Render dashboard as secrets
+      - key: AUTH0_DOMAIN
+        sync: false
+      - key: AUTH0_CLIENT_ID
+        sync: false
+      - key: AUTH0_CLIENT_SECRET
+        sync: false
+      - key: AUTH0_SECRET
+        sync: false
+      # OpenAI API Key - Set in Render dashboard as secret
       - key: OPENAI_API_KEY
-        value: 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
-      # Option 2: Set manually in Render dashboard (comment out above and uncomment below)
-      # - key: OPENAI_API_KEY
-      #   sync: false
+        sync: false
+      # Frontend URL for OAuth callbacks
+      - key: FRONTEND_URL
+        value: https://webeenthere.onrender.com
+      - key: AUTH0_BASE_URL
+        value: https://webeenthere-server.onrender.com
 
   # Frontend Service
   - type: web
