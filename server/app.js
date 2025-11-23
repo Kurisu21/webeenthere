@@ -22,26 +22,43 @@ app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, curl requests, or server-side redirects)
     // This is important for Auth0 OAuth callbacks which may not have an origin header
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      return callback(null, true);
+    }
     
     // Allow Auth0 domains for OAuth callbacks
     if (origin.includes('auth0.com') || origin.includes('auth0usercontent.com')) {
       return callback(null, true);
     }
     
+    // Check exact match first
     if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log('CORS blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
+      return callback(null, true);
     }
+    
+    // Allow any Render.com subdomain (for flexibility)
+    if (origin.includes('.onrender.com')) {
+      console.log('✅ CORS allowed Render origin:', origin);
+      return callback(null, true);
+    }
+    
+    // Allow localhost for development
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return callback(null, true);
+    }
+    
+    console.log('❌ CORS blocked origin:', origin);
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
-// Graceful handling for payload too large
+// Graceful handling for payload too large and CORS errors
 app.use((err, req, res, next) => {
   if (err && err.type === 'entity.too.large') {
     return res.status(413).json({
@@ -49,6 +66,19 @@ app.use((err, req, res, next) => {
       message: 'Payload too large. Try using smaller images or compressing assets.'
     });
   }
+  
+  // Handle CORS errors
+  if (err && err.message && err.message.includes('CORS')) {
+    console.error('CORS Error:', err.message);
+    console.error('Request Origin:', req.headers.origin);
+    return res.status(403).json({
+      success: false,
+      error: 'CORS policy violation',
+      message: 'Access denied by CORS policy',
+      origin: req.headers.origin
+    });
+  }
+  
   return next(err);
 });
 
