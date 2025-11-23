@@ -48,7 +48,7 @@ services:
     name: webeenthere
     env: node
     plan: free
-    buildCommand: cd client && npm install --include=optional && npm run build
+    buildCommand: cd client && npm install --include=optional && NODE_OPTIONS=--max-old-space-size=4096 npm run build
     startCommand: cd client && npm start
     envVars:
       - key: NODE_ENV
