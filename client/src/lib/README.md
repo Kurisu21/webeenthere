@@ -15,15 +15,15 @@ This guide explains how the API configuration works for both local development a
 The system automatically detects the environment based on the hostname:
 
 - **Local Development**: `localhost` or `127.0.0.1` → `http://localhost:5000`
-- **Production**: `webeenthere-1.onrender.com` → `https://webeenthere.onrender.com`
+- **Production**: `webeenthere.onrender.com` → `https://webeenthere-server.onrender.com`
 
 ### CORS Configuration
 
 The backend is configured to allow requests from:
 
 - `http://localhost:3000` (local frontend)
-- `https://webeenthere-1.onrender.com` (production frontend)
-- `https://webeenthere.onrender.com` (production backend)
+- `https://webeenthere.onrender.com` (production frontend)
+- `https://webeenthere-server.onrender.com` (production backend)
 
 ### Usage
 
@@ -84,8 +84,8 @@ logApiConfig();
 
 ## Deployment Checklist
 
-- [ ] Backend deployed to `https://webeenthere.onrender.com`
-- [ ] Frontend deployed to `https://webeenthere-1.onrender.com`
+- [ ] Backend deployed to `https://webeenthere-server.onrender.com`
+- [ ] Frontend deployed to `https://webeenthere.onrender.com`
 - [ ] CORS configured for production domains
 - [ ] API endpoints tested in production
 - [ ] Environment detection working correctly

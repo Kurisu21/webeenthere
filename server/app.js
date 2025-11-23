@@ -13,9 +13,9 @@ app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
 // CORS configuration for both local development and production
 const allowedOrigins = [
-  'http://localhost:3000',           // Local development frontend
-  'https://webeenthere-1.onrender.com', // Production frontend
-  'https://webeenthere.onrender.com'     // Production backend (for testing)
+  'http://localhost:3000',              // Local development frontend
+  'https://webeenthere.onrender.com',    // Production frontend
+  'https://webeenthere-server.onrender.com' // Production backend (for testing)
 ];
 
 app.use(cors({

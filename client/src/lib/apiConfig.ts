@@ -17,7 +17,7 @@ const getApiBaseUrl = (): string => {
     const hostname = window.location.hostname;
     
     // Production hostname
-    if (hostname === 'webeenthere-1.onrender.com' || hostname.includes('onrender.com')) {
+    if (hostname === 'webeenthere.onrender.com' || hostname.includes('onrender.com')) {
       return ENV_CONFIG.PRODUCTION_API_URL;
     }
     

@@ -5,7 +5,7 @@ require('dotenv').config();
 class DatabaseORM {
   constructor() {
     this.connection = null;
-    this.dbName = 'webeenthere';
+    this.dbName = process.env.DB_NAME || 'webeenthere';
     this.seededUserIds = null; // Store user IDs for plan assignment after plans are seeded
   }
 

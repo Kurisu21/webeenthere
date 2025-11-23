@@ -6,17 +6,17 @@
 export const ENV_CONFIG = {
   // API Base URLs
   LOCAL_API_URL: 'http://localhost:5000',
-  PRODUCTION_API_URL: 'https://webeenthere.onrender.com',
+  PRODUCTION_API_URL: 'https://webeenthere-server.onrender.com',
   
   // Frontend URLs
   LOCAL_FRONTEND_URL: 'http://localhost:3000',
-  PRODUCTION_FRONTEND_URL: 'https://webeenthere-1.onrender.com',
+  PRODUCTION_FRONTEND_URL: 'https://webeenthere.onrender.com',
   
   // CORS Allowed Origins
   ALLOWED_ORIGINS: [
     'http://localhost:3000',
-    'https://webeenthere-1.onrender.com',
-    'https://webeenthere.onrender.com'
+    'https://webeenthere.onrender.com',
+    'https://webeenthere-server.onrender.com'
   ],
   
   // Environment Detection
@@ -24,7 +24,7 @@ export const ENV_CONFIG = {
     // Always check hostname first (most reliable)
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
-      return hostname === 'webeenthere-1.onrender.com' || hostname.includes('onrender.com');
+      return hostname === 'webeenthere.onrender.com' || hostname.includes('onrender.com');
     }
     
     // For server-side, check environment variable but allow override
