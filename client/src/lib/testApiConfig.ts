@@ -16,7 +16,7 @@ console.log('\n=== Testing CORS Configuration ===');
 console.log('Expected Origins:');
 console.log('- http://localhost:3000 (local development)');
 console.log('- https://webeenthere.onrender.com (production frontend)');
-console.log('- https://webeenthere-server.onrender.com (production backend)');
+console.log('- https://webeenthere-1.onrender.com (production backend)');
 
 console.log('\n=== Environment Detection ===');
 if (typeof window !== 'undefined') {

@@ -15,40 +15,74 @@ app.use(express.urlencoded({ limit: '20mb', extended: true }));
 const allowedOrigins = [
   'http://localhost:3000',              // Local development frontend
   'https://webeenthere.onrender.com',    // Production frontend
-  'https://webeenthere-server.onrender.com' // Production backend (for testing)
+  'https://webeenthere-1.onrender.com' // Production backend (for testing)
 ];
 
+// Helper function to check if origin is allowed
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // Allow requests with no origin
+  
+  // Allow Auth0 domains
+  if (origin.includes('auth0.com') || origin.includes('auth0usercontent.com')) {
+    return true;
+  }
+  
+  // Check exact match
+  if (allowedOrigins.indexOf(origin) !== -1) {
+    return true;
+  }
+  
+  // Allow any Render.com subdomain
+  if (origin.includes('.onrender.com')) {
+    console.log('✅ CORS allowed Render origin:', origin);
+    return true;
+  }
+  
+  // Allow localhost for development
+  if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+    return true;
+  }
+  
+  return false;
+};
+
+// CORS middleware with explicit preflight handling
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  // Handle preflight OPTIONS requests
+  if (req.method === 'OPTIONS') {
+    if (isOriginAllowed(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Max-Age', '86400'); // 24 hours
+      return res.status(204).send();
+    } else {
+      console.log('❌ CORS blocked OPTIONS request from:', origin);
+      return res.status(403).json({ error: 'CORS policy violation' });
+    }
+  }
+  
+  // Handle regular requests
+  if (isOriginAllowed(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  
+  next();
+});
+
+// Also use cors middleware as backup
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl requests, or server-side redirects)
-    // This is important for Auth0 OAuth callbacks which may not have an origin header
-    if (!origin) {
-      return callback(null, true);
+    if (isOriginAllowed(origin)) {
+      callback(null, true);
+    } else {
+      console.log('❌ CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
     }
-    
-    // Allow Auth0 domains for OAuth callbacks
-    if (origin.includes('auth0.com') || origin.includes('auth0usercontent.com')) {
-      return callback(null, true);
-    }
-    
-    // Check exact match first
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true);
-    }
-    
-    // Allow any Render.com subdomain (for flexibility)
-    if (origin.includes('.onrender.com')) {
-      console.log('✅ CORS allowed Render origin:', origin);
-      return callback(null, true);
-    }
-    
-    // Allow localhost for development
-    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-      return callback(null, true);
-    }
-    
-    console.log('❌ CORS blocked origin:', origin);
-    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],

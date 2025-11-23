@@ -41,7 +41,7 @@ services:
       - key: FRONTEND_URL
         value: https://webeenthere.onrender.com
       - key: AUTH0_BASE_URL
-        value: https://webeenthere-server.onrender.com
+        value: https://webeenthere-1.onrender.com
 
   # Frontend Service
   - type: web
@@ -54,4 +54,4 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_URL
-        value: https://webeenthere-server.onrender.com
+        value: https://webeenthere-1.onrender.com

@@ -6,7 +6,7 @@
 export const ENV_CONFIG = {
   // API Base URLs
   LOCAL_API_URL: 'http://localhost:5000',
-  PRODUCTION_API_URL: 'https://webeenthere-server.onrender.com',
+  PRODUCTION_API_URL: 'https://webeenthere-1.onrender.com',
   
   // Frontend URLs
   LOCAL_FRONTEND_URL: 'http://localhost:3000',
@@ -16,7 +16,7 @@ export const ENV_CONFIG = {
   ALLOWED_ORIGINS: [
     'http://localhost:3000',
     'https://webeenthere.onrender.com',
-    'https://webeenthere-server.onrender.com'
+    'https://webeenthere-1.onrender.com'
   ],
   
   // Environment Detection
