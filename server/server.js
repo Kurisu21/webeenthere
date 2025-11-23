@@ -49,7 +49,7 @@ async function startServer() {
     // Start server
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
-      console.log(`📊 Database: ${process.env.DB_NAME || 'webeenthere'}`);
+      console.log(`📊 Database: ${process.env.DB_NAME || 'u875409848_jumaoas'}`);
       console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`💾 Auto-backup: Every 6 hours`);
     });

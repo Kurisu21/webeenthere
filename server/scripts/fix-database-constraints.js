@@ -9,7 +9,7 @@ async function fixDatabase() {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'webeenthere'
+    database: process.env.DB_NAME || 'u875409848_jumaoas'
   });
 
   try {

@@ -5,7 +5,7 @@ require('dotenv').config();
 class DatabaseORM {
   constructor() {
     this.connection = null;
-    this.dbName = 'webeenthere';
+    this.dbName = process.env.DB_NAME || 'u875409848_jumaoas';
     this.seededUserIds = null; // Store user IDs for plan assignment after plans are seeded
   }
 
@@ -52,6 +52,15 @@ class DatabaseORM {
     try {
       await connection.promise().execute(`CREATE DATABASE IF NOT EXISTS \`${this.dbName}\``);
       console.log(`✅ Database '${this.dbName}' created or already exists`);
+    } catch (error) {
+      // If user doesn't have CREATE DATABASE privileges, assume database exists
+      if (error.code === 'ER_DBACCESS_DENIED_ERROR' || error.errno === 1044) {
+        console.log(`⚠️  Cannot create database (insufficient privileges). Assuming '${this.dbName}' exists.`);
+        console.log(`💡 If database doesn't exist, create it manually: CREATE DATABASE ${this.dbName};`);
+        // Don't throw - continue assuming database exists
+      } else {
+        throw error; // Re-throw other errors
+      }
     } finally {
       connection.end();
     }
@@ -3436,6 +3445,13 @@ class DatabaseORM {
       if (!dbExists) {
         console.log(`📦 Creating database '${this.dbName}'...`);
         await this.createDatabase();
+        // After attempting to create, check again
+        const dbExistsAfter = await this.databaseExists();
+        if (!dbExistsAfter) {
+          console.error(`❌ Database '${this.dbName}' does not exist and could not be created.`);
+          console.error(`💡 Please create it manually: CREATE DATABASE ${this.dbName};`);
+          throw new Error(`Database '${this.dbName}' does not exist. Please create it manually.`);
+        }
       } else {
         console.log(`ℹ️  Database '${this.dbName}' already exists`);
       }

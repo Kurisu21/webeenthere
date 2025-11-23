@@ -55,7 +55,7 @@ class BackupService {
         host: process.env.DB_HOST || 'localhost',
         user: process.env.DB_USER || 'root',
         password: process.env.DB_PASSWORD || '',
-        database: process.env.DB_NAME || 'webeenthere',
+        database: process.env.DB_NAME || 'u875409848_jumaoas',
         port: process.env.DB_PORT || 3306
       });
       
@@ -68,7 +68,7 @@ class BackupService {
       let backupContent = '';
       backupContent += `-- Webeenthere Database Backup\n`;
       backupContent += `-- Generated: ${new Date().toISOString()}\n`;
-      backupContent += `-- Database: ${process.env.DB_NAME || 'webeenthere'}\n\n`;
+      backupContent += `-- Database: ${process.env.DB_NAME || 'u875409848_jumaoas'}\n\n`;
       
       // Disable foreign key checks
       backupContent += `SET FOREIGN_KEY_CHECKS = 0;\n\n`;
@@ -171,7 +171,7 @@ class BackupService {
         host: process.env.DB_HOST || 'localhost',
         user: process.env.DB_USER || 'root',
         password: process.env.DB_PASSWORD || '',
-        database: process.env.DB_NAME || 'webeenthere',
+        database: process.env.DB_NAME || 'u875409848_jumaoas',
         port: process.env.DB_PORT || 3306,
         multipleStatements: true
       });
