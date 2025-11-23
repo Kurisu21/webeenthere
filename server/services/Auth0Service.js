@@ -137,8 +137,19 @@ class Auth0Service {
    */
   getAuth0Config() {
     // baseURL must include the full path where the auth routes are mounted
-    const serverURL = process.env.AUTH0_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
-    const baseURL = `${serverURL}/api/auth`; // Routes are mounted at /api/auth
+    let serverURL = process.env.AUTH0_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
+    // Remove trailing slash if present to avoid double slashes
+    serverURL = serverURL.replace(/\/+$/, '');
+    // Ensure baseURL doesn't have double slashes
+    const baseURL = `${serverURL}/api/auth`.replace(/([^:]\/)\/+/g, '$1'); // Routes are mounted at /api/auth
+    
+    // Log the callback URL for debugging
+    const callbackURL = `${baseURL}/callback`;
+    console.log('🔐 Auth0 Configuration:');
+    console.log('  Server URL:', serverURL);
+    console.log('  Base URL:', baseURL);
+    console.log('  Callback URL:', callbackURL);
+    console.log('  ⚠️  Make sure this exact URL is in Auth0 Allowed Callback URLs!');
     const domain = process.env.AUTH0_DOMAIN;
     const clientID = process.env.AUTH0_CLIENT_ID;
     const clientSecret = process.env.AUTH0_CLIENT_SECRET;

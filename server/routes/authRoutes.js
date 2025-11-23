@@ -159,15 +159,18 @@ router.get('/user', (req, res) => {
 // Test endpoint to check Auth0 configuration
 router.get('/test-config', (req, res) => {
   const config = auth0Service.getAuth0Config();
+  const callbackURL = `${config.baseURL}${config.routes.callback}`;
   res.json({
     configured: !!(config.clientID && config.issuerBaseURL && config.clientSecret),
     hasClientID: !!config.clientID,
     hasDomain: !!config.issuerBaseURL,
     hasClientSecret: !!config.clientSecret,
     baseURL: config.baseURL,
-    callbackURL: `${config.baseURL}${config.routes.callback}`,
+    callbackURL: callbackURL,
+    callbackRoute: config.routes.callback,
     // Don't expose secrets in response
-    domain: config.issuerBaseURL ? 'configured' : 'missing'
+    domain: config.issuerBaseURL ? 'configured' : 'missing',
+    message: `Add this exact URL to Auth0 Allowed Callback URLs: ${callbackURL}`
   });
 });
 
