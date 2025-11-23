@@ -53,7 +53,9 @@ async function initializeDatabase() {
   
   // Check if database needs initialization
   const status = await orm.getStatus();
+  
   if (!status || !status.database) {
+    // Database doesn't exist - initialize everything
     console.log('🔧 Database not found, initializing...');
     const success = await orm.initialize();
     if (success) {
@@ -63,7 +65,24 @@ async function initializeDatabase() {
       return false;
     }
   } else {
-    console.log('✅ Database already initialized');
+    // Database exists - check if tables exist
+    const requiredTables = ['users', 'templates', 'websites', 'plans'];
+    const tablesExist = requiredTables.every(tableName => {
+      return status.tables && status.tables[tableName] && status.tables[tableName].exists;
+    });
+    
+    if (!tablesExist) {
+      console.log('🔧 Database exists but tables are missing, initializing tables...');
+      const success = await orm.initialize();
+      if (success) {
+        console.log('✅ Database initialization completed');
+      } else {
+        console.log('❌ Database initialization failed');
+        return false;
+      }
+    } else {
+      console.log('✅ Database already initialized');
+    }
   }
   return true;
 }
