@@ -11,7 +11,7 @@ import LogoutConfirmationDialog from '../dialogs/LogoutConfirmationDialog';
 import { API_ENDPOINTS, apiPost } from '../../../lib/apiConfig';
 
 const DashboardHeader = memo(() => {
-  const { isCollapsed } = useSidebar();
+  const { isCollapsed, toggleMobileSidebar } = useSidebar();
   const { user, logout } = useAuth();
   const router = useRouter();
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
@@ -46,11 +46,15 @@ const DashboardHeader = memo(() => {
     }
   };
   return (
-    <header className={`bg-surface-elevated/80 backdrop-blur-sm border-b border-app px-4 md:px-8 py-3 md:py-4 relative z-10 transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
+    <header className={`bg-surface-elevated/80 backdrop-blur-sm border-b border-app px-4 md:px-8 py-3 md:py-4 relative z-10 transition-all duration-300 ml-0 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
       <div className="flex justify-center items-center relative">
         {/* Left side - Mobile menu button */}
         <div className="absolute left-0 flex items-center gap-2">
-          <button className="md:hidden text-primary hover:text-secondary transition-colors">
+          <button 
+            onClick={toggleMobileSidebar}
+            className="md:hidden p-2 text-primary hover:text-secondary transition-colors rounded-lg hover:bg-surface-elevated"
+            aria-label="Toggle menu"
+          >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>

@@ -113,10 +113,19 @@ export const apiCall = async (
       if (response.status === 401) {
         // Only log out if:
         // 1. We have a token (meaning we tried to authenticate)
-        // 2. The endpoint is not a new/optional feature endpoint
-        const isOptionalEndpoint = endpoint.includes('/media/') || endpoint.includes('/ai/assistant');
+        // 2. The endpoint is not a public/optional endpoint
+        // Public endpoints that don't require authentication:
+        const isPublicEndpoint = 
+          endpoint.includes('/media/') || 
+          endpoint.includes('/ai/assistant') ||
+          endpoint.includes('/templates/community') ||
+          endpoint.includes('/templates/official') ||
+          endpoint.includes('/templates/featured') ||
+          endpoint.includes('/templates/category/') ||
+          endpoint.includes('/templates/active-with-creator') ||
+          (endpoint.includes('/templates/') && !endpoint.includes('/templates/from-website') && !endpoint.includes('/templates/admin'));
         
-        if (token && !isOptionalEndpoint) {
+        if (token && !isPublicEndpoint) {
           // Try to read response to see if it's a real auth error
           try {
             const responseText = await response.clone().text();
@@ -136,7 +145,7 @@ export const apiCall = async (
           }
         }
         
-        // For optional endpoints or when no token, just throw error without logging out
+        // For public endpoints or when no token, just throw error without logging out
         throw new Error('Authentication required');
       }
       

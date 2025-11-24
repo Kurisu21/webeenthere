@@ -55,17 +55,17 @@ export default function Home() {
     <div className="min-h-screen bg-gray-900">
       {/* Header/Navigation */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-gray-900/80 backdrop-blur-sm border-b border-gray-700/50">
-        <div className="flex justify-center items-center px-4 md:px-6 py-4 relative">
-          {/* Centered Nav - Visible on all screen sizes */}
-          <div className="flex bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-full px-4 md:px-6 py-2 md:py-3 space-x-4 md:space-x-8">
-            <a href="#features" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">Features</a>
-            <a href="#how-to-use" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">How to Use</a>
-            <a href="#about" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">About</a>
-            <a href="#pricing" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">Pricing</a>
+        <div className="flex justify-center items-center px-2 sm:px-4 md:px-6 py-3 md:py-4 relative">
+          {/* Centered Nav - Visible on all screen sizes, scrollable on very small screens */}
+          <div className="flex bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-full px-2 sm:px-4 md:px-6 py-2 md:py-3 space-x-2 sm:space-x-4 md:space-x-8 overflow-x-auto scrollbar-hide">
+            <a href="#features" className="text-gray-300 hover:text-white transition-colors text-xs sm:text-sm md:text-base whitespace-nowrap">Features</a>
+            <a href="#how-to-use" className="text-gray-300 hover:text-white transition-colors text-xs sm:text-sm md:text-base whitespace-nowrap">How to Use</a>
+            <a href="#about" className="text-gray-300 hover:text-white transition-colors text-xs sm:text-sm md:text-base whitespace-nowrap">About</a>
+            <a href="#pricing" className="text-gray-300 hover:text-white transition-colors text-xs sm:text-sm md:text-base whitespace-nowrap">Pricing</a>
           </div>
           
           {/* Social Icons - Right side, absolute positioned (Desktop only) */}
-          <div className="absolute right-4 hidden md:flex space-x-4">
+          <div className="absolute right-2 sm:right-4 hidden md:flex space-x-4">
             <a href="https://github.com/Kurisu21/webeenthere" target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-300 transition-colors">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
@@ -87,7 +87,7 @@ export default function Home() {
 
       {/* Hero Section - Full Screen */}
       <Background>
-        <section className="min-h-screen flex flex-col items-center justify-center px-6 relative overflow-hidden bg-gray-900">
+        <section className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 relative overflow-hidden bg-gray-900 pt-20">
           {/* Moving Templates Background */}
           <div className="absolute inset-0 overflow-hidden">
             {/* Template 1 - Moving from left to right - Website Preview */}
@@ -194,14 +194,14 @@ export default function Home() {
               The easiest website builder for freelancers, artists, and small businesses. 
               Create stunning one-page websites with our drag-and-drop interface.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center mb-12 md:mb-16 px-4">
-              <Link href="/register" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 md:px-8 py-3 md:py-4 rounded-lg flex items-center justify-center gap-3 transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-base md:text-lg font-medium">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 md:gap-6 justify-center mb-12 md:mb-16 px-4 w-full max-w-2xl">
+              <Link href="/register" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 rounded-lg flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-sm sm:text-base md:text-lg font-medium w-full sm:w-auto">
                 Start Building Free
                 <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
-              <Link href="#how-to-use" className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-6 md:px-8 py-3 md:py-4 rounded-lg flex items-center justify-center gap-3 transition-all duration-300 border border-gray-600 text-base md:text-lg">
+              <Link href="#how-to-use" className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 rounded-lg flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 border border-gray-600 text-sm sm:text-base md:text-lg w-full sm:w-auto">
               <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                 </svg>
@@ -219,7 +219,7 @@ export default function Home() {
       </Background>
 
       {/* Features Section */}
-      <section id="features" className="py-12 md:py-20 px-4 md:px-6 bg-gray-800">
+      <section id="features" className="py-12 md:py-20 px-4 sm:px-6 bg-gray-800">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12 md:mb-16">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 md:mb-4">
@@ -284,7 +284,7 @@ export default function Home() {
       </section>
 
       {/* How to Use Section */}
-      <section id="how-to-use" className="py-20 px-6 bg-gray-900">
+      <section id="how-to-use" className="py-12 md:py-20 px-4 sm:px-6 bg-gray-900">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">How to Use <span className="bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">WEBeenThere</span></h2>
@@ -356,7 +356,7 @@ export default function Home() {
       </section>
 
       {/* About Us Section */}
-      <section id="about" className="py-20 px-6 bg-gray-800">
+      <section id="about" className="py-12 md:py-20 px-4 sm:px-6 bg-gray-800">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-white mb-8">
             About <span className="bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">WEBeenThere</span>
@@ -396,7 +396,7 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 px-6 bg-gray-900">
+      <section id="pricing" className="py-12 md:py-20 px-4 sm:px-6 bg-gray-900">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">Simple, Transparent Pricing</h2>
@@ -504,7 +504,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-800 py-12 px-6 border-t border-gray-700">
+      <footer className="bg-gray-800 py-8 md:py-12 px-4 sm:px-6 border-t border-gray-700">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8">
             <div>

@@ -438,7 +438,7 @@ body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #333; }
         <div class="post-content">
           <h3>The Future of Web Development</h3>
           <p>Exploring the latest trends and technologies shaping the web...</p>
-          <span class="post-date">March 15, 2024</span>
+          <span class="post-date">March 15, 2025</span>
   </div>
       </article>
       <article class="post">
@@ -446,7 +446,7 @@ body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #333; }
         <div class="post-content">
           <h3>Building Better User Experiences</h3>
           <p>Tips and strategies for creating more engaging interfaces...</p>
-          <span class="post-date">March 10, 2024</span>
+          <span class="post-date">March 10, 2025</span>
 </div>
       </article>
       <article class="post">
@@ -454,7 +454,7 @@ body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #333; }
         <div class="post-content">
           <h3>My Journey as a Developer</h3>
           <p>Reflections on the challenges and rewards of coding...</p>
-          <span class="post-date">March 5, 2024</span>
+          <span class="post-date">March 5, 2025</span>
 </div>
       </article>
 </div>

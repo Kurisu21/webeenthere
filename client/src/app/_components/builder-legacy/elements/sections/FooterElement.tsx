@@ -44,7 +44,7 @@ const FooterElement: React.FC<ElementRendererProps> = ({ element }) => {
         </div>
       </div>
       <div style={{ borderTop: '1px solid #4a5f7a', paddingTop: '20px', textAlign: 'center', opacity: '0.6' }}>
-        <p>&copy; 2024 Company Name. All rights reserved.</p>
+        <p>&copy; 2025 Company Name. All rights reserved.</p>
       </div>
     </div>
   );

@@ -133,7 +133,7 @@ export const UrlEditModal: React.FC<UrlEditModalProps> = ({
         overflowY: 'auto'
       }}
     >
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div className="flex items-center justify-center min-h-screen pt-3 sm:pt-4 px-3 sm:px-4 pb-20 text-center sm:block sm:p-0">
         {/* Background overlay */}
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
@@ -150,17 +150,18 @@ export const UrlEditModal: React.FC<UrlEditModalProps> = ({
 
         {/* Modal */}
         <div 
-          className="inline-block align-bottom bg-surface rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+          className="inline-block align-bottom bg-surface rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full max-h-[90vh] overflow-y-auto"
           style={{
             position: 'relative',
             backgroundColor: 'var(--surface)',
             borderRadius: '0.5rem',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             maxWidth: '32rem',
-            width: '100%'
+            width: '100%',
+            maxHeight: '90vh'
           }}
         >
-          <div className="bg-surface px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div className="bg-surface px-3 sm:px-4 pt-4 sm:pt-5 pb-4 sm:p-6 sm:pb-4">
             <div className="sm:flex sm:items-start">
               <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/20 sm:mx-0 sm:h-10 sm:w-10">
                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,15 +182,15 @@ export const UrlEditModal: React.FC<UrlEditModalProps> = ({
                       <label className="block text-sm font-medium text-primary mb-2">
                         Website URL Slug
                       </label>
-                      <div className="flex items-center">
-                        <span className="inline-flex items-center px-3 py-2 rounded-l-md border border-r-0 border-app bg-surface-elevated text-sm text-secondary">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center">
+                        <span className="inline-flex items-center px-2 sm:px-3 py-2 rounded-t-md sm:rounded-l-md sm:rounded-t-none border border-b-0 sm:border-b sm:border-r-0 border-app bg-surface-elevated text-xs sm:text-sm text-secondary whitespace-nowrap">
                           localhost:3000/sites/
                         </span>
                         <input
                           type="text"
                           value={slug}
                           onChange={(e) => handleSlugChange(e.target.value)}
-                          className="flex-1 min-w-0 block w-full px-3 py-2 rounded-r-md border border-app bg-surface text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          className="flex-1 min-w-0 block w-full px-3 py-2 rounded-b-md sm:rounded-r-md sm:rounded-b-none border border-app bg-surface text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
                           placeholder="my-website"
                         />
                       </div>
@@ -217,16 +218,16 @@ export const UrlEditModal: React.FC<UrlEditModalProps> = ({
               </div>
             </div>
           </div>
-          <div className="bg-surface px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <div className="bg-surface px-3 sm:px-4 py-3 sm:px-6 flex flex-col-reverse sm:flex-row-reverse gap-2 sm:gap-3">
             <button
               type="button"
-              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2.5 sm:py-2 bg-blue-600 text-sm sm:text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
               onClick={handleSave}
               disabled={isLoading || !!error || slug === currentSlug || (availabilityStatus && !availabilityStatus.available)}
             >
               {isLoading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -238,7 +239,7 @@ export const UrlEditModal: React.FC<UrlEditModalProps> = ({
             </button>
             <button
               type="button"
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-app shadow-sm px-4 py-2 bg-surface text-base font-medium text-secondary hover:bg-surface-elevated focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              className="w-full inline-flex justify-center rounded-md border border-app shadow-sm px-4 py-2.5 sm:py-2 bg-surface text-sm sm:text-base font-medium text-secondary hover:bg-surface-elevated focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:mt-0 sm:ml-3 sm:w-auto min-h-[44px]"
               onClick={onCancel}
             >
               Cancel

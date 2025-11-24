@@ -73,7 +73,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4"
       style={{ 
         position: 'fixed', 
         top: 0, 
@@ -84,7 +84,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1rem'
+        padding: '0.75rem'
       }}
     >
       {/* Background overlay */}
@@ -103,7 +103,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
       {/* Dialog */}
       <div 
-        className="relative bg-surface rounded-lg shadow-xl max-w-md w-full mx-auto"
+        className="relative bg-surface rounded-lg shadow-xl max-w-md w-full mx-auto max-h-[90vh] overflow-y-auto"
         style={{
           position: 'relative',
           backgroundColor: 'var(--surface)',
@@ -111,16 +111,17 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           maxWidth: '28rem',
           width: '100%',
-          margin: '0 auto'
+          margin: '0 auto',
+          maxHeight: '90vh'
         }}
       >
-        <div className="p-6">
-          <div className="flex items-start">
-            <div className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/20">
+        <div className="p-4 sm:p-6">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="flex-shrink-0 flex items-center justify-center h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-red-100 dark:bg-red-900/20">
               {icon}
             </div>
-            <div className="ml-4 flex-1">
-              <h3 className="text-lg font-medium text-primary">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base sm:text-lg font-medium text-primary">
                 {title}
               </h3>
               <div className="mt-2">
@@ -132,17 +133,17 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </div>
         </div>
         
-        <div className="bg-surface px-6 py-4 flex flex-row-reverse gap-3 rounded-b-lg">
+        <div className="bg-surface px-4 sm:px-6 py-3 sm:py-4 flex flex-col-reverse sm:flex-row-reverse gap-2 sm:gap-3 rounded-b-lg">
           <button
             type="button"
-            className={`px-4 py-2 rounded-md text-sm font-medium ${confirmButton}`}
+            className={`px-4 py-2.5 sm:py-2 rounded-md text-sm font-medium min-h-[44px] ${confirmButton}`}
             onClick={onConfirm}
           >
             {confirmText}
           </button>
           <button
             type="button"
-            className="px-4 py-2 rounded-md text-sm font-medium bg-surface text-secondary hover:bg-surface-elevated border border-app"
+            className="px-4 py-2.5 sm:py-2 rounded-md text-sm font-medium bg-surface text-secondary hover:bg-surface-elevated border border-app min-h-[44px]"
             onClick={onCancel}
           >
             {cancelText}

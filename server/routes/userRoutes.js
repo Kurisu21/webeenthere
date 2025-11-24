@@ -121,11 +121,12 @@ router.post(
   (req, res) => userController.forgotPassword(req, res)
 );
 
-// Reset password route
+// Reset password route - accepts token as query parameter
 router.post(
-  '/reset-password/:token',
+  '/reset-password',
   [
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('token').notEmpty().withMessage('Reset token is required'),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
   ],
   (req, res) => userController.resetPassword(req, res)
 );

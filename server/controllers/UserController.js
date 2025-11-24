@@ -482,12 +482,17 @@ class UserController {
   // Reset password
   async resetPassword(req, res) {
     try {
-      const { token } = req.params;
-      const { password } = req.body;
+      const { token, password } = req.body;
       
-      if (!password || password.length < 6) {
+      if (!token) {
         return res.status(400).json({ 
-          error: 'Password must be at least 6 characters' 
+          error: 'Reset token is required' 
+        });
+      }
+      
+      if (!password || password.length < 8) {
+        return res.status(400).json({ 
+          error: 'Password must be at least 8 characters' 
         });
       }
       

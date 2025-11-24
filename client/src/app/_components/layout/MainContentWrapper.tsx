@@ -15,6 +15,7 @@ const MainContentWrapper: React.FC<MainContentWrapperProps> = ({ children }) => 
       className={`
         flex-1 transition-all duration-300 ease-in-out
         ${isCollapsed ? 'md:ml-16' : 'md:ml-64'}
+        ml-0
       `}
     >
       <div className="min-h-[calc(100vh-120px)] p-4 md:p-6">

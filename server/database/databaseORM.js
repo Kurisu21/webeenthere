@@ -932,7 +932,7 @@ class DatabaseORM {
                     <div class="post-image"></div>
                     <div class="post-content">
                       <h2>Blog Post Title</h2>
-                      <p class="post-meta">Published on January 1, 2024</p>
+                      <p class="post-meta">Published on January 1, 2025</p>
                       <p class="post-excerpt">This is a sample blog post excerpt...</p>
                     </div>
                   </article>
@@ -1335,7 +1335,7 @@ class DatabaseORM {
                     <div class="album-card">
                       <div class="album-cover"></div>
                       <h3>Album Title</h3>
-                      <p>2024</p>
+                      <p>2025</p>
                     </div>
                   </div>
                 </div>
@@ -1821,7 +1821,7 @@ class DatabaseORM {
 
               <!-- Footer -->
               <footer class="dimension-footer">
-                <p>&copy; 2024 Your Name. Design inspired by <a href="https://html5up.net" target="_blank" rel="noopener">HTML5 UP</a>.</p>
+                <p>&copy; 2025 Your Name. Design inspired by <a href="https://html5up.net" target="_blank" rel="noopener">HTML5 UP</a>.</p>
               </footer>
             `,
             css_content: `

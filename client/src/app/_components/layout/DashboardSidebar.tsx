@@ -128,22 +128,44 @@ const sections: NavSection[] = [
 
 const DashboardSidebar = memo(() => {
   const pathname = usePathname();
-  const { isCollapsed, toggleSidebar } = useSidebar();
+  const { isCollapsed, isMobileOpen, toggleSidebar, closeMobileSidebar } = useSidebar();
 
   return (
-    <aside className={`
-      fixed left-0 top-0 z-20 bg-surface text-primary flex flex-col py-4 md:py-8 px-4 md:min-h-screen border-r-0 md:border-r-4 border-app shadow-2xl transition-all duration-300 ease-in-out
-      ${isCollapsed 
-        ? 'w-16 md:w-16' 
-        : 'w-full md:w-64'
-      }
-    `}>
-      {/* Header with User Info and Toggle Button */}
+    <>
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 md:hidden transition-opacity duration-300"
+          onClick={closeMobileSidebar}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`
+        fixed left-0 top-0 z-40 bg-surface text-primary flex flex-col py-4 md:py-8 px-4 md:min-h-screen border-r-0 md:border-r-4 border-app shadow-2xl transition-all duration-300 ease-in-out
+        ${isCollapsed 
+          ? 'w-16 md:w-16' 
+          : 'w-full md:w-64'
+        }
+        ${isMobileOpen 
+          ? 'translate-x-0' 
+          : '-translate-x-full md:translate-x-0'
+        }
+      `}>
+        {/* Header with User Info and Toggle Button */}
       <div className="mb-4 md:mb-8">
         {/* Close Button - Top Right */}
         <div className="flex justify-end mb-4">
           <button
-            onClick={toggleSidebar}
+            onClick={() => {
+              // On mobile, close the sidebar; on desktop, toggle collapse
+              if (window.innerWidth < 768) {
+                closeMobileSidebar();
+              } else {
+                toggleSidebar();
+              }
+            }}
             className="p-2 rounded-lg hover:bg-surface-elevated transition-colors duration-200 flex-shrink-0"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
@@ -221,6 +243,7 @@ const DashboardSidebar = memo(() => {
         </nav>
       </div>
     </aside>
+    </>
   );
 });
 

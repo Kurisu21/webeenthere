@@ -521,7 +521,7 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
             content: `<div style="background: white; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; max-width: 320px;">
               <div style="height: 192px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
               <div style="padding: 1.5rem;">
-                <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">January 1, 2024</div>
+                <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">January 1, 2025</div>
                 <h3 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 0.5rem; color: #111827;">Blog Post Title</h3>
                 <p style="color: #4b5563; margin-bottom: 1rem;">Read about the latest trends and insights...</p>
                 <a href="#" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read More →</a>

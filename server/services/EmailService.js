@@ -105,7 +105,7 @@ class EmailService {
             
             <div class="footer">
               <p>Need help? Contact our support team</p>
-              <p>&copy; 2024 WEBeenThere. All rights reserved.</p>
+              <p>&copy; 2025 WEBeenThere. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -170,17 +170,21 @@ class EmailService {
             }
             .reset-button {
               display: inline-block;
-              background: linear-gradient(45deg, #e74c3c, #c0392b);
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
               color: white;
-              padding: 15px 30px;
+              padding: 16px 40px;
               text-decoration: none;
-              border-radius: 8px;
-              font-weight: bold;
-              margin: 20px 0;
-              transition: transform 0.3s ease;
+              border-radius: 12px;
+              font-weight: 600;
+              font-size: 16px;
+              margin: 25px 0;
+              transition: all 0.3s ease;
+              box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+              letter-spacing: 0.5px;
             }
             .reset-button:hover {
-              transform: translateY(-2px);
+              transform: translateY(-3px);
+              box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
             }
             p {
               color: #666;
@@ -192,7 +196,7 @@ class EmailService {
               padding: 20px;
               border-radius: 8px;
               margin-top: 30px;
-              border-left: 4px solid #e74c3c;
+              border-left: 4px solid #667eea;
             }
             .footer {
               color: #999;
@@ -216,7 +220,7 @@ class EmailService {
             
             <div class="footer">
               <p>Need help? Contact our support team</p>
-              <p>&copy; 2024 WEBeenThere. All rights reserved.</p>
+              <p>&copy; 2025 WEBeenThere. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -334,7 +338,7 @@ class EmailService {
             
             <div class="footer">
               <p>Need help? Contact our support team</p>
-              <p>&copy; 2024 WEBeenThere. All rights reserved.</p>
+              <p>&copy; 2025 WEBeenThere. All rights reserved.</p>
             </div>
           </div>
         </body>
