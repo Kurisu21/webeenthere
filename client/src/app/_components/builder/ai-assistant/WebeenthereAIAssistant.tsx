@@ -5,14 +5,67 @@ import type { Editor } from 'grapesjs';
 import { useWebeenthereAI } from './hooks/useWebeenthereAI';
 import './WebeenthereAIAssistant.css';
 
+// Helper function to simplify technical explanations for non-technical users
+function simplifyExplanation(explanation: string): string {
+  if (!explanation) return explanation;
+  
+  // Replace technical terms with simpler language
+  let simplified = explanation
+    // Technical terms
+    .replace(/component\(s\)/gi, 'element(s)')
+    .replace(/component's/gi, "element's")
+    .replace(/component/gi, 'element')
+    .replace(/property/gi, 'setting')
+    .replace(/GrapesJS API/gi, 'the editor')
+    .replace(/GrapesJS/gi, 'the editor')
+    .replace(/selector/gi, 'element')
+    .replace(/DOM/gi, 'page')
+    .replace(/append/gi, 'add')
+    .replace(/modify/gi, 'change')
+    .replace(/modifies/gi, 'changes')
+    .replace(/modifying/gi, 'changing')
+    .replace(/modification/gi, 'change')
+    .replace(/preserving the full structure/gi, 'keeping everything else the same')
+    .replace(/without removing, replacing, or adding new components/gi, 'without changing anything else')
+    .replace(/This modifies the existing/gi, 'This changes the existing')
+    .replace(/Locate the/gi, 'I found the')
+    .replace(/then append/gi, 'and added')
+    .replace(/then/gi, 'and')
+    .replace(/Chose/gi, 'I chose')
+    .replace(/as a fitting symbol/gi, 'as a good symbol')
+    .replace(/full-stack developer/gi, 'developer');
+  
+  // Remove overly technical phrases
+  simplified = simplified
+    .replace(/using component\.set\(\)/gi, '')
+    .replace(/by calling component\.set\(\)/gi, '')
+    .replace(/via component\.set\(\)/gi, '')
+    .replace(/component\.set\('content',/gi, '')
+    .replace(/\.get\('content'\)/gi, '')
+    .replace(/\(navbar\)/gi, '')
+    .replace(/\(/g, '')
+    .replace(/\)/g, '');
+  
+  // Clean up extra spaces
+  simplified = simplified.replace(/\s+/g, ' ').trim();
+  
+  // Capitalize first letter
+  if (simplified.length > 0) {
+    simplified = simplified.charAt(0).toUpperCase() + simplified.slice(1);
+  }
+  
+  return simplified;
+}
+
 interface WebeenthereAIAssistantProps {
   editor: Editor | null;
   isDark?: boolean;
   websiteId?: string;
   onAutoSave?: () => Promise<void>;
+  onPreview?: () => void;
 }
 
-export default function WebeenthereAIAssistant({ editor, isDark = false, websiteId, onAutoSave }: WebeenthereAIAssistantProps) {
+export default function WebeenthereAIAssistant({ editor, isDark = false, websiteId, onAutoSave, onPreview }: WebeenthereAIAssistantProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [userInput, setUserInput] = useState('');
   const [promptHistory, setPromptHistory] = useState<string[]>([]);
@@ -192,7 +245,7 @@ export default function WebeenthereAIAssistant({ editor, isDark = false, website
             </div>
             
             <div className="suggestion-explanation">
-              <p>{currentSuggestion.explanation}</p>
+              <p>{simplifyExplanation(currentSuggestion.explanation)}</p>
             </div>
 
             <div className="suggestion-actions">
@@ -207,9 +260,16 @@ export default function WebeenthereAIAssistant({ editor, isDark = false, website
                 </>
               )}
               {currentSuggestion.isAutoExecuted && (
-                <button onClick={handleRetry} className="btn-secondary">
-                  Try Different Approach
-                </button>
+                <>
+                  {onPreview && (
+                    <button onClick={onPreview} className="btn-primary">
+                      View Preview
+                    </button>
+                  )}
+                  <button onClick={handleRetry} className="btn-secondary">
+                    Try Different Approach
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -280,7 +340,7 @@ export default function WebeenthereAIAssistant({ editor, isDark = false, website
                                   {message.responseHtml && (() => {
                                     try {
                                       const parsed = JSON.parse(message.responseHtml);
-                                      return <p>{parsed.explanation || 'AI response'}</p>;
+                                      return <p>{simplifyExplanation(parsed.explanation || 'AI response')}</p>;
                                     } catch {
                                       return <p>AI response</p>;
                                     }

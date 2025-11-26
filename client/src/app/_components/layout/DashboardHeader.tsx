@@ -152,14 +152,15 @@ const DashboardHeader = memo(() => {
         isOpen={showLogoutConfirm}
         onConfirm={async () => {
           try {
-            // Call logout API
+            // Call logout API BEFORE clearing storage (needs token for authentication)
             await apiPost(`${API_ENDPOINTS.USERS}/logout`, {});
           } catch (error) {
-            console.error('Logout API error:', error);
-            // Continue with logout even if API call fails
+            // Log error but continue with logout - client-side logout should always succeed
+            // The API call is for server-side cleanup (session token, activity logging)
+            console.warn('Logout API call failed (continuing with client-side logout):', error);
           }
           
-          // Clear local storage and state
+          // Clear local storage and state (always do this, even if API call failed)
           logout();
           
           // Redirect to login

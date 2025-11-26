@@ -53,6 +53,9 @@ module.exports = (db) => {
       };
       const contentType = contentTypes[ext] || 'application/octet-stream';
       
+      // Set CORS headers to allow images to be loaded from any origin (public images)
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
       res.setHeader('Content-Type', contentType);
       res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
       res.sendFile(filePath, (err) => {

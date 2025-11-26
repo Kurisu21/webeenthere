@@ -1,7 +1,7 @@
 // routes/aiRoutes.js
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, optionalAuthMiddleware } = require('../middleware/auth');
 
 module.exports = (db) => {
   const AiController = require('../controllers/AiController');
@@ -18,12 +18,15 @@ module.exports = (db) => {
   });
 
   // AI Assistant endpoint for real-time suggestions and user prompts
-  router.post('/assistant', authMiddleware, async (req, res) => {
+  // Uses optional auth - works with or without authentication
+  // If authenticated, tracks usage and chat history. If not, still works but without tracking.
+  router.post('/assistant', optionalAuthMiddleware, async (req, res) => {
     await aiController.handleAssistantRequest(req, res);
   });
 
   // Get AI Assistant chat history for a website
-  router.get('/assistant/history/:websiteId', authMiddleware, async (req, res) => {
+  // Uses optional auth - returns history if authenticated, empty if not
+  router.get('/assistant/history/:websiteId', optionalAuthMiddleware, async (req, res) => {
     await aiController.getChatHistory(req, res);
   });
 

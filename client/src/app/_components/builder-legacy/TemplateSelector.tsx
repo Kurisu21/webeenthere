@@ -16,7 +16,7 @@ interface TemplateSelectorProps {
   onStartFromScratch: () => void;
 }
 
-const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: TemplateSelectorProps) => {
+const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch, isCreating = false }: TemplateSelectorProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -241,6 +241,7 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
               onSelect={() => onTemplateSelect(template)}
               onPreview={() => handleTemplatePreview(template)}
               isFeatured={template.is_featured}
+              disabled={isCreating}
             />
           ))}
         </div>
@@ -260,7 +261,8 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
           </div>
           <button
             onClick={onStartFromScratch}
-            className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-8 py-4 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg shadow-blue-500/20 text-sm md:text-base"
+            disabled={isCreating}
+            className={`bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-8 py-4 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg shadow-blue-500/20 text-sm md:text-base ${isCreating ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
             <svg className="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -286,14 +288,15 @@ interface TemplateCardProps {
   onSelect: () => void;
   onPreview: () => void;
   isFeatured: boolean;
+  disabled?: boolean;
 }
 
-const TemplateCard = memo(({ template, onSelect, onPreview, isFeatured }: TemplateCardProps) => {
+const TemplateCard = memo(({ template, onSelect, onPreview, isFeatured, disabled = false }: TemplateCardProps) => {
   // Use the same card structure as WebsiteCard from user/main and user/page
   return (
     <div 
-      className="bg-surface border border-app rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:border-purple-500/50 cursor-pointer"
-      onClick={onSelect}
+      className={`bg-surface border border-app rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:border-purple-500/50 ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+      onClick={disabled ? undefined : onSelect}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
@@ -331,12 +334,12 @@ const TemplateCard = memo(({ template, onSelect, onPreview, isFeatured }: Templa
         </div>
         <div className="bg-white dark:bg-gray-900 border-x border-b border-app rounded-b-lg overflow-hidden shadow-inner relative" style={{ aspectRatio: '16/9', height: 'auto', minHeight: '180px' }}>
           {template.source_website_id ? (
-            <div className="w-full h-full relative flex items-center justify-center" style={{ minHeight: '180px' }}>
+            <div className="w-full h-full relative overflow-hidden" style={{ minHeight: '180px' }}>
               <WebsitePreviewImage
                 websiteId={template.source_website_id}
                 alt={`${template.name} preview`}
                 className="w-full h-full"
-                style={{ objectFit: 'contain', width: '100%', height: '100%', maxHeight: '100%' }}
+                style={{ objectFit: 'cover', width: '100%', height: '100%' }}
               />
             </div>
           ) : (
@@ -360,9 +363,10 @@ const TemplateCard = memo(({ template, onSelect, onPreview, isFeatured }: Templa
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onSelect();
+            if (!disabled) onSelect();
           }}
-          className="flex-1 px-3 py-2 text-xs font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/40 rounded-md transition-colors"
+          disabled={disabled}
+          className={`flex-1 px-3 py-2 text-xs font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/40 rounded-md transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <svg className="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

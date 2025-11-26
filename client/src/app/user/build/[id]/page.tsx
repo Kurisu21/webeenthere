@@ -125,7 +125,7 @@ export default function BuildWebsitePage() {
       if (response.success) {
         alert('Website published successfully!');
         // Optionally redirect to published site
-        window.open(`/view/${websiteData.slug}`, '_blank');
+        window.open(`/sites/${websiteData.slug}`, '_blank');
       } else {
         throw new Error(response.message || 'Failed to publish website');
       }

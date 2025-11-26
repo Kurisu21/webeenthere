@@ -27,7 +27,7 @@ router.get('/login', (req, res) => {
   // Don't set returnTo - afterCallback and our callback route will handle the redirect
   res.oidc.login({
     authorizationParams: {
-      connection: req.query.connection || undefined // 'google-oauth2' or 'github'
+      connection: req.query.connection || undefined // 'google-oauth2'
     }
   });
 });
@@ -47,49 +47,6 @@ router.get('/login/google', (req, res) => {
   } catch (error) {
     console.error('Google login error:', error);
     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=google_not_enabled`);
-  }
-});
-
-// GitHub login route
-router.get('/login/github', (req, res) => {
-  if (!isAuth0Configured) {
-    return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_not_configured`);
-  }
-  try {
-    // GitHub connection identifier - matches Auth0 standard naming (same pattern as 'google-oauth2')
-    // Default to 'github-oauth2' to match Auth0's standard naming convention
-    // Can be overridden via AUTH0_GITHUB_CONNECTION environment variable
-    // Common names: 'github-oauth2' (standard), 'github', 'github-oauth'
-    const githubConnection = process.env.AUTH0_GITHUB_CONNECTION || 'github-oauth2';
-    
-    console.log('🔐 Attempting GitHub login with connection:', githubConnection);
-    console.log('📋 Make sure GitHub is enabled in:');
-    console.log('  1. Authentication → Social → GitHub (enabled)');
-    console.log('  2. Applications → Your App → Connections → GitHub (enabled) ← MOST IMPORTANT');
-    console.log('  3. Verify connection name matches:', githubConnection);
-    
-    // Don't set returnTo - afterCallback and our callback route will handle the redirect
-    res.oidc.login({
-      authorizationParams: {
-        connection: githubConnection
-      }
-    });
-  } catch (error) {
-    const githubConnection = process.env.AUTH0_GITHUB_CONNECTION || 'github-oauth2';
-    console.error('❌ GitHub login error:', error);
-    console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      statusCode: error.statusCode,
-      attemptedConnection: githubConnection,
-      stack: error.stack
-    });
-    console.error('\n⚠️  TROUBLESHOOTING:');
-    console.error('  1. Go to Auth0 Dashboard → Applications → Your App → Connections tab');
-    console.error('  2. Under "Social", make sure GitHub is toggled ON');
-    console.error(`  3. Verify the connection name is "${githubConnection}" (or set AUTH0_GITHUB_CONNECTION in .env)`);
-    console.error('  4. Common connection names: github-oauth2 (standard), github, github-oauth');
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=github_not_enabled`);
   }
 });
 

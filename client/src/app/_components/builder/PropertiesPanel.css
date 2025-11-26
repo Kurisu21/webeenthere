@@ -110,6 +110,9 @@
   padding: 8px 12px;
   font-size: 13px;
   transition: all 0.15s ease;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
 }
 
 .properties-panel.light input[type="text"],
@@ -361,6 +364,28 @@
   background-color: #ffffff;
   border-color: #e5e7eb;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Font Size Selector */
+.properties-panel .font-size-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.properties-panel .font-size-selector select {
+  min-width: 100px;
+}
+
+.properties-panel .font-size-selector input {
+  flex: 1;
+}
+
+/* Ensure all inputs are interactive */
+.properties-panel input,
+.properties-panel select,
+.properties-panel textarea {
+  pointer-events: auto !important;
+  z-index: 1;
 }
 
 /* Responsive Adjustments */

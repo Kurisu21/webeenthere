@@ -204,12 +204,14 @@ class Auth0Service {
           if (!res.headersSent && !res.finished) {
             // Mark response as handled to prevent middleware from continuing
             res.locals.oauthHandled = true;
-            // Redirect - this will end the response automatically
-            res.redirect(url);
-            // Ensure response is finished
-            if (!res.finished) {
-              res.end();
-            }
+            // Use writeHead and end to have full control and prevent middleware from continuing
+            res.writeHead(302, {
+              'Location': url,
+              'Content-Type': 'text/plain'
+            });
+            res.end('Redirecting...');
+            // Mark response as finished to prevent any further processing
+            res.finished = true;
           }
         };
         
@@ -224,7 +226,7 @@ class Auth0Service {
           if (req.query.error === 'invalid_request') {
             if (errorMessage?.includes('connection is not enabled')) {
               errorType = 'connection_not_enabled';
-              errorMessage = 'GitHub connection is not enabled for this application. Please enable it in Auth0 Dashboard → Applications → Your App → Connections → GitHub';
+              errorMessage = 'OAuth connection is not enabled for this application. Please enable it in Auth0 Dashboard → Applications → Your App → Connections';
             } else if (errorMessage?.includes('access_denied')) {
               errorType = 'access_denied';
               errorMessage = 'Access was denied. Please try again.';
@@ -270,12 +272,17 @@ class Auth0Service {
             // Find or create user from Auth0 profile
             const { user, token } = await auth0Service.findOrCreateUser(profile);
             
-            // Log successful OAuth login
+            // Prepare redirect URL before async operations
+            const redirectURL = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/callback?token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify(user))}`;
+            
+            // Log successful OAuth login (fire and forget - don't wait for it)
+            // This prevents blocking the redirect and avoids header errors
             const { extractClientIP } = require('../utils/ipExtractor');
             const ipAddress = extractClientIP(req);
             const userAgent = req.headers['user-agent'] || 'unknown';
             
-            await databaseActivityLogger.logActivity({
+            // Don't await - let it run in background to avoid delaying redirect
+            databaseActivityLogger.logActivity({
               userId: user.id,
               action: 'oauth_login',
               entityType: 'user',
@@ -288,10 +295,12 @@ class Auth0Service {
                 provider: profile.sub?.split('|')[0] || 'unknown',
                 timestamp: new Date().toISOString()
               }
+            }).catch(err => {
+              // Silently handle logging errors - don't block redirect
+              console.error('Failed to log OAuth login activity:', err);
             });
             
-            // Redirect to frontend with token
-            const redirectURL = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/callback?token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify(user))}`;
+            // Redirect immediately after getting user/token (before async logging completes)
             safeRedirect(redirectURL);
             // Return null to prevent middleware from doing additional redirects
             return null;

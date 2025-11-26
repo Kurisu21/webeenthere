@@ -17,7 +17,7 @@ const getApiBaseUrl = (): string => {
     const hostname = window.location.hostname;
     
     // Production hostname
-    if (hostname === 'webeenthere.onrender.com' || hostname.includes('onrender.com')) {
+    if (hostname === 'webeenthere-1.onrender.com' || hostname.includes('onrender.com')) {
       return ENV_CONFIG.PRODUCTION_API_URL;
     }
     
@@ -95,12 +95,19 @@ export const apiCall = async (
 ): Promise<Response> => {
   const token = getAuthToken();
   
+  // Build headers object - ensure Authorization is included if token exists
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+  
+  // Always include Authorization header if token exists (don't let custom headers override it)
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   const defaultOptions: RequestInit = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` }),
-      ...options.headers,
-    },
+    headers,
     ...options,
   };
 
@@ -113,19 +120,10 @@ export const apiCall = async (
       if (response.status === 401) {
         // Only log out if:
         // 1. We have a token (meaning we tried to authenticate)
-        // 2. The endpoint is not a public/optional endpoint
-        // Public endpoints that don't require authentication:
-        const isPublicEndpoint = 
-          endpoint.includes('/media/') || 
-          endpoint.includes('/ai/assistant') ||
-          endpoint.includes('/templates/community') ||
-          endpoint.includes('/templates/official') ||
-          endpoint.includes('/templates/featured') ||
-          endpoint.includes('/templates/category/') ||
-          endpoint.includes('/templates/active-with-creator') ||
-          (endpoint.includes('/templates/') && !endpoint.includes('/templates/from-website') && !endpoint.includes('/templates/admin'));
+        // 2. The endpoint is not a new/optional feature endpoint
+        const isOptionalEndpoint = endpoint.includes('/media/') || endpoint.includes('/ai/assistant');
         
-        if (token && !isPublicEndpoint) {
+        if (token && !isOptionalEndpoint) {
           // Try to read response to see if it's a real auth error
           try {
             const responseText = await response.clone().text();
@@ -145,7 +143,7 @@ export const apiCall = async (
           }
         }
         
-        // For public endpoints or when no token, just throw error without logging out
+        // For optional endpoints or when no token, just throw error without logging out
         throw new Error('Authentication required');
       }
       
@@ -187,10 +185,28 @@ export const apiPost = async (
 ): Promise<any> => {
   try {
     const isFormData = data instanceof FormData || options?.isFormData;
+    
+    // Get token first to ensure it's included
+    const token = getAuthToken();
     const headers: Record<string, string> = { ...options?.headers };
+    
+    // Always include Authorization header if token exists
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     
     if (!isFormData) {
       headers['Content-Type'] = 'application/json';
+    }
+    
+    // Log for debugging AI assistant requests
+    if (endpoint.includes('/ai/assistant')) {
+      console.log('[API] AI Assistant request:', {
+        endpoint,
+        hasToken: !!token,
+        tokenLength: token?.length || 0,
+        websiteId: data?.website_id || 'none'
+      });
     }
     
     const response = await apiCall(endpoint, {

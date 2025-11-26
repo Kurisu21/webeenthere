@@ -5,7 +5,7 @@
 
 import type { Editor } from 'grapesjs';
 
-export function executeAICode(editor: Editor, code: string): any {
+export async function executeAICode(editor: Editor, code: string): Promise<any> {
   if (!code || typeof code !== 'string') {
     throw new Error('Invalid code provided');
   }
@@ -107,6 +107,7 @@ export function executeAICode(editor: Editor, code: string): any {
           // Track find() calls and wrap set() on found components
           const originalFind = editor.getWrapper().find;
           const wrappedComponents = new WeakSet(); // Track which components we've wrapped
+          const foundComponents = new WeakSet(); // Track all found components
           
           editor.getWrapper().find = function(selector) {
             const results = originalFind.call(this, selector);
@@ -118,39 +119,104 @@ export function executeAICode(editor: Editor, code: string): any {
               console.log(\`[WebeenthereAI] Found \${resultsArray.length} component(s) with selector: \${selector}\`);
               // Wrap set() method on found components to track modifications
               resultsArray.forEach((comp, index) => {
-                if (comp && !wrappedComponents.has(comp)) {
-                  // Log component info for debugging
-                  try {
-                    const compId = comp.getId ? comp.getId() : 'no-id';
-                    const compType = comp.get ? comp.get('type') : 'unknown';
-                    const compTag = comp.get ? comp.get('tagName') : 'unknown';
-                    const compContent = comp.get ? comp.get('content') : 'unknown';
-                    console.log(\`[WebeenthereAI] Component \${index + 1}: id=\${compId}, type=\${compType}, tag=\${compTag}, content="\${compContent}"\`);
-                    console.log(\`[WebeenthereAI] Component \${index + 1} has set() method: \${typeof comp.set === 'function'}\`);
-                  } catch (logError) {
-                    console.warn(\`[WebeenthereAI] Could not log component \${index + 1} info:\`, logError);
-                  }
+                if (comp) {
+                  foundComponents.add(comp);
                   
-                  if (typeof comp.set === 'function') {
-                    const originalSet = comp.set.bind(comp);
-                    comp.set = function(...args) {
-                      try {
-                        console.log(\`[WebeenthereAI] 🔧 Calling component.set() with args:\`, args);
-                        const result = originalSet.apply(this, args);
-                        tracker.componentsModified++;
-                        console.log('[WebeenthereAI] ✅ Successfully modified component via set()');
-                        return result;
-                      } catch (setError) {
-                        console.error('[WebeenthereAI] ❌ Error in component.set():', setError);
-                        tracker.errors.push(\`component.set() failed: \${setError.message || setError}\`);
-                        throw setError; // Re-throw so the AI code can handle it
-                      }
-                    };
-                    wrappedComponents.add(comp);
-                    console.log(\`[WebeenthereAI] ✅ Wrapped set() method on component \${index + 1}\`);
-                  } else {
-                    console.warn(\`[WebeenthereAI] ⚠️ Component \${index + 1} does not have a set() method - cannot modify it\`);
-                    tracker.errors.push(\`Component \${index + 1} does not have a set() method\`);
+                  if (!wrappedComponents.has(comp)) {
+                    // Log component info for debugging
+                    try {
+                      const compId = comp.getId ? comp.getId() : 'no-id';
+                      const compType = comp.get ? comp.get('type') : 'unknown';
+                      const compTag = comp.get ? comp.get('tagName') : 'unknown';
+                      const compContent = comp.get ? comp.get('content') : 'unknown';
+                      console.log(\`[WebeenthereAI] Component \${index + 1}: id=\${compId}, type=\${compType}, tag=\${compTag}, content="\${compContent}"\`);
+                      console.log(\`[WebeenthereAI] Component \${index + 1} has set() method: \${typeof comp.set === 'function'}\`);
+                    } catch (logError) {
+                      console.warn(\`[WebeenthereAI] Could not log component \${index + 1} info:\`, logError);
+                    }
+                    
+                    // Wrap find() on component to track nested finds (e.g., header.find('.brand'))
+                    if (typeof comp.find === 'function' && !comp._findWrapped) {
+                      const originalCompFind = comp.find.bind(comp);
+                      comp.find = function(selector) {
+                        const results = originalCompFind.call(this, selector);
+                        const resultsArray = Array.isArray(results) ? results : (results ? [results] : []);
+                        if (resultsArray.length > 0) {
+                          tracker.componentsFound += resultsArray.length;
+                          console.log(\`[WebeenthereAI] Found \${resultsArray.length} nested component(s) with selector: \${selector}\`);
+                          // Wrap set() on nested components too
+                          resultsArray.forEach((nestedComp, nestedIndex) => {
+                            if (nestedComp && !wrappedComponents.has(nestedComp)) {
+                              foundComponents.add(nestedComp);
+                              if (typeof nestedComp.set === 'function') {
+                                const originalSet = nestedComp.set.bind(nestedComp);
+                                nestedComp.set = function(...args) {
+                                  try {
+                                    console.log(\`[WebeenthereAI] 🔧 Calling nested component.set() with args:\`, args);
+                                    const result = originalSet.apply(this, args);
+                                    tracker.componentsModified++;
+                                    console.log('[WebeenthereAI] ✅ Successfully modified nested component via set()');
+                                    return result;
+                                  } catch (setError) {
+                                    console.error('[WebeenthereAI] ❌ Error in nested component.set():', setError);
+                                    tracker.errors.push(\`nested component.set() failed: \${setError.message || setError}\`);
+                                    throw setError;
+                                  }
+                                };
+                                wrappedComponents.add(nestedComp);
+                                console.log(\`[WebeenthereAI] ✅ Wrapped set() method on nested component \${nestedIndex + 1}\`);
+                              }
+                            }
+                          });
+                        }
+                        return results;
+                      };
+                      comp._findWrapped = true;
+                      console.log(\`[WebeenthereAI] ✅ Wrapped find() method on component \${index + 1} for nested searches\`);
+                    }
+                    
+                    if (typeof comp.set === 'function') {
+                      const originalSet = comp.set.bind(comp);
+                      comp.set = function(...args) {
+                        try {
+                          console.log(\`[WebeenthereAI] 🔧 Calling component.set() with args:\`, args);
+                          const result = originalSet.apply(this, args);
+                          
+                          // CRITICAL: Force component to update and re-render
+                          try {
+                            // Trigger component update events
+                            comp.trigger('change:content');
+                            comp.trigger('update');
+                            comp.trigger('component:update');
+                            
+                            // Force view re-render if available
+                            if (comp.view && comp.view.render) {
+                              comp.view.render();
+                            }
+                            
+                            // Update component in editor
+                            if (comp.get('editable')) {
+                              comp.set('editable', true);
+                            }
+                          } catch (updateError) {
+                            console.warn('[WebeenthereAI] Could not trigger component update:', updateError);
+                          }
+                          
+                          tracker.componentsModified++;
+                          console.log('[WebeenthereAI] ✅ Successfully modified component via set()');
+                          return result;
+                        } catch (setError) {
+                          console.error('[WebeenthereAI] ❌ Error in component.set():', setError);
+                          tracker.errors.push(\`component.set() failed: \${setError.message || setError}\`);
+                          throw setError; // Re-throw so the AI code can handle it
+                        }
+                      };
+                      wrappedComponents.add(comp);
+                      console.log(\`[WebeenthereAI] ✅ Wrapped set() method on component \${index + 1}\`);
+                    } else {
+                      console.warn(\`[WebeenthereAI] ⚠️ Component \${index + 1} does not have a set() method - cannot modify it\`);
+                      tracker.errors.push(\`Component \${index + 1} does not have a set() method\`);
+                    }
                   }
                 }
               });
@@ -161,6 +227,14 @@ export function executeAICode(editor: Editor, code: string): any {
           };
           
           ${code}
+          
+          // After code execution, check if any found components were modified via DOM
+          // This handles cases where code manipulates DOM directly instead of using set()
+          if (tracker.componentsFound > 0 && tracker.componentsModified === 0) {
+            console.log('[WebeenthereAI] Checking for DOM-based modifications...');
+            // Check if HTML actually changed (indicating DOM manipulation worked)
+            // This will be checked later in the validation step
+          }
           
           // Restore original find
           editor.getWrapper().find = originalFind;
@@ -206,10 +280,154 @@ export function executeAICode(editor: Editor, code: string): any {
     // Execute the code with editor as context
     const result = new Function('editor', 'modificationTracker', safeCode)(editor, modificationTracker);
     
-    // Verify changes were made using multiple methods
-    const finalHtml = editor.getHtml();
+    // CRITICAL: Force all components to update and re-render
+    // Get all components and trigger updates on them
+    try {
+      const allComponents = editor.getComponents();
+      const updateComponent = (comp: any) => {
+        try {
+          comp.trigger('change:content');
+          comp.trigger('update');
+          comp.trigger('component:update');
+          if (comp.view && comp.view.render) {
+            comp.view.render();
+          }
+          // Recursively update child components
+          const children = comp.components();
+          if (children && children.length > 0) {
+            children.forEach((child: any) => updateComponent(child));
+          }
+        } catch (e) {
+          // Ignore errors for individual components
+        }
+      };
+      
+      // Update all components
+      allComponents.forEach((comp: any) => updateComponent(comp));
+    } catch (e) {
+      console.warn('[WebeenthereAI] Could not update all components:', e);
+    }
+    
+    // CRITICAL: Trigger update events to ensure GrapesJS processes all component changes
+    // This ensures that component.set() changes are reflected in getHtml() and getCss()
+    editor.trigger('component:update');
+    editor.trigger('update');
+    editor.trigger('change:component');
+    
+    // Force canvas refresh to ensure changes are visible
+    const canvas = editor.Canvas;
+    if (canvas) {
+      // Trigger canvas refresh without reloading
+      editor.trigger('canvas:update');
+      // Force a re-render by toggling zoom slightly
+      const currentZoom = canvas.getZoom();
+      canvas.setZoom(currentZoom + 0.001);
+      canvas.setZoom(currentZoom);
+      
+      // Force canvas frame to update (without full reload)
+      const frame = canvas.getFrameEl();
+      if (frame && frame.contentDocument) {
+        try {
+          // Trigger a repaint
+          const event = new Event('resize', { bubbles: true });
+          frame.contentWindow?.dispatchEvent(event);
+        } catch (e) {
+          // Cross-origin or other issue, use alternative method
+          console.warn('[WebeenthereAI] Could not update canvas frame:', e);
+        }
+      }
+    }
+    
+    // Wait longer for GrapesJS to process all updates
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // CRITICAL: Extract HTML directly from component model instead of using getHtml()
+    // getHtml() might return cached HTML, so we build HTML from component data
+    let finalHtml = '';
+    try {
+      // Function to extract HTML from a component's data model
+      const getComponentHtml = (comp: any): string => {
+        try {
+          const tagName = comp.get('tagName') || 'div';
+          const content = comp.get('content') || '';
+          const attributes = comp.getAttributes() || {};
+          const classes = comp.getClasses() || [];
+          const styles = comp.getStyle() || {};
+          
+          // Build attributes string
+          let attrs = '';
+          Object.keys(attributes).forEach(key => {
+            if (key !== 'class' && key !== 'style') {
+              attrs += ` ${key}="${attributes[key]}"`;
+            }
+          });
+          
+          // Add classes
+          if (classes.length > 0) {
+            attrs += ` class="${classes.join(' ')}"`;
+          }
+          
+          // Add inline styles
+          if (Object.keys(styles).length > 0) {
+            const styleStr = Object.keys(styles).map(key => {
+              const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+              return `${cssKey}: ${styles[key]}`;
+            }).join('; ');
+            attrs += ` style="${styleStr}"`;
+          }
+          
+          // Get children HTML
+          const children = comp.components();
+          let childrenHtml = '';
+          if (children && children.length > 0) {
+            childrenHtml = children.map((child: any) => getComponentHtml(child)).join('');
+          }
+          
+          // Build HTML - use content if no children, otherwise use children
+          const innerContent = childrenHtml || content;
+          
+          // Self-closing tags
+          const selfClosing = ['img', 'br', 'hr', 'input', 'meta', 'link'].includes(tagName.toLowerCase());
+          if (selfClosing) {
+            return `<${tagName}${attrs} />`;
+          }
+          
+          return `<${tagName}${attrs}>${innerContent}</${tagName}>`;
+        } catch (e) {
+          console.warn('[WebeenthereAI] Error extracting HTML from component:', e);
+          return '';
+        }
+      };
+      
+      // Extract HTML from all root components
+      const components = editor.getComponents();
+      const htmlParts = components.map((comp: any) => getComponentHtml(comp));
+      finalHtml = htmlParts.join('');
+      
+      console.log('[WebeenthereAI] Extracted HTML from components, length:', finalHtml.length);
+      
+      // Also trigger updates for visual refresh
+      editor.trigger('component:update');
+      editor.trigger('update');
+      if (editor.store) {
+        editor.store();
+      }
+    } catch (e) {
+      console.warn('[WebeenthereAI] Could not extract HTML from components, using getHtml():', e);
+      // Fallback to getHtml()
+      editor.trigger('update');
+      finalHtml = editor.getHtml();
+    }
+    
     const finalCss = editor.getCss();
     const finalComponentCount = editor.getComponents().length;
+    
+    console.log('[WebeenthereAI] Final HTML length:', finalHtml.length, 'Initial:', initialHtml.length);
+    console.log('[WebeenthereAI] HTML changed:', initialHtml !== finalHtml);
+    if (initialHtml !== finalHtml) {
+      console.log('[WebeenthereAI] HTML diff preview - Initial:', initialHtml.substring(0, 100));
+      console.log('[WebeenthereAI] HTML diff preview - Final:', finalHtml.substring(0, 100));
+    }
     
     // Check for changes in multiple ways
     const hasHtmlChanges = initialHtml !== finalHtml;
@@ -218,9 +436,15 @@ export function executeAICode(editor: Editor, code: string): any {
     const hasModifications = modificationTracker.componentsModified > 0;
     const hasAttempts = modificationTracker.modificationsAttempted;
     
-    // More lenient validation: if components were modified, consider it successful
-    // even if HTML string didn't change (GrapesJS might not immediately reflect changes)
-    if (!hasHtmlChanges && !hasCssChanges && !componentCountChanged && !hasModifications) {
+    // More lenient validation: if components were modified OR HTML changed, consider it successful
+    // HTML changes indicate DOM manipulation worked even if set() wasn't tracked
+    // Also check if components were found and HTML changed (indicates successful DOM manipulation)
+    const hasSuccessfulModification = hasModifications || 
+                                      (hasHtmlChanges && modificationTracker.componentsFound > 0) ||
+                                      hasCssChanges || 
+                                      componentCountChanged;
+    
+    if (!hasSuccessfulModification) {
       // Build helpful error message
       let errorMsg = 'No changes were made. ';
       
@@ -252,6 +476,12 @@ export function executeAICode(editor: Editor, code: string): any {
       });
       
       throw new Error(errorMsg);
+    }
+    
+    // If HTML changed but set() wasn't tracked, log a warning but allow it
+    if (hasHtmlChanges && modificationTracker.componentsModified === 0 && modificationTracker.componentsFound > 0) {
+      console.warn('[WebeenthereAI] ⚠️ HTML changed but component.set() was not tracked. Changes detected via DOM manipulation.');
+      console.warn('[WebeenthereAI] For better tracking, use component.set("content", value) instead of direct DOM manipulation.');
     }
     
     if (componentCountChanged && initialComponentCount > finalComponentCount) {

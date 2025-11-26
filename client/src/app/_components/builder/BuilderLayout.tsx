@@ -9,6 +9,8 @@ import { API_ENDPOINTS, apiPut } from '../../../lib/apiConfig';
 import LeftPanel from './LeftPanel';
 import { PropertiesPanel } from './PropertiesPanel';
 import WebeenthereAIAssistant from './ai-assistant/WebeenthereAIAssistant';
+import PreviewModal from './PreviewModal';
+import ImageLibrary from './ImageLibrary';
 import './BuilderLayout.css';
 import type { Editor } from 'grapesjs';
 
@@ -25,6 +27,11 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
   const [activeDevice, setActiveDevice] = useState('desktop');
   const [zoomLevel, setZoomLevel] = useState(100);
   const [showGrid, setShowGrid] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState('');
+  const [previewCss, setPreviewCss] = useState('');
+  const [showImageLibrary, setShowImageLibrary] = useState(false);
+  const [imageLibraryTarget, setImageLibraryTarget] = useState<{ component: any; editor: Editor } | null>(null);
   const editorRef = useRef<any>(null);
   
   // Get theme mode
@@ -33,6 +40,90 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
 
   // GrapesJS utilities
   const { save, getHtml, getCss, getJson, exportAsHtml } = useGrapesJS(editor);
+
+  // Listen for image library open events from canvas
+  useEffect(() => {
+    const handleOpenImageLibrary = (event: CustomEvent) => {
+      const { component, editor: editorInstance } = event.detail;
+      setImageLibraryTarget({ component, editor: editorInstance });
+      setShowImageLibrary(true);
+    };
+
+    window.addEventListener('openImageLibrary', handleOpenImageLibrary as EventListener);
+    return () => {
+      window.removeEventListener('openImageLibrary', handleOpenImageLibrary as EventListener);
+    };
+  }, []);
+
+  // Handle image selection from library
+  const handleImageSelect = async (imageUrl: string) => {
+    if (imageLibraryTarget && imageLibraryTarget.component && imageLibraryTarget.editor) {
+      const component = imageLibraryTarget.component;
+      const editorInstance = imageLibraryTarget.editor;
+      
+      // Ensure URL is properly formatted (should already be from ImageLibrary, but double-check)
+      let formattedUrl = imageUrl;
+      if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
+        // Import getImageUrl logic if needed
+        const { ENV_CONFIG } = await import('../../../lib/envConfig');
+        const apiUrl = ENV_CONFIG.isLocal() 
+          ? ENV_CONFIG.LOCAL_API_URL 
+          : ENV_CONFIG.PRODUCTION_API_URL;
+        
+        if (imageUrl.startsWith('/api/media')) {
+          formattedUrl = `${apiUrl}${imageUrl}`;
+        } else if (imageUrl.startsWith('/uploads')) {
+          formattedUrl = `${apiUrl}/api/media${imageUrl}`;
+        } else if (imageUrl.startsWith('/')) {
+          formattedUrl = `${apiUrl}${imageUrl}`;
+        }
+      }
+      
+      console.log('[ImagePlaceholder] Setting image URL:', { original: imageUrl, formatted: formattedUrl });
+      
+      // Set the src attribute with formatted URL
+      component.set('src', formattedUrl);
+      component.addAttributes({ src: formattedUrl });
+      
+      // Force view update with a small delay to ensure component is ready
+      setTimeout(() => {
+        const view = component.getView();
+        if (view && view.render) {
+          view.render();
+        }
+        
+        // Also update the model's updateImage method directly
+        if (component.updateImage && typeof component.updateImage === 'function') {
+          component.updateImage();
+        }
+        
+        // Trigger multiple update events to ensure visibility
+        editorInstance.trigger('component:update');
+        editorInstance.trigger('component:change:src');
+        editorInstance.trigger('update');
+        editorInstance.trigger('canvas:update');
+        
+        // Force canvas to refresh the specific component
+        const canvas = editorInstance.Canvas;
+        if (canvas) {
+          const frame = canvas.getFrameEl();
+          if (frame && frame.contentDocument) {
+            // Find the component in the iframe and update it
+            const componentEl = frame.contentDocument.querySelector(`[data-gjs-id="${component.getId()}"]`);
+            if (componentEl) {
+              const img = componentEl.querySelector('.image-placeholder-img');
+              if (img && formattedUrl) {
+                (img as HTMLImageElement).src = formattedUrl;
+                componentEl.classList.add('has-image');
+              }
+            }
+          }
+        }
+      }, 100);
+    }
+    setShowImageLibrary(false);
+    setImageLibraryTarget(null);
+  };
 
   // Initialize editor and load content
   useEffect(() => {
@@ -45,6 +136,52 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
           const layout = JSON.parse(currentWebsite.html_content);
           if (layout.html) {
             editor.setComponents(layout.html);
+            
+            // After loading, restore image placeholder components
+            setTimeout(() => {
+              const allComponents = editor.getComponents();
+              const restoreImagePlaceholders = (comp: any) => {
+                // Check if this is an image placeholder (has the class or contains image-placeholder-img)
+                const attrs = comp.getAttributes();
+                const classes = comp.getClasses();
+                const isImagePlaceholder = 
+                  attrs?.['data-gjs-type'] === 'image-placeholder' ||
+                  classes?.includes('image-placeholder-container') ||
+                  (comp.get('content') && comp.get('content').includes('image-placeholder-img'));
+                
+                if (isImagePlaceholder) {
+                  // Ensure it's recognized as image-placeholder type
+                  comp.set('type', 'image-placeholder');
+                  
+                  // Extract src from content if present
+                  const content = comp.get('content') || '';
+                  const srcMatch = content.match(/src=["']([^"']+)["']/);
+                  if (srcMatch && srcMatch[1]) {
+                    const extractedSrc = srcMatch[1];
+                    if (!comp.get('src') || comp.get('src') !== extractedSrc) {
+                      comp.set('src', extractedSrc);
+                      comp.addAttributes({ src: extractedSrc });
+                      // Trigger update
+                      if (comp.updateImage && typeof comp.updateImage === 'function') {
+                        setTimeout(() => comp.updateImage(), 100);
+                      }
+                    }
+                  }
+                }
+                
+                // Recursively check children
+                const children = comp.components();
+                if (children && children.length > 0) {
+                  children.forEach((child: any) => restoreImagePlaceholders(child));
+                }
+              };
+              
+              allComponents.forEach((comp: any) => restoreImagePlaceholders(comp));
+              
+              // Trigger update
+              editor.trigger('component:update');
+              editor.trigger('update');
+            }, 300);
           }
           if (layout.css) {
             editor.setStyle(layout.css);
@@ -53,6 +190,32 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
           // If not JSON, try as plain HTML
           if (currentWebsite.html_content) {
             editor.setComponents(currentWebsite.html_content);
+            
+            // Also restore image placeholders for plain HTML
+            setTimeout(() => {
+              const allComponents = editor.getComponents();
+              const restoreImagePlaceholders = (comp: any) => {
+                const content = comp.get('content') || '';
+                if (content.includes('image-placeholder-img')) {
+                  comp.set('type', 'image-placeholder');
+                  const srcMatch = content.match(/src=["']([^"']+)["']/);
+                  if (srcMatch && srcMatch[1]) {
+                    comp.set('src', srcMatch[1]);
+                    comp.addAttributes({ src: srcMatch[1] });
+                    if (comp.updateImage && typeof comp.updateImage === 'function') {
+                      setTimeout(() => comp.updateImage(), 100);
+                    }
+                  }
+                }
+                const children = comp.components();
+                if (children && children.length > 0) {
+                  children.forEach((child: any) => restoreImagePlaceholders(child));
+                }
+              };
+              allComponents.forEach((comp: any) => restoreImagePlaceholders(comp));
+              editor.trigger('component:update');
+              editor.trigger('update');
+            }, 300);
           }
         }
       }
@@ -123,25 +286,122 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
     
     setIsSaving(true);
     try {
-      const html = getHtml();
-      const css = getCss();
+      // CRITICAL: Force GrapesJS to store current state
+      // This ensures component.set() changes are persisted
+      if (editor.store) {
+        editor.store();
+      }
+      
+      // CRITICAL: Trigger update events to ensure GrapesJS has processed all changes
+      // This ensures that component.set() changes are reflected in getHtml() and getCss()
+      editor.trigger('component:update');
+      editor.trigger('update');
+      editor.trigger('storage:store');
+      
+      // Wait longer for GrapesJS to process and store the updates
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Get the latest HTML and CSS after updates are processed
+      // Use getJson to get the full component structure, then extract HTML/CSS
+      const jsonData = getJson();
+      let html, css;
+      
+      if (jsonData) {
+        try {
+          const parsed = JSON.parse(jsonData);
+          html = parsed.html || getHtml();
+          css = parsed.css || getCss();
+        } catch {
+          html = getHtml();
+          css = getCss();
+        }
+      } else {
+        html = getHtml();
+        css = getCss();
+      }
+      
+      console.log('[Save] HTML length:', html.length, 'CSS length:', css.length);
+      console.log('[Save] HTML preview:', html.substring(0, 200));
+      
+      // Debug: Check for image-placeholder components in saved HTML
+      if (process.env.NODE_ENV === 'development') {
+        const imagePlaceholderMatches = html.match(/<div[^>]*data-gjs-type=["']image-placeholder["'][^>]*>/gi);
+        const imagePlaceholderImgMatches = html.match(/<img[^>]*class=["'][^"']*image-placeholder-img[^"']*["'][^>]*>/gi);
+        console.log('[Save] Image placeholder divs found:', imagePlaceholderMatches?.length || 0);
+        console.log('[Save] Image placeholder img tags found:', imagePlaceholderImgMatches?.length || 0);
+        
+        if (imagePlaceholderImgMatches) {
+          imagePlaceholderImgMatches.forEach((match, idx) => {
+            const hasSrc = match.includes('src=');
+            console.log(`[Save] Image placeholder img ${idx + 1} has src:`, hasSrc, hasSrc ? match.match(/src=["']([^"']+)["']/)?.[1]?.substring(0, 50) : 'NO SRC');
+          });
+        }
+      }
+      
+      // Parse existing content to compare
+      let oldHtml = '';
+      let oldCss = '';
+      if (currentWebsite?.html_content) {
+        try {
+          const oldParsed = JSON.parse(currentWebsite.html_content);
+          oldHtml = oldParsed.html || currentWebsite.html_content;
+          oldCss = oldParsed.css || currentWebsite.css_content || '';
+        } catch {
+          oldHtml = currentWebsite.html_content;
+          oldCss = currentWebsite.css_content || '';
+        }
+      }
+      
+      console.log('[Save] === COMPARISON ===');
+      console.log('[Save] Old HTML length:', oldHtml.length);
+      console.log('[Save] New HTML length:', html.length);
+      console.log('[Save] HTML changed:', oldHtml !== html);
+      if (oldHtml !== html) {
+        console.log('[Save] Old HTML preview:', oldHtml.substring(0, 150));
+        console.log('[Save] New HTML preview:', html.substring(0, 150));
+      } else {
+        console.warn('[Save] ⚠️ WARNING: HTML content is the same as before!');
+      }
+      console.log('[Save] ===================');
+      
       const layout = JSON.stringify({ html, css });
       
       // Save both as separate strings for compatibility with view page
-      const response = await apiPut(`${API_ENDPOINTS.WEBSITES}/${websiteId}`, {
-        html_content: layout,
-        css_content: css, // Save CSS separately for view page
-      });
+      // Add retry logic for connection errors
+      let response;
+      let retries = 3;
+      while (retries > 0) {
+        try {
+          response = await apiPut(`${API_ENDPOINTS.WEBSITES}/${websiteId}`, {
+            html_content: layout,
+            css_content: css, // Save CSS separately for view page
+          });
+          break;
+        } catch (error: any) {
+          // Check if it's a connection error that we should retry
+          if ((error.message?.includes('ECONNRESET') || error.message?.includes('network') || error.status === 500) && retries > 1) {
+            console.warn(`[Save] Connection error, retrying... (${retries - 1} retries left)`);
+            retries--;
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+            continue;
+          }
+          throw error;
+        }
+      }
       
-      if (response.success) {
+      if (response && response.success) {
         console.log('Website saved successfully');
         // Only show alert for manual saves (not auto-saves)
         // Auto-saves are handled by the AI Assistant component
       } else {
-        throw new Error(response.message || 'Failed to save website');
+        throw new Error(response?.message || 'Failed to save website');
       }
     } catch (error) {
       console.error('Error saving website:', error);
+      // Don't show error to user for connection issues - they're usually transient
+      if (error instanceof Error && (error.message.includes('ECONNRESET') || error.message.includes('network'))) {
+        console.warn('[Save] Connection error - changes may not have been saved. Please try saving again.');
+      }
       // Re-throw error for auto-save to handle gracefully
       throw error;
     } finally {
@@ -202,8 +462,22 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
   }, [editor]);
 
   const handlePreview = useCallback(() => {
-    editor?.runCommand('preview');
-  }, [editor]);
+    if (!editor) return;
+    
+    // Force store current state
+    editor.store();
+    editor.trigger('component:update');
+    editor.trigger('update');
+    
+    // Wait for updates to process
+    setTimeout(() => {
+      const html = getHtml();
+      const css = getCss();
+      setPreviewHtml(html);
+      setPreviewCss(css);
+      setShowPreview(true);
+    }, 200);
+  }, [editor, getHtml, getCss, setPreviewHtml, setPreviewCss, setShowPreview]);
 
   const handleCodeView = useCallback(() => {
     editor?.runCommand('export-template');
@@ -497,6 +771,28 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
         isDark={isDark} 
         websiteId={websiteId}
         onAutoSave={handleSave}
+        onPreview={handlePreview}
+      />
+
+      {/* Preview Modal */}
+      <PreviewModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        html={previewHtml}
+        css={previewCss}
+        isDark={isDark}
+      />
+
+      {/* Image Library Modal */}
+      <ImageLibrary
+        isOpen={showImageLibrary}
+        onClose={() => {
+          setShowImageLibrary(false);
+          setImageLibraryTarget(null);
+        }}
+        onSelectImage={handleImageSelect}
+        websiteId={websiteId}
+        isDark={isDark}
       />
     </div>
   );

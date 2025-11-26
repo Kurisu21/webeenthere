@@ -10,9 +10,11 @@ import AIGenerationPanel from '../../_components/builder-legacy/AIGenerationPane
 import GeneratedTemplateModal from '../../_components/builder-legacy/GeneratedTemplateModal';
 import { API_ENDPOINTS, apiPost, apiGet } from '../../../lib/apiConfig';
 import { Template } from '../../../lib/templateApi';
+import { useAuth } from '../../_components/auth/AuthContext';
 
 export default function CreateWebsitePage() {
   const router = useRouter();
+  const { token: authToken, isAuthenticated, isLoading: authLoading } = useAuth();
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedTemplate, setGeneratedTemplate] = useState(null);
@@ -24,6 +26,7 @@ export default function CreateWebsitePage() {
   const [loadingUsage, setLoadingUsage] = useState(false);
   const [aiPromptId, setAiPromptId] = useState<string | number | null>(null);
   const [limitNotice, setLimitNotice] = useState<string | null>(null);
+  const [isCreatingWebsite, setIsCreatingWebsite] = useState(false);
 
   // Fetch subscription usage to gate UI
   React.useEffect(() => {
@@ -68,13 +71,30 @@ export default function CreateWebsitePage() {
 
   const handleTemplateSelect = async (template: Template) => {
     if (guardWhileGenerating()) return;
+    
+    // Prevent multiple concurrent requests
+    if (isCreatingWebsite) {
+      console.log('Website creation already in progress, please wait...');
+      return;
+    }
+    
     setSelectedTemplate(template);
+    
+    // Wait for auth to finish loading
+    if (authLoading) {
+      console.log('Auth is still loading, please wait...');
+      return;
+    }
+    
+    setIsCreatingWebsite(true);
     
     try {
       // Check if user is authenticated before making API calls
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      if (!token) {
-        console.log('No authentication token found, redirecting to login');
+      // Use token from AuthContext first, then fallback to storage
+      const token = authToken || localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token || !isAuthenticated) {
+        console.log('No authentication token found or user not authenticated, redirecting to login');
+        console.log('Token:', token ? 'exists' : 'missing', 'isAuthenticated:', isAuthenticated);
         window.location.href = '/login';
         return;
       }
@@ -113,7 +133,7 @@ export default function CreateWebsitePage() {
         is_published: false
       };
 
-      const response = await apiPost(API_ENDPOINTS.WEBSITES, websiteData);
+      const response = await apiPost(API_ENDPOINTS.WEBSITES, websiteData, { token });
       
       if (response.success) {
         // Navigate to build page with the actual database ID
@@ -121,17 +141,50 @@ export default function CreateWebsitePage() {
       } else {
         throw new Error(response.message || 'Failed to create website');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating website:', error);
-      if (error instanceof Error && error.message.includes('Authentication required')) {
-        console.log('User needs to authenticate');
+      console.error('Error details:', {
+        message: error?.message,
+        status: error?.status,
+        data: error?.data
+      });
+      
+      // Check for authentication errors - handle both Error objects and rejected promises
+      const errorMessage = error?.message || error?.error || String(error);
+      const isAuthError = errorMessage.includes('Authentication') || 
+                         errorMessage.includes('token') || 
+                         errorMessage.includes('Access denied') ||
+                         errorMessage.includes('Invalid token') ||
+                         error?.status === 401;
+      
+      if (isAuthError) {
+        console.log('User needs to authenticate - redirecting to login');
+        console.log('Current auth state:', {
+          authToken: authToken ? 'exists' : 'missing',
+          isAuthenticated,
+          localStorageToken: localStorage.getItem('token') ? 'exists' : 'missing',
+          sessionStorageToken: sessionStorage.getItem('token') ? 'exists' : 'missing'
+        });
+        // Clear tokens and redirect to login only when explicitly needed
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
+        window.location.href = '/login';
         return;
       }
-      alert('Error creating website. Please try again.');
+      alert('Error creating website: ' + (errorMessage || 'Please try again.'));
     }
   };
 
   const handleAIGenerate = async (description: string, options: { websiteType: string; style: string; colorScheme: string }) => {
+    // Check if user is authenticated before making API calls
+    const token = authToken || localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token || !isAuthenticated) {
+      console.log('No authentication token found or user not authenticated, redirecting to login');
+      window.location.href = '/login';
+      return;
+    }
     console.log('=== CREATE PAGE AI GENERATE CALLED ===');
     console.log('Description:', description);
     console.log('Options:', options);
@@ -145,11 +198,12 @@ export default function CreateWebsitePage() {
         websiteType: options.websiteType,
         style: options.style,
         colorScheme: options.colorScheme,
-      });
+      }, { token });
       console.log('API response data:', data);
 
-      if (data.success) {
+      if (data.success && data.template) {
         console.log('Template generated successfully, showing preview...');
+        console.log('Template data:', data.template);
         // Show the generated template in a preview modal instead of navigating
         setGeneratedTemplate(data.template);
         setTemplateReasoning(data.reasoning || '');
@@ -157,8 +211,8 @@ export default function CreateWebsitePage() {
         setShowGeneratedTemplate(true);
         if (data.aiPromptId) setAiPromptId(data.aiPromptId);
       } else {
-        console.error('Template generation failed:', data.error);
-        alert('Template generation failed: ' + (data.error || 'Unknown error'));
+        console.error('Template generation failed:', data.error || 'No template in response', data);
+        alert('Template generation failed: ' + (data.error || 'No template received'));
       }
     } catch (error) {
       console.error('Error generating template:', error);
@@ -171,18 +225,30 @@ export default function CreateWebsitePage() {
 
   // Handle using the generated template
   const handleUseGeneratedTemplate = async (template: any) => {
+    // Prevent multiple concurrent requests
+    if (isCreatingWebsite) {
+      console.log('Website creation already in progress, please wait...');
+      return;
+    }
+    
     setSelectedTemplate(template);
+    setIsCreatingWebsite(true);
     
     try {
       // Check if user is authenticated before making API calls
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      if (!token) {
-        console.log('No authentication token found, redirecting to login');
+      // Use token from AuthContext first, then fallback to storage
+      const token = authToken || localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token || !isAuthenticated) {
+        console.log('No authentication token found or user not authenticated, redirecting to login');
+        setIsCreatingWebsite(false);
         window.location.href = '/login';
         return;
       }
 
-      if (!ensureCanCreate()) return;
+      if (!ensureCanCreate()) {
+        setIsCreatingWebsite(false);
+        return;
+      }
 
       // Create website in database immediately with AI-generated template (store normalized html/css JSON)
       const normalizedHtmlCss = JSON.stringify({ html: (template.html || ''), css: (template.css || template.css_base || '') });
@@ -196,7 +262,7 @@ export default function CreateWebsitePage() {
         ai_prompt_id: aiPromptId ?? undefined
       };
 
-      const response = await apiPost(API_ENDPOINTS.WEBSITES, websiteData);
+      const response = await apiPost(API_ENDPOINTS.WEBSITES, websiteData, { token });
       
       if (response.success) {
         // Navigate to build page with the actual database ID
@@ -204,23 +270,61 @@ export default function CreateWebsitePage() {
       } else {
         throw new Error(response.message || 'Failed to create website');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating website:', error);
-      if (error instanceof Error && error.message.includes('Authentication required')) {
-        console.log('User needs to authenticate');
+      console.error('Error details:', {
+        message: error?.message,
+        status: error?.status,
+        data: error?.data
+      });
+      
+      // Check for authentication errors - handle both Error objects and rejected promises
+      const errorMessage = error?.message || error?.error || String(error);
+      const isAuthError = errorMessage.includes('Authentication') || 
+                         errorMessage.includes('token') || 
+                         errorMessage.includes('Access denied') ||
+                         errorMessage.includes('Invalid token') ||
+                         error?.status === 401;
+      
+      if (isAuthError) {
+        console.log('User needs to authenticate - redirecting to login');
+        console.log('Current auth state:', {
+          authToken: authToken ? 'exists' : 'missing',
+          isAuthenticated,
+          localStorageToken: localStorage.getItem('token') ? 'exists' : 'missing',
+          sessionStorageToken: sessionStorage.getItem('token') ? 'exists' : 'missing'
+        });
+        // Clear tokens and redirect to login only when explicitly needed
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
+        window.location.href = '/login';
         return;
       }
-      alert('Error creating website. Please try again.');
+      alert('Error creating website: ' + (errorMessage || 'Please try again.'));
+    } finally {
+      setIsCreatingWebsite(false);
     }
   };
 
   const handleBuildFromScratch = async () => {
     if (guardWhileGenerating()) return;
+    
+    // Prevent multiple concurrent requests
+    if (isCreatingWebsite) {
+      console.log('Website creation already in progress, please wait...');
+      return;
+    }
+    
+    setIsCreatingWebsite(true);
+    
     try {
       // Check if user is authenticated before making API calls
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      if (!token) {
-        console.log('No authentication token found, redirecting to login');
+      // Use token from AuthContext first, then fallback to storage
+      const token = authToken || localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token || !isAuthenticated) {
+        console.log('No authentication token found or user not authenticated, redirecting to login');
         window.location.href = '/login';
         return;
       }
@@ -238,7 +342,7 @@ export default function CreateWebsitePage() {
         is_published: false
       };
 
-      const response = await apiPost(API_ENDPOINTS.WEBSITES, websiteData);
+      const response = await apiPost(API_ENDPOINTS.WEBSITES, websiteData, { token });
       
       if (response.success) {
         // Navigate to build page with the actual database ID
@@ -246,13 +350,39 @@ export default function CreateWebsitePage() {
       } else {
         throw new Error(response.message || 'Failed to create website');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating website:', error);
-      if (error instanceof Error && error.message.includes('Authentication required')) {
-        console.log('User needs to authenticate');
+      console.error('Error details:', {
+        message: error?.message,
+        status: error?.status,
+        data: error?.data
+      });
+      
+      // Check for authentication errors - handle both Error objects and rejected promises
+      const errorMessage = error?.message || error?.error || String(error);
+      const isAuthError = errorMessage.includes('Authentication') || 
+                         errorMessage.includes('token') || 
+                         errorMessage.includes('Access denied') ||
+                         errorMessage.includes('Invalid token') ||
+                         error?.status === 401;
+      
+      if (isAuthError) {
+        console.log('User needs to authenticate - redirecting to login');
+        console.log('Current auth state:', {
+          authToken: authToken ? 'exists' : 'missing',
+          isAuthenticated,
+          localStorageToken: localStorage.getItem('token') ? 'exists' : 'missing',
+          sessionStorageToken: sessionStorage.getItem('token') ? 'exists' : 'missing'
+        });
+        // Clear tokens and redirect to login only when explicitly needed
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
+        window.location.href = '/login';
         return;
       }
-      alert('Error creating website. Please try again.');
+      alert('Error creating website: ' + (errorMessage || 'Please try again.'));
     }
   };
 
@@ -392,6 +522,7 @@ export default function CreateWebsitePage() {
                 <TemplateSelector 
                   onTemplateSelect={handleTemplateSelect}
                   onStartFromScratch={handleBuildFromScratch}
+                  isCreating={isCreatingWebsite}
                 />
               </div>
             )}

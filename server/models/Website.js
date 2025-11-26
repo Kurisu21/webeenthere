@@ -49,7 +49,20 @@ class Website {
     
     values.push(id);
     const query = `UPDATE websites SET ${fields.join(', ')} WHERE id = ?`;
-    await this.db.execute(query, values);
+    
+    console.log(`[Website Model] Executing UPDATE query for website ${id}`);
+    console.log(`[Website Model] Fields being updated: ${fields.join(', ')}`);
+    if (data.html_content) {
+      console.log(`[Website Model] HTML content length: ${data.html_content.length}`);
+    }
+    if (data.css_content) {
+      console.log(`[Website Model] CSS content length: ${data.css_content.length}`);
+    }
+    
+    const [result] = await this.db.execute(query, values);
+    console.log(`[Website Model] Update result - Affected rows: ${result.affectedRows}`);
+    
+    return result;
   }
 
   async delete(id) {

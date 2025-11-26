@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { convertTemplateElementsToElements } from './utils/templateConverter';
 
 interface GeneratedTemplateModalProps {
@@ -20,10 +20,50 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
   reasoning,
   suggestions = []
 }) => {
+  const [previewHtml, setPreviewHtml] = useState('');
+  
   console.log('GeneratedTemplateModal render:', { isOpen, template: !!template, templateData: template });
   
-  if (!isOpen || !template) {
-    console.log('Modal not showing because:', { isOpen, hasTemplate: !!template });
+  useEffect(() => {
+    if (isOpen && template) {
+      const html = template.html || '';
+      const css = template.css || template.css_base || '';
+      
+      // Combine HTML and CSS for preview in iframe
+      const fullHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Template Preview</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+    }
+    ${css}
+  </style>
+</head>
+<body>
+  ${html}
+</body>
+</html>`;
+      setPreviewHtml(fullHtml);
+    }
+  }, [isOpen, template]);
+  
+  // More lenient check - allow template to be an object even if some properties are missing
+  const hasValidTemplate = template && (typeof template === 'object');
+  
+  if (!isOpen || !hasValidTemplate) {
+    console.log('Modal not showing because:', { isOpen, hasTemplate: hasValidTemplate, templateType: typeof template });
     return null;
   }
 
@@ -41,7 +81,7 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 p-4 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl bg-white dark:bg-gray-900">
+      <div className="w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl bg-white dark:bg-gray-900">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-blue-600/10 to-purple-600/10 dark:from-blue-400/10 dark:to-purple-400/10">
           <div className="min-w-0">
@@ -72,37 +112,24 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
               </h3>
               
               <div className="rounded-lg p-4 mb-4 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-800">
-                <div className="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm min-h-[300px] relative overflow-hidden bg-white dark:bg-gray-900">
-                  {/* Real HTML preview with CSS */}
-                  <div className="w-full h-full">
-                    <style dangerouslySetInnerHTML={{ __html: (template.css || template.css_base || '') }} />
-                    <div className="template-preview" style={{ 
-                      width: '100%', 
-                      height: '100%', 
-                      overflow: 'auto',
-                      fontSize: '12px'
-                    }}>
-                      {template.elements?.map((element: any, index: number) => (
-                        <div
-                          key={element.id || index}
-                          style={{
-                            position: element.position ? 'absolute' : 'relative',
-                            left: element.position?.x || 'auto',
-                            top: element.position?.y || 'auto',
-                            width: element.size?.width || 'auto',
-                            height: element.size?.height || 'auto',
-                            ...element.styles
-                          }}
-                          dangerouslySetInnerHTML={{ __html: element.content || '' }}
-                        />
-                      ))}
-                      {(!template.elements || template.elements.length === 0) && (
-                        <div className="text-center text-gray-500 py-8">
-                          No elements to preview
+                <div className="rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm relative overflow-hidden bg-white dark:bg-gray-900" style={{ height: '500px' }}>
+                  {/* Real HTML preview with CSS in iframe */}
+                  {previewHtml ? (
+                    <iframe
+                      srcDoc={previewHtml}
+                      className="w-full h-full border-0"
+                      title="Template Preview"
+                      sandbox="allow-same-origin allow-scripts"
+                      style={{ minHeight: '500px' }}
+                    />
+                  ) : (
+                    <div className="text-center text-gray-500 py-8 flex items-center justify-center h-full">
+                      <div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p>Loading preview...</p>
                         </div>
-                      )}
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 

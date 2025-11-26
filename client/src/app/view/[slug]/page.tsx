@@ -69,6 +69,82 @@ export default function PublicWebsiteViewer() {
   const cssContent = website.css_content || '';
   const htmlContent = website.html_content || '';
   
+  // Add smooth scrolling for anchor links
+  useEffect(() => {
+    if (!htmlContent) return;
+    
+    // Add smooth scrolling CSS and ensure inline styles are preserved
+    const style = document.createElement('style');
+    style.textContent = `
+      html {
+        scroll-behavior: smooth;
+      }
+      [id] {
+        scroll-margin-top: 20px;
+      }
+      /* Default link styles - ONLY apply to links without color/text-decoration in style */
+      /* Links with inline styles will preserve their custom styles */
+      a[href]:not([data-gjs-type="link-button"]):not(.link-button):not([style*="color"]):not([style*="text-decoration"]):not([style*="textDecoration"]) {
+        color: #2563eb;
+        text-decoration: underline;
+      }
+      a[href]:not([data-gjs-type="link-button"]):not(.link-button):not([style*="color"]):hover {
+        color: #1d4ed8;
+      }
+      /* Text link specific styles - only if no color/text-decoration in style */
+      .text-link:not([style*="color"]), 
+      a[data-gjs-type="text-link"]:not([style*="color"]) {
+        color: #2563eb;
+        cursor: pointer;
+      }
+      .text-link:not([style*="text-decoration"]):not([style*="textDecoration"]), 
+      a[data-gjs-type="text-link"]:not([style*="text-decoration"]):not([style*="textDecoration"]) {
+        text-decoration: underline;
+      }
+      .text-link:not([style*="color"]):hover, 
+      a[data-gjs-type="text-link"]:not([style*="color"]):hover {
+        color: #1d4ed8;
+      }
+      /* CRITICAL: Inline styles have highest specificity (1,0,0,0) and will always override */
+      /* Links with inline color or text-decoration will use those values */
+      a[style*="color"] {
+        /* Inline color will override any CSS color rules */
+      }
+      a[style*="text-decoration"], a[style*="textDecoration"] {
+        /* Inline text-decoration will override any CSS text-decoration rules */
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Handle anchor link clicks
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest('a[href^="#"]') as HTMLAnchorElement;
+      if (link && link.hash) {
+        e.preventDefault();
+        const targetId = link.hash.substring(1);
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+          targetElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+          // Update URL without triggering scroll
+          if (history.pushState) {
+            history.pushState(null, '', link.hash);
+          }
+        }
+      }
+    };
+    
+    document.addEventListener('click', handleClick);
+    
+    return () => {
+      document.removeEventListener('click', handleClick);
+      document.head.removeChild(style);
+    };
+  }, [htmlContent]);
+  
   return (
     <div className="min-h-screen bg-white">
       {cssContent && <style dangerouslySetInnerHTML={{ __html: cssContent }} />}

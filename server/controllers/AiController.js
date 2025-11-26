@@ -237,6 +237,17 @@ class AiController {
     try {
       const { prompt, userInput, isUserPrompt = false, website_id, conversation_id } = req.body || {};
 
+      // Log authentication status for debugging
+      const authHeader = req.header('Authorization');
+      const hasToken = !!authHeader;
+      const isAuthenticated = !!req.user?.id;
+      console.log('[AI Assistant] Request received:', {
+        hasToken,
+        isAuthenticated,
+        userId: req.user?.id || 'none',
+        websiteId: website_id || 'none'
+      });
+
       if (!prompt || typeof prompt !== 'string') {
         return res.status(400).json({
           success: false,
@@ -249,6 +260,7 @@ class AiController {
 
       // Check AI chat limits if authenticated
       if (req.user?.id) {
+        console.log('[AI Assistant] User authenticated, checking limits for user:', req.user.id);
         const aiChatLimits = await this.subscriptionService.checkAiChatLimit(req.user.id);
         if (!aiChatLimits.canUse) {
           return res.status(403).json({
@@ -339,11 +351,20 @@ class AiController {
 
       // Increment AI chat usage if authenticated
       if (req.user?.id) {
+        console.log('[AI Assistant] Incrementing usage for authenticated user:', req.user.id);
         await this.subscriptionService.incrementAiChatUsage(req.user.id);
+      } else {
+        console.log('[AI Assistant] Request from unauthenticated user - no usage tracking');
       }
 
       // Estimate token count (rough approximation)
       const tokenCount = Math.ceil((prompt.length + aiResponse.content.length) / 4);
+
+      console.log('[AI Assistant] Request completed successfully:', {
+        authenticated: !!req.user?.id,
+        conversationId: currentConversationId,
+        messageSaved: !!aiResponseId
+      });
 
       return res.json({
         success: true,
@@ -371,17 +392,18 @@ class AiController {
       const { websiteId } = req.params;
       const userId = req.user?.id;
 
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          error: 'Authentication required'
-        });
-      }
-
       if (!websiteId) {
         return res.status(400).json({
           success: false,
           error: 'Website ID is required'
+        });
+      }
+
+      // If not authenticated, return empty history (no error)
+      if (!userId) {
+        return res.json({
+          success: true,
+          conversations: []
         });
       }
 

@@ -100,7 +100,12 @@ export default function ImageLibrary({ isOpen, onClose, onSelectImage, websiteId
         await loadImages(); // Reload images
         // Auto-select the newly uploaded image
         if (data.media?.file_url) {
-          onSelectImage(data.media.file_url);
+          // Use getImageUrl to properly format the URL
+          const formattedUrl = getImageUrl(data.media.file_url);
+          // Add a small delay to ensure file is written to disk
+          setTimeout(() => {
+            onSelectImage(formattedUrl);
+          }, 200);
         }
       } else {
         throw new Error(data.error || 'Upload failed');

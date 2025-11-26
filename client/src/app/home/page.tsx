@@ -195,7 +195,7 @@ export default function Home() {
               Create stunning one-page websites with our drag-and-drop interface.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 md:gap-6 justify-center mb-12 md:mb-16 px-4 w-full max-w-2xl">
-              <Link href="/register" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 rounded-lg flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-sm sm:text-base md:text-lg font-medium w-full sm:w-auto">
+              <Link href="/login" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 rounded-lg flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-sm sm:text-base md:text-lg font-medium w-full sm:w-auto">
                 Start Building Free
                 <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

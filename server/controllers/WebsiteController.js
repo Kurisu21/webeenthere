@@ -186,8 +186,24 @@ class WebsiteController {
       const userId = req.user.id;
       const updateData = req.body;
 
-      // Check if website exists and user owns it
-      const website = await this.websiteModel.findById(id);
+      // Retry logic for database connection issues
+      let website;
+      let retries = 3;
+      while (retries > 0) {
+        try {
+          website = await this.websiteModel.findById(id);
+          break;
+        } catch (dbError) {
+          if ((dbError.code === 'ECONNRESET' || dbError.code === 'PROTOCOL_CONNECTION_LOST') && retries > 1) {
+            console.warn(`[WebsiteController] Database connection error, retrying... (${retries - 1} retries left)`);
+            retries--;
+            await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
+            continue;
+          }
+          throw dbError;
+        }
+      }
+
       if (!website) {
         return res.status(404).json({
           success: false,
@@ -233,7 +249,85 @@ class WebsiteController {
         }
       }
 
-      await this.websiteModel.update(id, updateData);
+      // Log HTML changes for debugging
+      if (updateData.html_content) {
+        const oldHtml = website.html_content || '';
+        const newHtml = updateData.html_content;
+        
+        console.log('\n=== WEBSITE UPDATE - HTML CHANGE ===');
+        console.log(`Website ID: ${id}`);
+        console.log(`User ID: ${userId}`);
+        console.log(`Old HTML length: ${oldHtml.length}`);
+        console.log(`New HTML length: ${newHtml.length}`);
+        console.log(`HTML changed: ${oldHtml !== newHtml}`);
+        
+        if (oldHtml !== newHtml) {
+          // Show first 200 chars of each for comparison
+          console.log('\n--- OLD HTML (first 200 chars) ---');
+          console.log(oldHtml.substring(0, 200));
+          console.log('\n--- NEW HTML (first 200 chars) ---');
+          console.log(newHtml.substring(0, 200));
+          
+          // Try to parse and show structure if JSON
+          try {
+            const oldParsed = JSON.parse(oldHtml);
+            const newParsed = JSON.parse(newHtml);
+            console.log('\n--- OLD HTML Structure ---');
+            console.log(`Has html: ${!!oldParsed.html}, Has css: ${!!oldParsed.css}`);
+            if (oldParsed.html) {
+              console.log(`Old HTML content length: ${oldParsed.html.length}`);
+              console.log(`Old HTML preview: ${oldParsed.html.substring(0, 150)}`);
+            }
+            console.log('\n--- NEW HTML Structure ---');
+            console.log(`Has html: ${!!newParsed.html}, Has css: ${!!newParsed.css}`);
+            if (newParsed.html) {
+              console.log(`New HTML content length: ${newParsed.html.length}`);
+              console.log(`New HTML preview: ${newParsed.html.substring(0, 150)}`);
+            }
+            
+            // Compare the actual HTML content inside JSON
+            if (oldParsed.html && newParsed.html) {
+              console.log(`\n--- HTML CONTENT COMPARISON ---`);
+              console.log(`HTML content changed: ${oldParsed.html !== newParsed.html}`);
+              if (oldParsed.html !== newParsed.html) {
+                console.log(`Old HTML content (first 100 chars): ${oldParsed.html.substring(0, 100)}`);
+                console.log(`New HTML content (first 100 chars): ${newParsed.html.substring(0, 100)}`);
+              } else {
+                console.warn('⚠️ WARNING: HTML content inside JSON is the SAME! Changes may not have been applied.');
+              }
+            }
+          } catch (e) {
+            console.log('HTML is not JSON format, showing as plain text');
+          }
+        } else {
+          console.log('⚠️ WARNING: HTML content did not change!');
+        }
+        console.log('=====================================\n');
+      }
+      
+      if (updateData.css_content) {
+        const oldCss = website.css_content || '';
+        const newCss = updateData.css_content;
+        console.log(`CSS length - Old: ${oldCss.length}, New: ${newCss.length}, Changed: ${oldCss !== newCss}`);
+      }
+
+      // Retry logic for update operation
+      retries = 3;
+      while (retries > 0) {
+        try {
+          await this.websiteModel.update(id, updateData);
+          console.log(`✅ Website ${id} updated successfully in database`);
+          break;
+        } catch (dbError) {
+          if ((dbError.code === 'ECONNRESET' || dbError.code === 'PROTOCOL_CONNECTION_LOST') && retries > 1) {
+            console.warn(`[WebsiteController] Database connection error during update, retrying... (${retries - 1} retries left)`);
+            retries--;
+            await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
+            continue;
+          }
+          throw dbError;
+        }
+      }
       
       // Log website update activity
       const { extractClientIP } = require('../utils/ipExtractor');

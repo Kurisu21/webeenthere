@@ -88,7 +88,7 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
   }, [router]);
 
   const handleViewWebsite = useCallback((slug: string) => {
-    window.open(`/view/${slug}`, '_blank');
+    window.open(`/sites/${slug}`, '_blank');
   }, []);
 
   const getUserInitial = (name: string) => {

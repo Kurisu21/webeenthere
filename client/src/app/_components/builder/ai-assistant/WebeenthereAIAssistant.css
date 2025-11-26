@@ -350,7 +350,21 @@
 
 .suggestion-explanation {
   margin-bottom: 16px;
-  line-height: 1.6;
+  line-height: 1.7;
+  font-size: 14px;
+  color: #334155;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.webeenthere-ai-panel.dark .suggestion-explanation {
+  color: #cbd5e1;
+}
+
+.suggestion-explanation p {
+  margin: 0;
+  padding: 0;
+  color: inherit;
 }
 
 .suggestion-actions {
@@ -659,6 +673,15 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.message-content p {
+  margin: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.6;
+  font-size: 13px;
+  color: inherit;
 }
 
 .message-content p {

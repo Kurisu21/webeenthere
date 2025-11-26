@@ -113,8 +113,10 @@ export function useWebeenthereAI(editor: Editor | null, websiteId?: string, onAu
                 changeCountRef.current = 0;
               }
             } catch (err: any) {
+              // Silently handle errors for auto-suggestions (don't spam console)
               if (err.name !== 'AbortError' && err.message !== 'Request cancelled') {
-                console.error('[WebeenthereAI] Auto-suggestion failed:', err);
+                // Only log non-abort errors, but don't show to user
+                console.log('[WebeenthereAI] Auto-suggestion failed (silent):', err.message);
               }
             } finally {
               // Only re-enable if we're still not loading (user might have made a request)
@@ -231,7 +233,7 @@ export function useWebeenthereAI(editor: Editor | null, websiteId?: string, onAu
 
         // Auto-execute user prompt results
         try {
-          executeAICode(editor, suggestion.code);
+          await executeAICode(editor, suggestion.code);
           // Only mark as auto-executed if execution succeeds
           setCurrentSuggestion(prev => prev ? { ...prev, isAutoExecuted: true } : null);
           
@@ -286,7 +288,7 @@ export function useWebeenthereAI(editor: Editor | null, websiteId?: string, onAu
     autoSuggestEnabledRef.current = false;
 
     try {
-      executeAICode(editor, suggestion.code);
+      await executeAICode(editor, suggestion.code);
       setCurrentSuggestion(prev => prev ? { ...prev, isAutoExecuted: true } : null);
       
       // Auto-save after successful execution
@@ -343,7 +345,7 @@ export function useWebeenthereAI(editor: Editor | null, websiteId?: string, onAu
         setCurrentSuggestion(suggestion);
         
         try {
-          executeAICode(editor, suggestion.code);
+          await executeAICode(editor, suggestion.code);
           // Only mark as auto-executed if execution succeeds
           setCurrentSuggestion(prev => prev ? { ...prev, isAutoExecuted: true } : null);
           

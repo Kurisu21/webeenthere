@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { Editor } from 'grapesjs';
 import './LayerPanel.css';
 
@@ -22,23 +22,35 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
   const [layers, setLayers] = useState<LayerNode[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<any>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const expandedNodesRef = useRef<Set<string>>(new Set());
+  const hasInitializedRef = useRef<boolean>(false);
+  const isUpdatingRef = useRef<boolean>(false);
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Build layer tree from GrapesJS components
-  const buildLayerTree = (component: any): LayerNode[] => {
+  // Build layer tree from GrapesJS components - memoized to prevent unnecessary recreations
+  const buildLayerTree = useCallback((component: any, autoExpand: boolean = false, currentExpandedNodes?: Set<string>): LayerNode[] => {
     if (!component) return [];
+    
+    // Use provided expanded nodes or ref to avoid closure issues
+    const expandedSet = currentExpandedNodes || expandedNodesRef.current;
     
     const children = component.components ? component.components().models || [] : [];
     const childNodes = children.map((child: any) => {
-      const childChildren = buildLayerTree(child);
+      const childCid = child.cid;
+      // Auto-expand all nodes by default on first load only
+      if (autoExpand && !expandedNodesRef.current.has(childCid)) {
+        expandedNodesRef.current.add(childCid);
+      }
+      const childChildren = buildLayerTree(child, autoExpand, expandedSet);
       return {
         component: child,
         children: childChildren,
-        isExpanded: expandedNodes.has(child.cid),
+        isExpanded: expandedSet.has(childCid) || (autoExpand && !hasInitializedRef.current),
       };
     });
 
     return childNodes;
-  };
+  }, []);
 
   // Update layers when components change
   useEffect(() => {
@@ -47,21 +59,84 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
     const updateLayers = () => {
       const root = editor.getWrapper();
       if (root) {
-        const tree = buildLayerTree(root);
+        // Auto-expand all nodes on first load only
+        const shouldAutoExpand = !hasInitializedRef.current;
+        // Use ref for expanded nodes to avoid closure issues
+        const tree = buildLayerTree(root, shouldAutoExpand, expandedNodesRef.current);
         setLayers(tree);
+        
+        // Update expanded nodes state only on first load
+        if (shouldAutoExpand) {
+          setExpandedNodes(new Set(expandedNodesRef.current));
+          hasInitializedRef.current = true;
+        }
       }
     };
 
     const handleComponentAdd = () => {
-      updateLayers();
+      // Debounce to prevent rapid-fire updates
+      requestAnimationFrame(() => {
+        updateLayers();
+      });
     };
 
     const handleComponentRemove = () => {
-      updateLayers();
+      // Debounce to prevent rapid-fire updates
+      requestAnimationFrame(() => {
+        updateLayers();
+      });
     };
 
     const handleComponentUpdate = () => {
-      updateLayers();
+      // Skip if already updating
+      if (isUpdatingRef.current) return;
+      
+      // Clear any pending timeout
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+      
+      // Debounce with a longer delay to prevent rapid-fire updates
+      updateTimeoutRef.current = setTimeout(() => {
+        if (isUpdatingRef.current) return;
+        isUpdatingRef.current = true;
+        
+        try {
+          const root = editor.getWrapper();
+          if (root) {
+            // Use ref for expanded nodes to avoid closure issues
+            const tree = buildLayerTree(root, false, expandedNodesRef.current);
+            // Only update if tree structure actually changed
+            setLayers((prevLayers) => {
+              // Simple check - if component count changed, update
+              const prevCount = prevLayers.reduce((count, node) => {
+                const countChildren = (n: LayerNode): number => {
+                  return 1 + n.children.reduce((sum, child) => sum + countChildren(child), 0);
+                };
+                return count + countChildren(node);
+              }, 0);
+              
+              const newCount = tree.reduce((count, node) => {
+                const countChildren = (n: LayerNode): number => {
+                  return 1 + n.children.reduce((sum, child) => sum + countChildren(child), 0);
+                };
+                return count + countChildren(node);
+              }, 0);
+              
+              // Only update if count changed (new component added/removed)
+              if (prevCount !== newCount) {
+                return tree;
+              }
+              return prevLayers;
+            });
+          }
+        } finally {
+          // Reset flag after a short delay
+          setTimeout(() => {
+            isUpdatingRef.current = false;
+          }, 200);
+        }
+      }, 300); // 300ms debounce
     };
 
     const handleComponentSelected = (component: any) => {
@@ -70,7 +145,9 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
 
     editor.on('component:add', handleComponentAdd);
     editor.on('component:remove', handleComponentRemove);
-    editor.on('component:update', handleComponentUpdate);
+    // Don't listen to component:update - it fires too frequently and causes infinite loops
+    // Only update on structural changes (add/remove)
+    // editor.on('component:update', handleComponentUpdate);
     editor.on('component:selected', handleComponentSelected);
 
     // Initial load
@@ -83,27 +160,95 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
     return () => {
       editor.off('component:add', handleComponentAdd);
       editor.off('component:remove', handleComponentRemove);
-      editor.off('component:update', handleComponentUpdate);
+      // editor.off('component:update', handleComponentUpdate);
       editor.off('component:selected', handleComponentSelected);
+      isUpdatingRef.current = false;
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+        updateTimeoutRef.current = null;
+      }
     };
-  }, [editor, expandedNodes]);
+  }, [editor, buildLayerTree]); // Added buildLayerTree to dependencies since it's now memoized
 
   const toggleNode = (cid: string) => {
     setExpandedNodes((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(cid)) {
         newSet.delete(cid);
+        expandedNodesRef.current.delete(cid);
       } else {
         newSet.add(cid);
+        expandedNodesRef.current.add(cid);
       }
       return newSet;
     });
   };
 
+  const closeAllNodes = () => {
+    setExpandedNodes(new Set());
+    expandedNodesRef.current.clear();
+  };
+
+  const expandAllNodes = useCallback(() => {
+    // Get current layers from state using a function to avoid dependency
+    setLayers((currentLayers) => {
+      const collectAllCids = (nodes: LayerNode[]): Set<string> => {
+        const cids = new Set<string>();
+        nodes.forEach(node => {
+          if (node.children.length > 0) {
+            cids.add(node.component.cid);
+            const childCids = collectAllCids(node.children);
+            childCids.forEach(cid => cids.add(cid));
+          }
+        });
+        return cids;
+      };
+      
+      const allCids = collectAllCids(currentLayers);
+      setExpandedNodes(allCids);
+      expandedNodesRef.current = new Set(allCids);
+      return currentLayers; // Don't change layers, just update expanded state
+    });
+  }, []);
+
   const selectComponent = (component: any) => {
     if (editor) {
       editor.select(component);
       component.trigger('active');
+      
+      // Scroll to component in canvas
+      try {
+        const view = component.getView();
+        if (view && view.el) {
+          const canvas = editor.Canvas;
+          const frame = canvas?.getFrameEl?.();
+          if (frame && frame.contentDocument) {
+            const element = view.el;
+            if (element) {
+              // Scroll element into view
+              element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+              
+              // Also try to scroll the iframe itself
+              const frameRect = frame.getBoundingClientRect();
+              const elementRect = element.getBoundingClientRect();
+              const frameDoc = frame.contentDocument;
+              const frameWindow = frameDoc.defaultView || frameDoc.parentWindow;
+              
+              if (frameWindow) {
+                const scrollX = elementRect.left - frameRect.width / 2;
+                const scrollY = elementRect.top - frameRect.height / 2;
+                frameWindow.scrollTo({
+                  left: scrollX,
+                  top: scrollY,
+                  behavior: 'smooth'
+                });
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Could not scroll to component:', error);
+      }
     }
   };
 
@@ -238,9 +383,35 @@ export const LayerPanel: React.FC<LayerPanelProps> = ({
           <p className="text-sm text-gray-400">No layers yet</p>
         </div>
       ) : (
-        <div className="layer-list">
-          {layers.map((node) => renderLayerNode(node))}
-        </div>
+        <>
+          <div className="layer-panel-actions">
+            <button
+              type="button"
+              onClick={expandAllNodes}
+              className="layer-action-btn"
+              title="Expand All"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+              <span>Expand All</span>
+            </button>
+            <button
+              type="button"
+              onClick={closeAllNodes}
+              className="layer-action-btn"
+              title="Close All"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+              <span>Close All</span>
+            </button>
+          </div>
+          <div className="layer-list">
+            {layers.map((node) => renderLayerNode(node))}
+          </div>
+        </>
       )}
     </div>
   );

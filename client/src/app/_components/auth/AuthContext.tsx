@@ -14,7 +14,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (token: string, user: User) => void;
+  login: (token: string, user: User, rememberMe?: boolean) => void;
   logout: () =>void;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -33,8 +33,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Check for existing token and user data on mount
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    // First check localStorage (for remember me), then sessionStorage
+    let storedToken = localStorage.getItem('token');
+    let storedUser = localStorage.getItem('user');
+    
+    // If not in localStorage, check sessionStorage
+    if (!storedToken || !storedUser) {
+      storedToken = sessionStorage.getItem('token');
+      storedUser = sessionStorage.getItem('user');
+    }
     
     if (storedToken && storedUser) {
       try {
@@ -44,25 +51,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('Error parsing stored user data:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
       }
     }
     
     setIsLoading(false);
   }, []);
 
-  const login = (newToken: string, newUser: User) => {
+  const login = (newToken: string, newUser: User, rememberMe: boolean = false) => {
     setToken(newToken);
     setUser(newUser);
-    localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
+    
+    if (rememberMe) {
+      // Store in localStorage (persists across browser sessions)
+      localStorage.setItem('token', newToken);
+      localStorage.setItem('user', JSON.stringify(newUser));
+      localStorage.setItem('rememberMe', 'true');
+      // Clear sessionStorage in case it was used before
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+    } else {
+      // Store in sessionStorage (cleared when browser closes)
+      sessionStorage.setItem('token', newToken);
+      sessionStorage.setItem('user', JSON.stringify(newUser));
+      // Clear localStorage and rememberMe flag
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('rememberMe');
+    }
   };
 
   const logout = () => {
     setToken(null);
     setUser(null);
+    // Clear both localStorage and sessionStorage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('rememberMe');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
   };
 
   const value: AuthContextType = {

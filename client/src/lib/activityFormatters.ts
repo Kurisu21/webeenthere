@@ -95,7 +95,6 @@ export const formatActivityDetails = (action: string, details: any): string => {
         const provider = parsedDetails.provider || 'OAuth';
         // Format provider name nicely
         const providerName = provider === 'google-oauth2' ? 'Google' : 
-                            provider === 'github' ? 'GitHub' :
                             provider === 'facebook' ? 'Facebook' :
                             provider.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         const email = parsedDetails.email ? ` (${parsedDetails.email})` : '';
