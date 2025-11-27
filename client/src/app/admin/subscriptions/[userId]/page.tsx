@@ -5,7 +5,9 @@ import DashboardHeader from '../../../_components/layout/DashboardHeader';
 import AdminSidebar from '../../../_components/layout/AdminSidebar';
 import MainContentWrapper from '../../../_components/layout/MainContentWrapper';
 import AssignPlanModal from '../../../_components/admin/AssignPlanModal';
+import InvoiceReceipt from '../../../_components/subscription/InvoiceReceipt';
 import { adminSubscriptionApi, UserSubscriptionDetails, SubscriptionLog, PaymentTransaction } from '../../../../lib/adminSubscriptionApi';
+import { Invoice } from '../../../../lib/invoiceApi';
 import { useRouter, useParams } from 'next/navigation';
 
 export default function UserSubscriptionDetailsPage() {
@@ -13,6 +15,8 @@ export default function UserSubscriptionDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showInvoiceReceipt, setShowInvoiceReceipt] = useState(false);
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
   const router = useRouter();
   const params = useParams();
@@ -61,6 +65,13 @@ export default function UserSubscriptionDetailsPage() {
 
       if (response.success) {
         setShowAssignModal(false);
+        
+        // Show invoice receipt if available (for paid plans)
+        if (response.data?.invoice) {
+          setInvoice(response.data.invoice);
+          setShowInvoiceReceipt(true);
+        }
+        
         await fetchUserDetails();
       } else {
         setError(response.error || 'Failed to assign plan');
@@ -331,6 +342,17 @@ export default function UserSubscriptionDetailsPage() {
               isLoading={isAssigning}
               userId={userId}
             />
+
+            {/* Invoice Receipt */}
+            {invoice && showInvoiceReceipt && (
+              <InvoiceReceipt
+                invoice={invoice}
+                onClose={() => {
+                  setShowInvoiceReceipt(false);
+                  setInvoice(null);
+                }}
+              />
+            )}
           </div>
         </MainContentWrapper>
       </div>

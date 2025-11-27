@@ -42,6 +42,52 @@ const getApiBaseUrl = (): string => {
 
 export const API_BASE_URL = getApiBaseUrl();
 
+/**
+ * Helper function to normalize image URLs
+ * Converts relative paths to full URLs, handles both local uploads and external URLs
+ */
+export const getImageUrl = (imageUrl: string | null | undefined): string => {
+  if (!imageUrl) return '';
+  
+  // If already a full URL (http/https), return as is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  
+  // If it's a data URL (base64), return as is
+  if (imageUrl.startsWith('data:')) {
+    return imageUrl;
+  }
+  
+  // If it's a relative path starting with /api/media or /uploads, convert to full URL
+  if (imageUrl.startsWith('/api/media') || imageUrl.startsWith('/uploads')) {
+    return `${API_BASE_URL}${imageUrl}`;
+  }
+  
+  // If it starts with /, assume it's a relative path and prepend API_BASE_URL
+  if (imageUrl.startsWith('/')) {
+    return `${API_BASE_URL}${imageUrl}`;
+  }
+  
+  // Otherwise, return as is (might be a relative path without leading slash)
+  return imageUrl;
+};
+
+/**
+ * Helper function to get profile image URL
+ * Returns the blob endpoint URL for a user's profile image
+ * @param userId - The user ID
+ * @param cacheBust - Optional timestamp to force refresh (use after upload)
+ */
+export const getProfileImageUrl = (userId: string | number | null | undefined, cacheBust?: number): string | null => {
+  if (!userId) return null;
+  const url = API_ENDPOINTS.PROFILE_IMAGE(userId);
+  // Always add cache-busting parameter to prevent browser caching issues
+  // Use provided cacheBust or current timestamp
+  const timestamp = cacheBust || Date.now();
+  return `${url}?t=${timestamp}`;
+};
+
 // API endpoints
 export const API_ENDPOINTS = {
   // AI endpoints
@@ -68,12 +114,20 @@ export const API_ENDPOINTS = {
   SUBSCRIPTION_USAGE: `${API_BASE_URL}/api/subscriptions/usage`,
   ADMIN_SUBSCRIPTIONS: `${API_BASE_URL}/api/admin/subscriptions`,
   
+  // Invoice endpoints
+  INVOICES: `${API_BASE_URL}/api/invoices`,
+  ADMIN_INVOICES: `${API_BASE_URL}/api/admin/invoices`,
+  
   // Media endpoints
   MEDIA_UPLOAD: `${API_BASE_URL}/api/media/upload`,
   MEDIA_IMAGES: `${API_BASE_URL}/api/media/images`,
   
   // Profile image upload
   PROFILE_IMAGE_UPLOAD: `${API_BASE_URL}/api/users/profile/upload-image`,
+  // Profile image get (blob endpoint)
+  PROFILE_IMAGE: (userId: string | number) => `${API_BASE_URL}/api/users/profile/image/${userId}`,
+  // Request email change
+  REQUEST_EMAIL_CHANGE: `${API_BASE_URL}/api/users/profile/request-email-change`,
 } as const;
 
 // Helper function to get authentication token

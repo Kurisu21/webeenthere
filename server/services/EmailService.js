@@ -356,6 +356,125 @@ class EmailService {
     }
   }
 
+  async sendEmailChangeVerificationCode(newEmail, username, code) {
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'your-email@gmail.com',
+      to: newEmail,
+      subject: 'Verify Your New Email Address - WEBeenThere',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Email Change Verification</title>
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              margin: 0;
+              padding: 20px;
+              min-height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .email-container {
+              background: white;
+              border-radius: 15px;
+              padding: 40px;
+              max-width: 500px;
+              box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+              text-align: center;
+            }
+            .logo {
+              font-size: 2.5em;
+              font-weight: bold;
+              background: linear-gradient(45deg, #667eea, #764ba2);
+              -webkit-background-clip: text;
+              color: transparent;
+              margin-bottom: 20px;
+            }
+            h1 {
+              color: #333;
+              margin-bottom: 30px;
+              font-size: 1.8em;
+            }
+            .verification-code {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              font-size: 3em;
+              font-weight: bold;
+              padding: 20px 40px;
+              border-radius: 12px;
+              letter-spacing: 8px;
+              margin: 30px 0;
+              display: inline-block;
+              box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            }
+            p {
+              color: #666;
+              line-height: 1.6;
+              margin-bottom: 20px;
+            }
+            .expiry-notice {
+              background: #fff3cd;
+              padding: 15px;
+              border-radius: 8px;
+              margin-top: 20px;
+              border-left: 4px solid #ffc107;
+              color: #856404;
+            }
+            .security-notice {
+              background: #f8f9fa;
+              padding: 20px;
+              border-radius: 8px;
+              margin-top: 30px;
+              border-left: 4px solid #764ba2;
+            }
+            .footer {
+              color: #999;
+              font-size: 0.9em;
+              margin-top: 30px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="email-container">
+            <div class="logo">WEBeenThere</div>
+            <h1>Verify Your New Email Address</h1>
+            <p>Hello ${username},</p>
+            <p>You requested to change your email address to <strong>${newEmail}</strong>. To complete this change, please enter the verification code below:</p>
+            <div class="verification-code">${code}</div>
+            <p>This code will expire in 15 minutes for security reasons.</p>
+            
+            <div class="expiry-notice">
+              <strong>⏰ Important:</strong> Please use this code within 15 minutes. If it expires, you can request a new code.
+            </div>
+            
+            <div class="security-notice">
+              <strong>Security Notice:</strong> If you didn't request this email change, please ignore this email and contact support immediately.
+            </div>
+            
+            <div class="footer">
+              <p>Need help? Contact our support team</p>
+              <p>&copy; 2025 WEBeenThere. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log(`Email change verification code sent to ${newEmail}`);
+      return true;
+    } catch (error) {
+      console.error('Error sending email change verification code:', error);
+      return false;
+    }
+  }
+
   async sendWelcomeEmail(email, username) {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     

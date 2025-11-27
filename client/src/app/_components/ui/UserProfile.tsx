@@ -2,10 +2,10 @@
 
 import React, { useState, useCallback, memo, useEffect, useRef } from 'react';
 import { useAuth } from '../auth/AuthContext';
-import { API_ENDPOINTS, apiPut, API_BASE_URL } from '../../../lib/apiConfig';
+import { API_ENDPOINTS, apiPut, apiPost, API_BASE_URL, getImageUrl, getProfileImageUrl } from '../../../lib/apiConfig';
 
 const UserProfile = memo(() => {
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -18,6 +18,10 @@ const UserProfile = memo(() => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageCacheBust, setImageCacheBust] = useState<number | undefined>(undefined);
+  const [emailVerificationCode, setEmailVerificationCode] = useState('');
+  const [isRequestingEmailCode, setIsRequestingEmailCode] = useState(false);
+  const [emailCodeSent, setEmailCodeSent] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -25,7 +29,7 @@ const UserProfile = memo(() => {
       setFormData({
         username: user.username,
         email: user.email,
-        profile_image: (user as any).profile_image || '',
+        profile_image: '', // No longer used, profile images are blobs
         theme_mode: (user as any).theme_mode === 'dark' ? 'dark' : 'light',
       });
     }
@@ -85,14 +89,33 @@ const UserProfile = memo(() => {
 
       const data = await response.json();
 
-      if (data.success && data.profile_image) {
-        // Update form data with the uploaded image URL
-        setFormData(prev => ({
-          ...prev,
-          profile_image: data.profile_image
-        }));
+      if (data.success) {
+        // Profile image is now stored as blob, no URL needed
         setSuccess('Profile image uploaded successfully!');
-        setImagePreview(null); // Clear preview since we have the URL now
+        setImagePreview(null);
+        
+        // Force image refresh by updating cache-bust timestamp
+        // Use a unique timestamp to force browser to fetch new image
+        const newCacheBust = Date.now();
+        setImageCacheBust(newCacheBust);
+        
+        // Force React to re-render the image component by updating cache bust multiple times
+        // This ensures the browser fetches the new image from the server
+        setTimeout(() => {
+          setImageCacheBust(Date.now() + 1);
+        }, 100);
+        setTimeout(() => {
+          setImageCacheBust(Date.now() + 2);
+        }, 300);
+        
+        // Also clear any potential browser cache by reloading the image
+        // Force a re-fetch by updating the key
+        setTimeout(() => {
+          if (user?.id) {
+            // Trigger a state update to force re-render
+            setFormData(prev => ({ ...prev }));
+          }
+        }, 500);
       } else {
         throw new Error(data.error || 'Upload failed');
       }
@@ -108,6 +131,57 @@ const UserProfile = memo(() => {
     }
   }, []);
 
+  // Check if email is changing
+  const isEmailChanging = user && formData.email.toLowerCase() !== user.email.toLowerCase();
+
+  // Request email change verification code
+  const handleRequestEmailCode = async () => {
+    if (!user || !token || !formData.email) return;
+
+    try {
+      setIsRequestingEmailCode(true);
+      setError(null);
+      setSuccess(null);
+
+      const response = await apiPost(API_ENDPOINTS.REQUEST_EMAIL_CHANGE, {
+        new_email: formData.email,
+      });
+
+      if (response.success) {
+        setEmailCodeSent(true);
+        setSuccess('Verification code sent to your new email address. Please check your email and enter the code below.');
+      } else {
+        setError(response.error || 'Failed to send verification code');
+      }
+    } catch (err: any) {
+      console.error('Failed to request email code:', err);
+      // Handle different error formats from apiPost
+      // apiPost returns rejected promises with error objects, not thrown errors
+      let errorMessage = 'Failed to send verification code';
+      
+      if (err && typeof err === 'object') {
+        // Check various error object formats
+        if (err.message) {
+          errorMessage = err.message;
+        } else if (err.error) {
+          errorMessage = err.error;
+        } else if (err.data?.error) {
+          errorMessage = err.data.error;
+        } else if (err.data?.message) {
+          errorMessage = err.data.message;
+        } else if (err.status && err.status === 400) {
+          errorMessage = 'Invalid email address or email already in use';
+        }
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setIsRequestingEmailCode(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!user || !token) return;
 
@@ -118,36 +192,66 @@ const UserProfile = memo(() => {
 
       const payload: any = {
         username: formData.username,
-        email: formData.email,
         theme_mode: formData.theme_mode,
       };
-      if (formData.profile_image && formData.profile_image.trim().length > 0) {
-        payload.profile_image = formData.profile_image.trim();
+
+      // Only include email if it's changing (and include verification code)
+      if (isEmailChanging) {
+        if (!emailVerificationCode) {
+          setError('Please request and enter the verification code to change your email address.');
+          setIsSaving(false);
+          return;
+        }
+        payload.email = formData.email;
+        payload.email_verification_code = emailVerificationCode;
+      } else {
+        // Email not changing, don't include it in payload
+        // (backend will keep current email)
       }
 
       const response = await apiPut(`${API_ENDPOINTS.USERS}/profile`, payload);
 
       if (response.success) {
+        // Update AuthContext state
+        updateUser({
+          username: formData.username,
+          email: isEmailChanging ? formData.email : user.email,
+          theme_mode: formData.theme_mode,
+        });
+
+        // Update theme attribute on document for immediate visual feedback
+        if (typeof document !== 'undefined') {
+          document.documentElement.setAttribute('data-theme', formData.theme_mode);
+        }
+
         setSuccess('Profile updated successfully!');
         setIsEditing(false);
-
-        // Persist updated theme and profile locally so UI reflects changes immediately
-        const mergedUser = {
-          ...user,
-          username: formData.username,
-          email: formData.email,
-          ...(payload.profile_image !== undefined ? { profile_image: payload.profile_image } : {}),
-          theme_mode: formData.theme_mode,
-        } as any;
-        try {
-          localStorage.setItem('user', JSON.stringify(mergedUser));
-        } catch {}
+        setEmailCodeSent(false);
+        setEmailVerificationCode('');
       } else {
-        setError(response.error || 'Failed to update profile');
+        // Check if it requires verification
+        if (response.requires_verification) {
+          setError(response.error || 'Email verification required');
+          if (!emailCodeSent) {
+            // Auto-request code if not already sent
+            await handleRequestEmailCode();
+          }
+        } else {
+          setError(response.error || 'Failed to update profile');
+        }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to update profile:', err);
-      setError('Failed to update profile');
+      // Check if error indicates verification needed
+      if (err.message && err.message.includes('verification code is required')) {
+        setError(err.message);
+        if (!emailCodeSent) {
+          // Auto-request code if not already sent
+          await handleRequestEmailCode();
+        }
+      } else {
+        setError(err.message || 'Failed to update profile');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -159,12 +263,14 @@ const UserProfile = memo(() => {
         username: user.username,
         email: user.email,
         profile_image: '',
-        theme_mode: 'light',
+        theme_mode: (user as any).theme_mode === 'dark' ? 'dark' : 'light',
       });
     }
     setIsEditing(false);
     setError(null);
     setSuccess(null);
+    setEmailCodeSent(false);
+    setEmailVerificationCode('');
   };
 
   if (!user) {
@@ -293,13 +399,68 @@ const UserProfile = memo(() => {
               Email
             </label>
             {isEditing ? (
-              <input
-                type="email"
-                value={formData.email || ''}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="Enter email address"
-                className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-colors-fast"
-              />
+              <div className="space-y-3">
+                <input
+                  type="email"
+                  value={formData.email || ''}
+                  onChange={(e) => {
+                    handleInputChange('email', e.target.value);
+                    // Reset verification state when email changes
+                    if (emailCodeSent) {
+                      setEmailCodeSent(false);
+                      setEmailVerificationCode('');
+                    }
+                  }}
+                  placeholder="Enter email address"
+                  className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-colors-fast"
+                />
+                
+                {/* Email Verification UI - Show when email is changing */}
+                {isEmailChanging && (
+                  <div className="space-y-2 p-3 bg-blue-900/20 border border-blue-500/30 rounded-md">
+                    <p className="text-sm text-blue-300">
+                      Email address is changing. Verification required.
+                    </p>
+                    
+                    {!emailCodeSent ? (
+                      <button
+                        type="button"
+                        onClick={handleRequestEmailCode}
+                        disabled={isRequestingEmailCode || !formData.email}
+                        className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-md text-sm font-medium transition-colors"
+                      >
+                        {isRequestingEmailCode ? 'Sending Code...' : 'Send Verification Code to New Email'}
+                      </button>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-sm text-green-300">
+                          ✓ Verification code sent! Check your new email address.
+                        </p>
+                        <input
+                          type="text"
+                          value={emailVerificationCode}
+                          onChange={(e) => {
+                            // Only allow 6 digits
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                            setEmailVerificationCode(value);
+                          }}
+                          placeholder="Enter 6-digit code"
+                          maxLength={6}
+                          className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors-fast text-center text-2xl tracking-widest font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleRequestEmailCode}
+                          disabled={isRequestingEmailCode}
+                          className="w-full px-3 py-1.5 text-xs bg-surface-elevated border border-app text-secondary hover:text-primary rounded-md transition-colors"
+                        >
+                          {isRequestingEmailCode ? 'Sending...' : 'Resend Code'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary">
                 {user.email}
@@ -314,10 +475,11 @@ const UserProfile = memo(() => {
             {isEditing ? (
               <div className="space-y-3">
                 {/* Image Preview */}
-                {(imagePreview || formData.profile_image) && (
+                {(imagePreview || (user?.id && getProfileImageUrl(user.id, imageCacheBust))) && (
                   <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-app">
                     <img
-                      src={imagePreview || (formData.profile_image?.startsWith('/') ? `${API_BASE_URL}${formData.profile_image}` : formData.profile_image) || ''}
+                      key={`preview-${imageCacheBust || imagePreview || 'default'}`}
+                      src={imagePreview || getProfileImageUrl(user?.id || '', imageCacheBust) || ''}
                       alt="Profile preview"
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -364,38 +526,25 @@ const UserProfile = memo(() => {
                     )}
                   </label>
                 </div>
-
-                {/* Or Divider */}
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-app"></div>
-                  </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="px-2 bg-surface text-secondary">OR</span>
-                  </div>
-                </div>
-
-                {/* URL Input */}
-                <input
-                  type="text"
-                  value={formData.profile_image || ''}
-                  onChange={(e) => handleInputChange('profile_image', e.target.value)}
-                  placeholder="Enter image URL (e.g., https://cdn.example.com/image.jpg)"
-                  className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-colors-fast"
-                />
                 <p className="text-xs text-secondary">
-                  Upload a local file or enter a URL from CDN/online source
+                  Upload a profile image (JPEG, PNG, GIF, WebP, or SVG)
                 </p>
               </div>
             ) : (
               <div className="space-y-2">
-                {formData.profile_image ? (
+                {user?.id && getProfileImageUrl(user.id, imageCacheBust) ? (
                   <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-app">
                     <img
-                      src={formData.profile_image.startsWith('/') ? `${API_BASE_URL}${formData.profile_image}` : formData.profile_image}
+                      key={`profile-${user.id}-${imageCacheBust || 'default'}`}
+                      src={getProfileImageUrl(user.id, imageCacheBust) || ''}
                       alt="Profile"
                       className="w-full h-full object-cover"
+                      onLoad={() => {
+                        // Image loaded successfully
+                        console.log('Profile image loaded');
+                      }}
                       onError={(e) => {
+                        console.error('Profile image failed to load');
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}
                     />

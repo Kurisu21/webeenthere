@@ -108,11 +108,27 @@ export const subscriptionApi = {
     return await apiGet(`${API_ENDPOINTS.SUBSCRIPTIONS}/current`);
   },
 
+  // Create payment intent for Stripe
+  async createPaymentIntent(planId: number): Promise<{
+    success: boolean;
+    data?: {
+      clientSecret: string;
+      paymentIntentId: string;
+      amount: number;
+      currency: string;
+    };
+    error?: string;
+  }> {
+    return await apiPost(`${API_ENDPOINTS.SUBSCRIPTIONS}/create-payment-intent`, {
+      planId
+    });
+  },
+
   // Subscribe to a plan
-  async subscribe(planId: number, paymentReference?: string): Promise<SubscriptionResponse> {
+  async subscribe(planId: number, paymentIntentId?: string): Promise<SubscriptionResponse> {
     return await apiPost(`${API_ENDPOINTS.SUBSCRIPTIONS}/subscribe`, {
       planId,
-      paymentReference
+      paymentIntentId
     });
   },
 

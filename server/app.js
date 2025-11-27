@@ -6,6 +6,12 @@ const app = express();
 // Trust proxy - important for getting real client IP addresses behind proxies/load balancers
 app.set('trust proxy', true);
 
+// Stripe webhook route - must be before express.json() middleware
+// Stripe requires raw body for signature verification
+const stripeWebhookRoutes = require('./routes/stripeWebhookRoutes');
+// Use raw body parser for Stripe webhook endpoint only
+app.use('/api/stripe', express.raw({ type: 'application/json' }), stripeWebhookRoutes);
+
 // Middleware
 // Increase body size limits to support saving HTML/CSS with embedded images (base64)
 app.use(express.json({ limit: '20mb' }));
@@ -137,6 +143,8 @@ const reportRoutes = require('./routes/reportRoutes');
 const userActivityRoutes = require('./routes/userActivityRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const adminSubscriptionRoutes = require('./routes/adminSubscriptionRoutes');
+const invoiceRoutes = require('./routes/invoiceRoutes');
+const adminInvoiceRoutes = require('./routes/adminInvoiceRoutes');
 const userAnalyticsRoutes = require('./routes/userAnalyticsRoutes');
 const testAnalyticsRoutes = require('./routes/testAnalyticsRoutes');
 const analyticsTrackingRoutes = require('./routes/analyticsTrackingRoutes');
@@ -166,6 +174,8 @@ app.use('/api/admin/reports', reportRoutes);
 app.use('/api/user/activity', userActivityRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/admin/subscriptions', adminSubscriptionRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/admin/invoices', adminInvoiceRoutes);
 app.use('/api/user/analytics', userAnalyticsRoutes);
 app.use('/api/user/analytics/test', testAnalyticsRoutes);
 app.use('/api/analytics', analyticsTrackingRoutes);

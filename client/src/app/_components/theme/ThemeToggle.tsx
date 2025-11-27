@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { API_ENDPOINTS, apiPut } from '../../../lib/apiConfig';
 
 const ThemeToggle: React.FC = () => {
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
 
   const currentTheme = user?.theme_mode || 'light';
@@ -25,22 +25,20 @@ const ThemeToggle: React.FC = () => {
       });
 
       if (response.success) {
-        // Update local storage immediately for instant UI feedback
-        const updatedUser = {
-          ...user,
-          theme_mode: newTheme,
-        };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        // Update AuthContext state immediately for instant UI feedback
+        updateUser({ theme_mode: newTheme });
         
-        // Force a page reload to ensure all components update
-        window.location.reload();
+        // Update theme attribute on document for immediate visual feedback
+        if (typeof document !== 'undefined') {
+          document.documentElement.setAttribute('data-theme', newTheme);
+        }
       }
     } catch (error) {
       console.error('Failed to update theme:', error);
     } finally {
       setIsUpdating(false);
     }
-  }, [user, token, isDark, isUpdating]);
+  }, [user, token, isDark, isUpdating, updateUser]);
 
   return (
     <button

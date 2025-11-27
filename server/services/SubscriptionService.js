@@ -3,6 +3,7 @@ const Plan = require('../models/Plan');
 const UserPlan = require('../models/UserPlan');
 const SubscriptionLog = require('../models/SubscriptionLog');
 const PaymentTransaction = require('../models/PaymentTransaction');
+const InvoiceService = require('./InvoiceService');
 
 class SubscriptionService {
   constructor(db) {
@@ -11,6 +12,7 @@ class SubscriptionService {
     this.userPlanModel = new UserPlan(db);
     this.subscriptionLogModel = new SubscriptionLog(db);
     this.paymentTransactionModel = new PaymentTransaction(db);
+    this.invoiceService = new InvoiceService(db);
   }
 
   async createSubscription(userId, planId, paymentReference = null) {
@@ -69,16 +71,37 @@ class SubscriptionService {
     // Create payment transaction if not free
     if (plan.type !== 'free') {
       const transactionRef = paymentReference || `TXN_${Date.now()}_${userId}`;
-      await this.paymentTransactionModel.create({
+      const transactionId = await this.paymentTransactionModel.create({
         user_id: userId,
         plan_id: planId,
         amount: plan.price,
-        status: 'completed', // Mock payment - always succeeds
+        status: paymentReference ? 'completed' : 'pending', // Stripe payment or pending
         transaction_reference: transactionRef
       });
+
+      // Auto-create invoice for completed payments
+      let invoice = null;
+      if (paymentReference) {
+        try {
+          invoice = await this.invoiceService.createInvoiceFromTransaction(transactionId);
+          
+          // Send invoice via email
+          try {
+            await this.invoiceService.sendInvoiceEmail(transactionId);
+          } catch (emailError) {
+            console.error('Failed to send invoice email:', emailError);
+            // Don't fail subscription creation if email fails
+          }
+        } catch (error) {
+          console.error('Failed to create invoice:', error);
+          // Don't fail subscription creation if invoice creation fails
+        }
+      }
+
+      return { subscriptionId, invoice };
     }
 
-    return subscriptionId;
+    return { subscriptionId, invoice: null };
   }
 
   async checkWebsiteLimit(userId) {

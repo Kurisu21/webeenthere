@@ -161,6 +161,101 @@ class User {
     return result.affectedRows > 0;
   }
 
+  // Update profile image as blob
+  async updateProfileImage(userId, imageBuffer, mimeType) {
+    try {
+      // Ensure we have a Buffer
+      const buffer = Buffer.isBuffer(imageBuffer) ? imageBuffer : Buffer.from(imageBuffer);
+      
+      console.log(`[User Model] Updating profile image for user ${userId}:`, {
+        bufferSize: buffer.length,
+        mimeType: mimeType || 'image/jpeg'
+      });
+
+      // Try to update with mime_type column if it exists
+      const [result] = await this.db.execute(
+        'UPDATE users SET profile_image = ?, profile_image_mime_type = ? WHERE id = ?',
+        [buffer, mimeType || 'image/jpeg', userId]
+      );
+      
+      console.log(`[User Model] Profile image update result:`, {
+        affectedRows: result.affectedRows,
+        userId
+      });
+      
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error(`[User Model] Error updating profile image:`, error.message);
+      // If mime_type column doesn't exist, just update the blob
+      if (error.message && error.message.includes('profile_image_mime_type')) {
+        const buffer = Buffer.isBuffer(imageBuffer) ? imageBuffer : Buffer.from(imageBuffer);
+        const [result] = await this.db.execute(
+          'UPDATE users SET profile_image = ? WHERE id = ?',
+          [buffer, userId]
+        );
+        console.log(`[User Model] Profile image update (no mime_type column):`, {
+          affectedRows: result.affectedRows,
+          userId
+        });
+        return result.affectedRows > 0;
+      }
+      throw error;
+    }
+  }
+
+  // Get profile image blob
+  async getProfileImage(userId) {
+    try {
+      // Try to get with mime_type column if it exists
+      const [rows] = await this.db.execute(
+        'SELECT profile_image, profile_image_mime_type FROM users WHERE id = ?',
+        [userId]
+      );
+      
+      if (!rows[0] || !rows[0].profile_image) {
+        console.log(`[User Model] No profile image found for user ${userId}`);
+        return null;
+      }
+      
+      const blobData = rows[0].profile_image;
+      const isBuffer = Buffer.isBuffer(blobData);
+      const dataSize = isBuffer ? blobData.length : (blobData ? blobData.length : 0);
+      
+      console.log(`[User Model] Retrieved profile image for user ${userId}:`, {
+        isBuffer,
+        dataSize,
+        mimeType: rows[0].profile_image_mime_type || 'image/jpeg'
+      });
+      
+      // Ensure we return a Buffer
+      const buffer = Buffer.isBuffer(blobData) ? blobData : Buffer.from(blobData);
+      
+      return {
+        data: buffer,
+        mimeType: rows[0].profile_image_mime_type || 'image/jpeg'
+      };
+    } catch (error) {
+      console.error(`[User Model] Error getting profile image:`, error.message);
+      // If mime_type column doesn't exist, just get the blob
+      if (error.message && error.message.includes('profile_image_mime_type')) {
+        const [rows] = await this.db.execute(
+          'SELECT profile_image FROM users WHERE id = ?',
+          [userId]
+        );
+        if (!rows[0] || !rows[0].profile_image) {
+          return null;
+        }
+        const blobData = rows[0].profile_image;
+        const buffer = Buffer.isBuffer(blobData) ? blobData : Buffer.from(blobData);
+        return {
+          data: buffer,
+          mimeType: 'image/jpeg' // Default mime type
+        };
+      }
+      throw error;
+    }
+  }
+
   // Get user by ID
   async findById(userId) {
     const [rows] = await this.db.execute(

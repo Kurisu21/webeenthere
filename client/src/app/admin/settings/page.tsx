@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardHeader from '../../_components/layout/DashboardHeader';
 import AdminSidebar from '../../_components/layout/AdminSidebar';
 import MainContentWrapper from '../../_components/layout/MainContentWrapper';
 import { useAuth } from '../../_components/auth/AuthContext';
+import { API_ENDPOINTS, apiPut } from '../../../lib/apiConfig';
+import { useAuth } from '../../_components/auth/AuthContext';
 
 export default function AdminSettingsPage() {
-  const { user } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -16,10 +18,22 @@ export default function AdminSettingsPage() {
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
-    theme_mode: 'dark' as 'light' | 'dark',
+    theme_mode: (user?.theme_mode as 'light' | 'dark') || 'dark',
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Update formData when user changes
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        username: user.username || prev.username,
+        email: user.email || prev.email,
+        theme_mode: (user.theme_mode as 'light' | 'dark') || prev.theme_mode,
+      }));
+    }
+  }, [user]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -29,17 +43,38 @@ export default function AdminSettingsPage() {
   };
 
   const handleSaveProfile = async () => {
+    if (!user || !token) return;
+
     try {
       setIsSaving(true);
       setError(null);
       setSuccess(null);
 
-      // Here you would call the API to update the admin's profile
-      // For now, we'll just simulate the update
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Update profile via API
+      const response = await apiPut(`${API_ENDPOINTS.USERS}/profile`, {
+        username: formData.username,
+        email: formData.email,
+        theme_mode: formData.theme_mode,
+      });
 
-      setIsEditing(false);
-      setSuccess('Profile updated successfully!');
+      if (response.success) {
+        // Update AuthContext state
+        updateUser({
+          username: formData.username,
+          email: formData.email,
+          theme_mode: formData.theme_mode,
+        });
+
+        // Update theme attribute on document for immediate visual feedback
+        if (typeof document !== 'undefined') {
+          document.documentElement.setAttribute('data-theme', formData.theme_mode);
+        }
+
+        setIsEditing(false);
+        setSuccess('Profile updated successfully!');
+      } else {
+        setError(response.error || 'Failed to update profile');
+      }
     } catch (err) {
       console.error('Failed to update profile:', err);
       setError('Failed to update profile');

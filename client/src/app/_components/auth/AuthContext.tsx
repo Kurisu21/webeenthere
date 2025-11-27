@@ -16,6 +16,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (token: string, user: User, rememberMe?: boolean) => void;
   logout: () =>void;
+  updateUser: (updates: Partial<User>) => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
 }
@@ -93,12 +94,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     sessionStorage.removeItem('user');
   };
 
+  const updateUser = (updates: Partial<User>) => {
+    if (!user) return;
+    
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
+    
+    // Update stored user data
+    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (storedUser) {
+      const isRememberMe = localStorage.getItem('rememberMe') === 'true';
+      if (isRememberMe) {
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      } else {
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    }
+  };
+
   const value: AuthContextType = {
     user,
     token,
     isLoading,
     login,
     logout,
+    updateUser,
     isAuthenticated: !!user && !!token,
     isAdmin: user?.role === 'admin',
   };

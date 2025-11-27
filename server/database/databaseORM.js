@@ -178,7 +178,7 @@ class DatabaseORM {
           email VARCHAR(100) NOT NULL UNIQUE,
           password_hash VARCHAR(255) NOT NULL,
           session_token VARCHAR(255) NULL,
-          profile_image VARCHAR(255),
+          profile_image LONGBLOB,
           role ENUM('user', 'admin') DEFAULT 'user',
           theme_mode ENUM('light', 'dark') DEFAULT 'light',
           is_verified BOOLEAN DEFAULT FALSE,
@@ -351,6 +351,33 @@ class DatabaseORM {
           INDEX idx_user_id (user_id),
           INDEX idx_status (status),
           INDEX idx_transaction_reference (transaction_reference)
+        )
+      `,
+      invoices: `
+        CREATE TABLE IF NOT EXISTS invoices (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          invoice_number VARCHAR(50) UNIQUE NOT NULL,
+          user_id INT NOT NULL,
+          transaction_id INT NOT NULL,
+          plan_id INT NOT NULL,
+          amount DECIMAL(10,2) NOT NULL,
+          tax_amount DECIMAL(10,2) DEFAULT 0,
+          total_amount DECIMAL(10,2) NOT NULL,
+          status ENUM('draft', 'sent', 'paid', 'cancelled') DEFAULT 'draft',
+          issue_date DATE NOT NULL,
+          due_date DATE,
+          paid_date DATE NULL,
+          billing_address TEXT,
+          notes TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (transaction_id) REFERENCES payment_transactions(id) ON DELETE CASCADE,
+          FOREIGN KEY (plan_id) REFERENCES plans(id),
+          INDEX idx_user_id (user_id),
+          INDEX idx_invoice_number (invoice_number),
+          INDEX idx_status (status),
+          INDEX idx_issue_date (issue_date)
         )
       `,
       feedback: `

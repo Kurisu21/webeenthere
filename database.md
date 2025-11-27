@@ -5,7 +5,7 @@ CREATE TABLE users (
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     session_token VARCHAR(255) NULL, -- NEW: Session Token Storage - Stores JWT tokens for active user sessions. Enables server-side session management and token revocation. NULL for users not currently logged in or using OAuth.
-    profile_image VARCHAR(255),
+    profile_image LONGBLOB,
     role ENUM('user', 'admin') DEFAULT 'user',
     theme_mode ENUM('light', 'dark') DEFAULT 'light',
     is_verified BOOLEAN DEFAULT FALSE,

@@ -8,6 +8,7 @@ import RoleBadge from '../../../_components/admin/RoleBadge';
 import StatusBadge from '../../../_components/admin/StatusBadge';
 import { adminApi, User } from '../../../../lib/adminApi';
 import { useRouter } from 'next/navigation';
+import { getImageUrl, API_BASE_URL, getProfileImageUrl } from '../../../../lib/apiConfig';
 
 interface UserDetailsPageProps {
   params: Promise<{
@@ -44,7 +45,7 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
         setFormData({
           username: response.user.username,
           email: response.user.email,
-          profile_image: response.user.profile_image || '',
+          profile_image: '', // No longer used, profile images are blobs
           theme_mode: response.user.theme_mode,
           role: response.user.role,
           is_active: response.user.is_active,
@@ -72,11 +73,10 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
     try {
       setIsSaving(true);
       
-      // Update profile data
+      // Update profile data (profile_image is now blob-only, managed separately)
       await adminApi.updateUserProfile(parseInt(resolvedParams.id), {
         username: formData.username,
         email: formData.email,
-        profile_image: formData.profile_image,
         theme_mode: formData.theme_mode,
       });
 
@@ -295,18 +295,43 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Profile Image URL
+                      Profile Image
                     </label>
                     {isEditing ? (
-                      <input
-                        type="text"
-                        value={formData.profile_image || ''}
-                        onChange={(e) => handleInputChange('profile_image', e.target.value)}
-                        placeholder="https://example.com/image.jpg"
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
+                      <div className="space-y-3">
+                        <p className="text-sm text-gray-400">
+                          Profile images are managed through the user's profile page. Admins cannot directly edit profile images.
+                        </p>
+                        {user?.id && getProfileImageUrl(user.id) && (
+                          <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
+                            <img
+                              src={getProfileImageUrl(user.id) || ''}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     ) : (
-                      <p className="text-white">{user.profile_image || 'Not set'}</p>
+                      <div className="space-y-2">
+                        {user?.id && getProfileImageUrl(user.id) ? (
+                          <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
+                            <img
+                              src={getProfileImageUrl(user.id) || ''}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <p className="text-gray-400">Not set</p>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

@@ -543,7 +543,46 @@ class UserController {
   async updateProfile(req, res) {
     try {
       const userId = req.user.id;
-      const { username, email, profile_image, theme_mode } = req.body;
+      const { username, email, profile_image, theme_mode, email_verification_code } = req.body;
+
+      // Get current user to check if email is changing
+      const currentUser = await this.userModel.findById(userId);
+      const isEmailChanging = email && email.toLowerCase() !== currentUser.email.toLowerCase();
+
+      // If email is changing, require verification code
+      if (isEmailChanging) {
+        if (!email_verification_code) {
+          return res.status(400).json({
+            success: false,
+            error: 'Email verification code is required to change email address. Please request a verification code first.',
+            requires_verification: true
+          });
+        }
+
+        // Verify the code is valid and recent (within 15 minutes)
+        const verificationResult = await this.userModel.verifyEmailCode(userId, email_verification_code);
+        if (!verificationResult.valid) {
+          return res.status(400).json({
+            success: false,
+            error: verificationResult.error || 'Invalid or expired verification code',
+            requires_verification: true
+          });
+        }
+
+        // Since the code was sent to the new email address, if user has the code,
+        // they have proven access to that email. We accept the email they provide.
+        // Check if new email is already taken by another user
+        const existingUser = await this.userModel.findByEmail(email);
+        if (existingUser && existingUser.id !== userId) {
+          return res.status(400).json({
+            success: false,
+            error: 'Email is already registered to another account'
+          });
+        }
+
+        // Clear verification code after successful verification
+        await this.userModel.clearVerificationCode(userId);
+      }
 
       // Check if username is already taken by another user
       if (username) {
@@ -556,29 +595,20 @@ class UserController {
         }
       }
 
-      // Check if email is already taken by another user
-      if (email) {
-        const existingUser = await this.userModel.findByEmail(email);
-        if (existingUser && existingUser.id !== userId) {
-          return res.status(400).json({
-            success: false,
-            error: 'Email is already registered'
-          });
-        }
-      }
-
       // Update user profile
       const updateData = {};
       if (username) updateData.username = username;
-      if (email) updateData.email = email;
+      if (email && isEmailChanging) {
+        updateData.email = email;
+        // Mark email as verified after successful change
+        await this.userModel.verifyUser(userId);
+      }
       if (profile_image) updateData.profile_image = profile_image;
       if (theme_mode) updateData.theme_mode = theme_mode;
 
       const success = await this.userModel.updateProfile(userId, updateData);
 
       if (success) {
-        // User updated successfully
-
         res.json({
           success: true,
           message: 'Profile updated successfully'
@@ -591,6 +621,89 @@ class UserController {
       }
     } catch (err) {
       console.error('Update profile error:', err);
+      res.status(500).json({
+        success: false,
+        error: 'Server error'
+      });
+    }
+  }
+
+  // Request email change - sends verification code to new email
+  async requestEmailChange(req, res) {
+    try {
+      const userId = req.user.id;
+      const { new_email } = req.body;
+
+      if (!new_email) {
+        return res.status(400).json({
+          success: false,
+          error: 'New email address is required'
+        });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(new_email)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid email format'
+        });
+      }
+
+      // Get current user
+      const currentUser = await this.userModel.findById(userId);
+      if (!currentUser) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+
+      // Check if new email is same as current
+      if (new_email.toLowerCase() === currentUser.email.toLowerCase()) {
+        return res.status(400).json({
+          success: false,
+          error: 'New email must be different from current email'
+        });
+      }
+
+      // Check if new email is already taken
+      const existingUser = await this.userModel.findByEmail(new_email);
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Email is already registered to another account'
+        });
+      }
+
+      // Generate 6-digit verification code
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+
+      // Store verification code in database
+      // Note: We don't need to store pending_email - if user has the code, they have access to the email
+      await this.userModel.storeVerificationCode(userId, verificationCode, expiresAt);
+
+      // Send verification code email to NEW email address
+      const emailSent = await this.emailService.sendEmailChangeVerificationCode(
+        new_email, 
+        currentUser.username, 
+        verificationCode
+      );
+
+      if (emailSent) {
+        res.json({
+          success: true,
+          message: 'Verification code sent to new email address'
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: 'Failed to send verification code email'
+        });
+      }
+    } catch (err) {
+      console.error('Request email change error:', err);
       res.status(500).json({
         success: false,
         error: 'Server error'
@@ -753,20 +866,71 @@ class UserController {
         return res.status(400).json({ error: 'No image file provided' });
       }
 
-      // Create file URL (must match the route path - /api/media/uploads/...)
-      const fileUrl = `/api/media/uploads/user_${userId}/${req.file.filename}`;
+      // Read file buffer (from memory storage)
+      const imageBuffer = req.file.buffer;
+      const mimeType = req.file.mimetype;
+
+      console.log('[UserController] Uploading profile image:', {
+        userId,
+        bufferSize: imageBuffer ? imageBuffer.length : 0,
+        mimeType,
+        originalName: req.file.originalname
+      });
+
+      // Store blob in database
+      const updateResult = await this.userModel.updateProfileImage(userId, imageBuffer, mimeType);
       
-      // Update user's profile_image in database
-      await this.userModel.updateProfile(userId, { profile_image: fileUrl });
+      if (!updateResult) {
+        console.error('[UserController] Failed to update profile image in database');
+        return res.status(500).json({ error: 'Failed to save profile image to database' });
+      }
+      
+      console.log('[UserController] Profile image saved successfully');
 
       res.json({ 
         success: true,
-        profile_image: fileUrl,
         message: 'Profile image uploaded successfully'
       });
     } catch (error) {
       console.error('Upload profile image error:', error);
       res.status(500).json({ error: 'Failed to upload profile image' });
+    }
+  }
+
+  // Get profile image as blob
+  async getProfileImage(req, res) {
+    try {
+      const { userId } = req.params;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+
+      const profileImage = await this.userModel.getProfileImage(userId);
+
+      if (!profileImage || !profileImage.data) {
+        console.log(`[UserController] Profile image not found for user ${userId}`);
+        return res.status(404).json({ error: 'Profile image not found' });
+      }
+
+      console.log(`[UserController] Serving profile image for user ${userId}:`, {
+        dataSize: profileImage.data ? profileImage.data.length : 0,
+        mimeType: profileImage.mimeType
+      });
+
+      // Set appropriate content type
+      const contentType = profileImage.mimeType || 'image/jpeg';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate'); // Don't cache to see updates immediately
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      
+      // Send the blob data
+      res.send(profileImage.data);
+    } catch (error) {
+      console.error('Get profile image error:', error);
+      res.status(500).json({ error: 'Failed to retrieve profile image' });
     }
   }
 

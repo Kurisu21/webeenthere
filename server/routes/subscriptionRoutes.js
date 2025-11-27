@@ -13,6 +13,7 @@ router.get('/plans', subscriptionController.getPlans.bind(subscriptionController
 
 // Protected routes (require authentication)
 router.get('/current', authMiddleware, subscriptionController.getCurrentSubscription.bind(subscriptionController));
+router.post('/create-payment-intent', authMiddleware, subscriptionController.createPaymentIntent.bind(subscriptionController));
 router.post('/subscribe', authMiddleware, subscriptionController.subscribe.bind(subscriptionController));
 router.put('/cancel', authMiddleware, subscriptionController.cancelSubscription.bind(subscriptionController));
 router.get('/history', authMiddleware, subscriptionController.getSubscriptionHistory.bind(subscriptionController));

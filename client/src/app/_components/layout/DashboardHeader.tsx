@@ -8,7 +8,7 @@ import ThemeToggle from '../theme/ThemeToggle';
 import SubscriptionBadge from '../subscription/SubscriptionBadge';
 import { subscriptionApi, Subscription } from '../../../lib/subscriptionApi';
 import LogoutConfirmationDialog from '../dialogs/LogoutConfirmationDialog';
-import { API_ENDPOINTS, apiPost } from '../../../lib/apiConfig';
+import { API_ENDPOINTS, apiPost, getProfileImageUrl } from '../../../lib/apiConfig';
 
 const DashboardHeader = memo(() => {
   const { isCollapsed, toggleMobileSidebar } = useSidebar();
@@ -118,11 +118,29 @@ const DashboardHeader = memo(() => {
             )}
             
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-surface-elevated border border-app rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-              </div>
+              {user?.id && getProfileImageUrl(user.id) ? (
+                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-app">
+                  <img
+                    src={getProfileImageUrl(user.id) || ''}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `<div class="w-full h-full bg-surface-elevated border border-app rounded-full flex items-center justify-center"><svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>`;
+                      }
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="w-8 h-8 bg-surface-elevated border border-app rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  </svg>
+                </div>
+              )}
               <span className="text-primary text-sm font-medium">
                 {user ? user.username : 'User'}
               </span>
@@ -138,11 +156,29 @@ const DashboardHeader = memo(() => {
           {/* Mobile user avatar and theme toggle */}
           <div className="md:hidden flex items-center space-x-2">
             <ThemeToggle />
-            <div className="w-8 h-8 bg-surface-elevated border border-app rounded-full flex items-center justify-center">
-              <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-            </div>
+            {user?.id && getProfileImageUrl(user.id) ? (
+              <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-app">
+                <img
+                  src={getProfileImageUrl(user.id) || ''}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `<div class="w-full h-full bg-surface-elevated border border-app rounded-full flex items-center justify-center"><svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>`;
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="w-8 h-8 bg-surface-elevated border border-app rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
+            )}
           </div>
         </div>
       </div>

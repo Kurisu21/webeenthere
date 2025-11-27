@@ -5,10 +5,12 @@ import DashboardHeader from '../../_components/layout/DashboardHeader';
 import DashboardSidebar from '../../_components/layout/DashboardSidebar';
 import MainContentWrapper from '../../_components/layout/MainContentWrapper';
 import PricingCard from '../../_components/subscription/PricingCard';
-import MockPaymentModal from '../../_components/subscription/MockPaymentModal';
+import StripePaymentModal from '../../_components/subscription/StripePaymentModal';
+import InvoiceReceipt from '../../_components/subscription/InvoiceReceipt';
 import UsageStats from '../../_components/subscription/UsageStats';
 import SubscriptionBadge from '../../_components/subscription/SubscriptionBadge';
 import { subscriptionApi, Plan, Subscription, UsageLimits } from '../../../lib/subscriptionApi';
+import { Invoice } from '../../../lib/invoiceApi';
 import { useAuth } from '../../_components/auth/AuthContext';
 
 export default function SubscriptionPage() {
@@ -20,6 +22,8 @@ export default function SubscriptionPage() {
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showInvoiceReceipt, setShowInvoiceReceipt] = useState(false);
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -61,11 +65,36 @@ export default function SubscriptionPage() {
     const plan = plans.find(p => p.id === planId);
     if (!plan) return;
 
+    // For free plans, subscribe directly without showing payment modal
+    if (plan.type === 'free' || plan.price === 0) {
+      try {
+        setIsSubscribing(true);
+        setError(null);
+        setSuccess(null);
+
+        const response = await subscriptionApi.subscribe(plan.id, undefined);
+
+        if (response.success) {
+          setSuccess('Subscription updated successfully!');
+          await loadSubscriptionData();
+        } else {
+          setError(response.error || 'Failed to update subscription');
+        }
+      } catch (err) {
+        console.error('Failed to subscribe:', err);
+        setError('Failed to update subscription');
+      } finally {
+        setIsSubscribing(false);
+      }
+      return;
+    }
+
+    // For paid plans, show payment modal
     setSelectedPlan(plan);
     setShowPaymentModal(true);
   };
 
-  const handlePaymentConfirm = async (paymentReference: string) => {
+  const handlePaymentConfirm = async (paymentIntentId: string) => {
     if (!selectedPlan) return;
 
     try {
@@ -73,12 +102,23 @@ export default function SubscriptionPage() {
       setError(null);
       setSuccess(null);
 
-      const response = await subscriptionApi.subscribe(selectedPlan.id, paymentReference);
+      // For free plans, paymentIntentId will be empty string
+      const response = await subscriptionApi.subscribe(
+        selectedPlan.id, 
+        paymentIntentId || undefined
+      );
 
       if (response.success) {
         setSuccess('Subscription updated successfully!');
         setShowPaymentModal(false);
         setSelectedPlan(null);
+        
+        // Show invoice receipt if available (for paid plans)
+        if (response.data?.invoice) {
+          setInvoice(response.data.invoice);
+          setShowInvoiceReceipt(true);
+        }
+        
         // Reload subscription data
         await loadSubscriptionData();
       } else {
@@ -254,13 +294,24 @@ export default function SubscriptionPage() {
             )}
 
             {/* Payment Modal */}
-            <MockPaymentModal
+            <StripePaymentModal
               isOpen={showPaymentModal}
               onClose={() => setShowPaymentModal(false)}
               plan={selectedPlan}
               onConfirm={handlePaymentConfirm}
               isLoading={isSubscribing}
             />
+
+            {/* Invoice Receipt */}
+            {invoice && showInvoiceReceipt && (
+              <InvoiceReceipt
+                invoice={invoice}
+                onClose={() => {
+                  setShowInvoiceReceipt(false);
+                  setInvoice(null);
+                }}
+              />
+            )}
           </div>
         </MainContentWrapper>
       </div>

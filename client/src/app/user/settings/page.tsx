@@ -8,7 +8,7 @@ import { useAuth } from '../../_components/auth/AuthContext';
 import { API_ENDPOINTS, apiPut, apiPost } from '../../../lib/apiConfig';
 
 export default function UserSettingsPage() {
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -44,6 +44,18 @@ export default function UserSettingsPage() {
       });
 
       if (response.success) {
+        // Update AuthContext state
+        updateUser({
+          username: formData.username,
+          email: formData.email,
+          theme_mode: formData.theme_mode,
+        });
+
+        // Update theme attribute on document for immediate visual feedback
+        if (typeof document !== 'undefined') {
+          document.documentElement.setAttribute('data-theme', formData.theme_mode);
+        }
+
         setIsEditing(false);
         setSuccess('Profile updated successfully!');
       } else {

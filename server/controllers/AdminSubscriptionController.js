@@ -112,6 +112,34 @@ class AdminSubscriptionController {
         payment_reference: paymentReference || `ADMIN_ASSIGNED_${Date.now()}`
       });
 
+      // Create payment transaction if not free
+      let invoice = null;
+      if (plan.type !== 'free' && plan.price > 0) {
+        const transactionRef = paymentReference || `ADMIN_ASSIGNED_${Date.now()}`;
+        const transactionId = await this.paymentTransactionModel.create({
+          user_id: userId,
+          plan_id: planId,
+          amount: plan.price,
+          status: 'completed',
+          transaction_reference: transactionRef
+        });
+
+        // Create invoice for the transaction
+        try {
+          invoice = await this.subscriptionService.invoiceService.createInvoiceFromTransaction(transactionId);
+          
+          // Send invoice via email
+          try {
+            await this.subscriptionService.invoiceService.sendInvoiceEmail(transactionId);
+          } catch (emailError) {
+            console.error('Failed to send invoice email:', emailError);
+            // Don't fail plan assignment if email fails
+          }
+        } catch (error) {
+          console.error('Failed to create invoice:', error);
+        }
+      }
+
       // Log the assignment
       await this.subscriptionService.subscriptionLogModel.create({
         user_id: userId,
@@ -126,6 +154,7 @@ class AdminSubscriptionController {
         success: true,
         data: {
           subscriptionId,
+          invoice: invoice || null,
           message: 'Plan assigned successfully'
         }
       });

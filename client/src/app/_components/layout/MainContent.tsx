@@ -3,6 +3,7 @@
 import React, { useState, useCallback, memo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { WebsitePreviewImage } from '../../_components/shared/WebsitePreviewImage';
+import { getProfileImageUrl } from '../../../lib/apiConfig';
 
 interface MainContentProps {
   currentWebsite?: any;
@@ -129,11 +130,30 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
             </div>
             
             {/* Profile Picture */}
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-surface-elevated rounded-full flex items-center justify-center hover:bg-[var(--accent)] transition-all duration-300 transform hover:scale-110 cursor-pointer">
-              <span className="text-secondary font-medium text-sm md:text-base">
-                {getUserInitial(userData?.username || userData?.name || '')}
-              </span>
-            </div>
+            {userData?.id && getProfileImageUrl(userData.id) ? (
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden border-2 border-app hover:border-[var(--accent)] transition-all duration-300 transform hover:scale-110 cursor-pointer">
+                <img
+                  src={getProfileImageUrl(userData.id) || ''}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback to initials if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `<span class="text-secondary font-medium text-sm md:text-base flex items-center justify-center w-full h-full bg-surface-elevated">${getUserInitial(userData?.username || userData?.name || '')}</span>`;
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-surface-elevated rounded-full flex items-center justify-center hover:bg-[var(--accent)] transition-all duration-300 transform hover:scale-110 cursor-pointer">
+                <span className="text-secondary font-medium text-sm md:text-base">
+                  {getUserInitial(userData?.username || userData?.name || '')}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -210,11 +230,30 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
           </div>
           
           {/* Profile Picture */}
-          <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all duration-300 transform hover:scale-110 cursor-pointer">
-            <span className="text-gray-300 font-medium text-sm md:text-base">
-              {getUserInitial(userData?.username || userData?.name || '')}
-            </span>
-          </div>
+          {userData?.id && getProfileImageUrl(userData.id) ? (
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden border-2 border-app hover:border-[var(--accent)] transition-all duration-300 transform hover:scale-110 cursor-pointer">
+              <img
+                src={getProfileImageUrl(userData.id) || ''}
+                alt="Profile"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to initials if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML = `<span class="text-gray-300 font-medium text-sm md:text-base flex items-center justify-center w-full h-full bg-gray-700">${getUserInitial(userData?.username || userData?.name || '')}</span>`;
+                  }
+                }}
+              />
+            </div>
+          ) : (
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all duration-300 transform hover:scale-110 cursor-pointer">
+              <span className="text-gray-300 font-medium text-sm md:text-base">
+                {getUserInitial(userData?.username || userData?.name || '')}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

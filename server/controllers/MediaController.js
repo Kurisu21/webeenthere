@@ -182,9 +182,32 @@ class MediaController {
     }
   }
 
-  // Get multer upload middleware
+  // Get multer upload middleware (disk storage for regular media)
   getUploadMiddleware() {
     return this.upload.single('image');
+  }
+
+  // Get multer upload middleware for profile images (memory storage for blob)
+  getProfileImageUploadMiddleware() {
+    const memoryStorage = multer.memoryStorage();
+    
+    return multer({
+      storage: memoryStorage,
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit
+      },
+      fileFilter: (req, file, cb) => {
+        const allowedTypes = /jpeg|jpg|png|gif|webp|svg/;
+        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = allowedTypes.test(file.mimetype);
+        
+        if (extname && mimetype) {
+          cb(null, true);
+        } else {
+          cb(new Error('Only image files are allowed (jpeg, jpg, png, gif, webp, svg)'));
+        }
+      }
+    }).single('image');
   }
 }
 

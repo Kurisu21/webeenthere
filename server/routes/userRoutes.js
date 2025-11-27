@@ -149,19 +149,8 @@ router.put(
       .isEmail()
       .withMessage('Please enter a valid email address')
       .normalizeEmail(),
-    body('profile_image')
-      .optional()
-      .custom((value) => {
-        // Allow empty string, or valid URL
-        if (!value || value === '') return true;
-        try {
-          new URL(value);
-          return true;
-        } catch {
-          return false;
-        }
-      })
-      .withMessage('Profile image must be a valid URL or empty'),
+    // Profile image is now handled separately via upload endpoint (blob storage)
+    // No validation needed here as it's not part of the profile update payload
     body('theme_mode')
       .optional()
       .isIn(['light', 'dark'])
@@ -170,12 +159,31 @@ router.put(
   (req, res) => userController.updateProfile(req, res)
 );
 
-// Upload profile image route
+// Request email change - sends verification code to new email
+router.post(
+  '/profile/request-email-change',
+  authMiddleware,
+  [
+    body('new_email')
+      .isEmail()
+      .withMessage('Please enter a valid email address')
+      .normalizeEmail(),
+  ],
+  (req, res) => userController.requestEmailChange(req, res)
+);
+
+// Upload profile image route (uses memory storage for blob)
 router.post(
   '/profile/upload-image',
   authMiddleware,
-  mediaController.getUploadMiddleware(),
+  mediaController.getProfileImageUploadMiddleware(),
   (req, res) => userController.uploadProfileImage(req, res)
+);
+
+// Get profile image route (serves blob)
+router.get(
+  '/profile/image/:userId',
+  (req, res) => userController.getProfileImage(req, res)
 );
 
 module.exports = router; 
