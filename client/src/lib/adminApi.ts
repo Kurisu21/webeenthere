@@ -3,7 +3,12 @@ import { API_ENDPOINTS, API_BASE_URL } from './apiConfig';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
+  // Check both localStorage and sessionStorage for token
+  let token = localStorage.getItem('token');
+  if (!token) {
+    token = sessionStorage.getItem('token');
+  }
+  
   return {
     'Content-Type': 'application/json',
     'Authorization': token ? `Bearer ${token}` : '',
@@ -33,12 +38,24 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
     if (!response.ok) {
       let errorData;
       try {
-        errorData = await response.json();
+        const text = await response.text();
+        if (text) {
+          errorData = JSON.parse(text);
+        } else {
+          errorData = {};
+        }
       } catch {
         errorData = { error: `HTTP error! status: ${response.status}` };
       }
+      
+      // Handle different error response formats
+      const errorMessage = errorData.error 
+        || errorData.message 
+        || (typeof errorData === 'string' ? errorData : null)
+        || `HTTP error! status: ${response.status}`;
+      
       console.error('API Error:', errorData);
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
@@ -106,6 +123,12 @@ export const adminApi = {
     });
   },
 
+  deleteUser: async (id: number) => {
+    return apiRequest(`/api/admin/users/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
   // Bulk operations
   bulkUpdateUserStatus: async (userIds: number[], status: { is_active?: boolean; is_verified?: boolean }) => {
     const promises = userIds.map(id => adminApi.updateUserStatus(id, status));
@@ -136,14 +159,28 @@ export const adminApi = {
 
   // Analytics helpers
   getUserStats: async () => {
-    const stats = await adminApi.getStats();
-    return {
-      totalUsers: stats.stats.totalUsers,
-      activeUsers: stats.stats.activeUsers,
-      verifiedUsers: stats.stats.verifiedUsers,
-      adminUsers: stats.stats.adminUsers,
-      recentUsers: stats.stats.recentUsers,
-    };
+    try {
+      const stats = await adminApi.getStats();
+      // Handle different response structures
+      const statsData = stats.stats || stats || {};
+      return {
+        totalUsers: statsData.totalUsers || 0,
+        activeUsers: statsData.activeUsers || 0,
+        verifiedUsers: statsData.verifiedUsers || 0,
+        adminUsers: statsData.adminUsers || 0,
+        recentUsers: statsData.recentUsers || [],
+      };
+    } catch (error: any) {
+      console.error('Error fetching user stats:', error);
+      // Return default values on error
+      return {
+        totalUsers: 0,
+        activeUsers: 0,
+        verifiedUsers: 0,
+        adminUsers: 0,
+        recentUsers: [],
+      };
+    }
   },
 };
 

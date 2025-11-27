@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useCallback, memo, useEffect } from 'react';
+import React, { useState, useCallback, memo, useEffect, useRef } from 'react';
 import { useAuth } from '../auth/AuthContext';
-import { API_ENDPOINTS, apiPut } from '../../../lib/apiConfig';
+import { API_ENDPOINTS, apiPut, API_BASE_URL } from '../../../lib/apiConfig';
 
 const UserProfile = memo(() => {
   const { user, token } = useAuth();
@@ -14,8 +14,11 @@ const UserProfile = memo(() => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -33,6 +36,76 @@ const UserProfile = memo(() => {
       ...prev,
       [field]: value
     }));
+    // Clear preview if URL is changed
+    if (field === 'profile_image') {
+      setImagePreview(null);
+    }
+  }, []);
+
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Please select a valid image file (JPEG, PNG, GIF, WebP, or SVG)');
+      return;
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Image file size must be less than 10MB');
+      return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload file
+    setIsUploading(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const response = await fetch(API_ENDPOINTS.PROFILE_IMAGE_UPLOAD, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.profile_image) {
+        // Update form data with the uploaded image URL
+        setFormData(prev => ({
+          ...prev,
+          profile_image: data.profile_image
+        }));
+        setSuccess('Profile image uploaded successfully!');
+        setImagePreview(null); // Clear preview since we have the URL now
+      } else {
+        throw new Error(data.error || 'Upload failed');
+      }
+    } catch (err: any) {
+      console.error('Failed to upload profile image:', err);
+      setError(err.message || 'Failed to upload profile image');
+      setImagePreview(null);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   }, []);
 
   const handleSave = async () => {
@@ -236,19 +309,102 @@ const UserProfile = memo(() => {
           
           <div className="group">
             <label className="block text-sm font-medium text-secondary mb-2 transition-colors duration-300">
-              Profile Image URL
+              Profile Image
             </label>
             {isEditing ? (
-              <input
-                type="text"
-                value={formData.profile_image || ''}
-                onChange={(e) => handleInputChange('profile_image', e.target.value)}
-                placeholder="Enter profile image URL"
-                className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-colors-fast"
-              />
+              <div className="space-y-3">
+                {/* Image Preview */}
+                {(imagePreview || formData.profile_image) && (
+                  <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-app">
+                    <img
+                      src={imagePreview || (formData.profile_image?.startsWith('/') ? `${API_BASE_URL}${formData.profile_image}` : formData.profile_image) || ''}
+                      alt="Profile preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+                
+                {/* File Upload Button */}
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/svg+xml"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="profile-image-upload"
+                    disabled={isUploading}
+                  />
+                  <label
+                    htmlFor="profile-image-upload"
+                    className={`inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                      isUploading
+                        ? 'bg-surface text-secondary cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                  >
+                    {isUploading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Upload Image
+                      </>
+                    )}
+                  </label>
+                </div>
+
+                {/* Or Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-app"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="px-2 bg-surface text-secondary">OR</span>
+                  </div>
+                </div>
+
+                {/* URL Input */}
+                <input
+                  type="text"
+                  value={formData.profile_image || ''}
+                  onChange={(e) => handleInputChange('profile_image', e.target.value)}
+                  placeholder="Enter image URL (e.g., https://cdn.example.com/image.jpg)"
+                  className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-colors-fast"
+                />
+                <p className="text-xs text-secondary">
+                  Upload a local file or enter a URL from CDN/online source
+                </p>
+              </div>
             ) : (
-              <div className="px-3 py-2 bg-surface-elevated border border-app rounded-md text-secondary">
-                {formData.profile_image || 'Not set'}
+              <div className="space-y-2">
+                {formData.profile_image ? (
+                  <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-app">
+                    <img
+                      src={formData.profile_image.startsWith('/') ? `${API_BASE_URL}${formData.profile_image}` : formData.profile_image}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="px-3 py-2 bg-surface-elevated border border-app rounded-md text-secondary">
+                    Not set
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -256,26 +412,6 @@ const UserProfile = memo(() => {
 
         {/* Right Column */}
         <div className="space-y-4">
-          <div className="group">
-            <label className="block text-sm font-medium text-secondary mb-2 transition-colors duration-300">
-              Theme Mode
-            </label>
-            {isEditing ? (
-              <select
-                value={formData.theme_mode || 'dark'}
-                onChange={(e) => handleInputChange('theme_mode', e.target.value)}
-                className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-colors-fast"
-              >
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
-            ) : (
-              <div className="px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary capitalize">
-                {formData.theme_mode}
-              </div>
-            )}
-          </div>
-          
           <div className="group">
             <label className="block text-sm font-medium text-secondary mb-2 transition-colors duration-300">
               Account Status
@@ -299,6 +435,37 @@ const UserProfile = memo(() => {
             <div className="px-3 py-2 bg-surface-elevated border border-app rounded-md text-secondary font-mono">
               #{user.id}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Account Settings Section */}
+      <div className="border-t border-app pt-6 mb-8">
+        <div className="flex items-center space-x-2 mb-4">
+          <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+          </svg>
+          <h3 className="text-lg font-semibold text-primary">Account Settings</h3>
+        </div>
+        <div className="space-y-4">
+          <div className="group">
+            <label className="block text-sm font-medium text-secondary mb-2 transition-colors duration-300">
+              Theme Mode
+            </label>
+            {isEditing ? (
+              <select
+                value={formData.theme_mode || 'light'}
+                onChange={(e) => handleInputChange('theme_mode', e.target.value)}
+                className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-colors-fast"
+              >
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            ) : (
+              <div className="px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary capitalize">
+                {formData.theme_mode}
+              </div>
+            )}
           </div>
         </div>
       </div>

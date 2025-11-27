@@ -23,6 +23,7 @@ router.get('/users/:id', (req, res) => userController.getUserById(req, res));
 router.put('/users/:id/role', (req, res) => userController.updateUserRole(req, res));
 router.put('/users/:id/status', (req, res) => userController.updateUserStatus(req, res));
 router.put('/users/:id/profile', (req, res) => userController.updateUserProfile(req, res));
+router.delete('/users/:id', (req, res) => userController.deleteUser(req, res));
 
 module.exports = router;
 

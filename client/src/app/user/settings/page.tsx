@@ -17,7 +17,7 @@ export default function UserSettingsPage() {
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
-    theme_mode: 'light' as 'light' | 'dark',
+    theme_mode: (user?.theme_mode as 'light' | 'dark') || 'light',
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -106,7 +106,7 @@ export default function UserSettingsPage() {
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
-      theme_mode: 'dark',
+      theme_mode: (user?.theme_mode as 'light' | 'dark') || 'light',
     });
     setIsEditing(false);
     setError(null);
@@ -246,7 +246,13 @@ export default function UserSettingsPage() {
                       </span>
                     </div>
                   </div>
+                </div>
+              </div>
 
+              {/* Account Settings */}
+              <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Account Settings</h3>
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Theme Mode
@@ -261,7 +267,7 @@ export default function UserSettingsPage() {
                         <option value="dark">Dark</option>
                       </select>
                     ) : (
-                      <p className="text-white capitalize">Dark</p>
+                      <p className="text-white capitalize">{user.theme_mode || 'light'}</p>
                     )}
                   </div>
                 </div>

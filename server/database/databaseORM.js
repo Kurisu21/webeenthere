@@ -11,18 +11,35 @@ class DatabaseORM {
 
   // Create connection without specifying database first
   async createConnection() {
-    return mysql.createConnection({
+    const connection = mysql.createConnection({
       host: process.env.DB_HOST || 'localhost',
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '',
       port: process.env.DB_PORT || 3306,
       multipleStatements: true
     });
+    
+    // Add error handler to prevent unhandled errors
+    connection.on('error', (err) => {
+      // Ignore "closed state" errors - these happen when trying to close an already-closed connection
+      if (err.message && err.message.includes('closed state')) {
+        return; // Silently ignore - connection is already closed
+      }
+      
+      console.error('❌ Database connection error:', err.message);
+      if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
+        console.log('🔄 Database connection lost. Connection will be closed.');
+      } else if (err.fatal && !err.message?.includes('closed state')) {
+        console.error('💥 Fatal database connection error:', err);
+      }
+    });
+    
+    return connection;
   }
 
   // Create connection with database
   async createConnectionWithDB() {
-    return mysql.createConnection({
+    const connection = mysql.createConnection({
       host: process.env.DB_HOST || 'localhost',
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '',
@@ -30,6 +47,64 @@ class DatabaseORM {
       port: process.env.DB_PORT || 3306,
       multipleStatements: true
     });
+    
+    // Add error handler to prevent unhandled errors
+    connection.on('error', (err) => {
+      // Ignore "closed state" errors - these happen when trying to close an already-closed connection
+      if (err.message && err.message.includes('closed state')) {
+        return; // Silently ignore - connection is already closed
+      }
+      
+      console.error('❌ Database connection error:', err.message);
+      if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
+        console.log('🔄 Database connection lost. Connection will be closed.');
+      } else if (err.fatal && !err.message?.includes('closed state')) {
+        console.error('💥 Fatal database connection error:', err);
+      }
+    });
+    
+    return connection;
+  }
+
+  // Safely close a connection, handling cases where it's already closed
+  safeEndConnection(connection) {
+    if (!connection) return;
+    
+    try {
+      // Check if connection is still in a state that allows ending
+      // Also check if connection has been destroyed or is in a closed state
+      const state = connection.state;
+      const isDestroyed = connection._socket && connection._socket.destroyed;
+      
+      if (state !== 'disconnected' && 
+          state !== 'protocol_error' && 
+          !isDestroyed &&
+          connection._socket) {
+        try {
+          connection.end();
+        } catch (endError) {
+          // Silently ignore "closed state" errors - connection is already closed
+          if (endError.message && 
+              (endError.message.includes('closed state') || 
+               endError.message.includes('ECONNRESET'))) {
+            return; // Connection already closed, which is fine
+          }
+          // Re-throw unexpected errors
+          throw endError;
+        }
+      }
+    } catch (error) {
+      // Silently ignore errors when trying to close an already-closed connection
+      if (error.message && 
+          (error.message.includes('closed state') || 
+           error.message.includes('ECONNRESET') ||
+           error.message.includes('Cannot perform operations'))) {
+        // Connection already closed, which is fine - don't log this
+        return;
+      }
+      // Only log unexpected errors
+      console.warn('⚠️  Warning: Unexpected error closing connection:', error.message);
+    }
   }
 
   // Check if database exists
@@ -42,7 +117,7 @@ class DatabaseORM {
       );
       return rows.length > 0;
     } finally {
-      connection.end();
+      this.safeEndConnection(connection);
     }
   }
 
@@ -3502,25 +3577,32 @@ class DatabaseORM {
       }
 
       // Database exists, now check tables
-      const connection = await this.createConnectionWithDB();
-      
-      const tables = ['users', 'templates', 'websites', 'plans', 'feedback', 'feedback_responses', 'forum_categories', 'forum_threads', 'forum_replies', 'help_categories', 'help_articles', 'support_tickets', 'support_messages', 'activity_logs', 'system_settings'];
-      const status = {
-        database: dbExists,
-        tables: {}
-      };
+      let connection = null;
+      try {
+        connection = await this.createConnectionWithDB();
+        
+        const tables = ['users', 'templates', 'websites', 'plans', 'feedback', 'feedback_responses', 'forum_categories', 'forum_threads', 'forum_replies', 'help_categories', 'help_articles', 'support_tickets', 'support_messages', 'activity_logs', 'system_settings'];
+        const status = {
+          database: dbExists,
+          tables: {}
+        };
 
-      for (const table of tables) {
-        const exists = await this.tableExists(table);
-        let hasData = false;
-        if (exists) {
-          hasData = await this.tableHasData(table);
+        for (const table of tables) {
+          const exists = await this.tableExists(table);
+          let hasData = false;
+          if (exists) {
+            hasData = await this.tableHasData(table);
+          }
+          status.tables[table] = { exists, hasData };
         }
-        status.tables[table] = { exists, hasData };
-      }
 
-      connection.end();
-      return status;
+        return status;
+      } finally {
+        // Safely close connection even if errors occurred
+        if (connection) {
+          this.safeEndConnection(connection);
+        }
+      }
     } catch (error) {
       console.error('Error getting database status:', error);
       return null;

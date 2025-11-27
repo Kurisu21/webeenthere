@@ -9,7 +9,9 @@ import { API_ENDPOINTS, apiPost } from '@/lib/apiConfig';
 function VerifyCodeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const email = searchParams.get('email') || '';
+  const emailParam = searchParams.get('email') || '';
+  const [email, setEmail] = useState(emailParam);
+  const [showEmailInput, setShowEmailInput] = useState(!emailParam);
   
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -124,7 +126,12 @@ function VerifyCodeContent() {
   };
 
   const handleResendCode = async () => {
-    if (resendCooldown > 0 || !email) {
+    if (resendCooldown > 0) {
+      return;
+    }
+
+    if (!email) {
+      setError('Please enter your email address');
       return;
     }
 
@@ -133,12 +140,13 @@ function VerifyCodeContent() {
 
     try {
       const response = await apiPost(`${API_ENDPOINTS.USERS}/resend-code`, {
-        email,
+        email: email.trim(),
       });
 
       if (response.message) {
         setResendCooldown(60); // 60 second cooldown
         setCode(['', '', '', '', '', '']);
+        setShowEmailInput(false); // Hide email input after sending
         if (inputRefs.current[0]) {
           inputRefs.current[0].focus();
         }
@@ -187,20 +195,59 @@ function VerifyCodeContent() {
               </span>
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">Verify Your Email</h1>
-            <p className="text-gray-300 text-sm">
-              We sent a 6-digit code to
-            </p>
-            <p className="text-purple-300 font-medium mt-1">{email}</p>
-            <p className="text-gray-400 text-xs mt-2">
-              The code will expire in 15 minutes
-            </p>
+            {!showEmailInput ? (
+              <>
+                <p className="text-gray-300 text-sm">
+                  We sent a 6-digit code to
+                </p>
+                <p className="text-purple-300 font-medium mt-1">{email}</p>
+                <p className="text-gray-400 text-xs mt-2">
+                  The code will expire in 15 minutes
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowEmailInput(true)}
+                  className="text-blue-400 hover:text-blue-300 text-xs mt-2 underline"
+                >
+                  Change email
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-gray-300 text-sm mb-3">
+                  Enter your email address to receive a verification code
+                </p>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your.email@example.com"
+                  className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+                {email && (
+                  <button
+                    type="button"
+                    onClick={handleResendCode}
+                    disabled={resendCooldown > 0 || isResending}
+                    className="mt-3 text-purple-400 hover:text-purple-300 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isResending
+                      ? 'Sending...'
+                      : resendCooldown > 0
+                      ? `Resend code in ${resendCooldown}s`
+                      : 'Send Verification Code'}
+                  </button>
+                )}
+              </>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3 text-center">
-                Enter Verification Code
-              </label>
+            {!showEmailInput && (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-3 text-center">
+                  Enter Verification Code
+                </label>
               <div className="flex justify-center gap-3">
                 {code.map((digit, index) => (
                   <input
@@ -219,33 +266,38 @@ function VerifyCodeContent() {
               {error && (
                 <p className="text-red-400 text-sm mt-3 text-center">{error}</p>
               )}
-            </div>
+              </div>
+            )}
 
-            <button
-              type="submit"
-              disabled={isSubmitting || code.join('').length !== 6}
-              className="w-full bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Verifying...' : 'Verify Email'}
-            </button>
+            {!showEmailInput && (
+              <>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || code.join('').length !== 6}
+                  className="w-full bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Verifying...' : 'Verify Email'}
+                </button>
 
-            <div className="text-center">
-              <p className="text-gray-400 text-sm mb-2">
-                Didn't receive the code?
-              </p>
-              <button
-                type="button"
-                onClick={handleResendCode}
-                disabled={resendCooldown > 0 || isResending}
-                className="text-purple-400 hover:text-purple-300 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isResending
-                  ? 'Sending...'
-                  : resendCooldown > 0
-                  ? `Resend code in ${resendCooldown}s`
-                  : 'Resend Code'}
-              </button>
-            </div>
+                <div className="text-center">
+                  <p className="text-gray-400 text-sm mb-2">
+                    Didn't receive the code?
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleResendCode}
+                    disabled={resendCooldown > 0 || isResending}
+                    className="text-purple-400 hover:text-purple-300 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isResending
+                      ? 'Sending...'
+                      : resendCooldown > 0
+                      ? `Resend code in ${resendCooldown}s`
+                      : 'Resend Code'}
+                  </button>
+                </div>
+              </>
+            )}
 
             <div className="text-center pt-4 border-t border-gray-700">
               <Link

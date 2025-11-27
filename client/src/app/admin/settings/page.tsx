@@ -211,7 +211,13 @@ export default function AdminSettingsPage() {
                       </span>
                     </div>
                   </div>
+                </div>
+              </div>
 
+              {/* Account Settings */}
+              <div className="bg-surface-elevated rounded-lg border border-app p-6">
+                <h3 className="text-lg font-semibold text-primary mb-4">Account Settings</h3>
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-secondary mb-2">
                       Theme Mode
@@ -226,7 +232,7 @@ export default function AdminSettingsPage() {
                         <option value="dark">Dark</option>
                       </select>
                     ) : (
-                      <p className="text-primary capitalize">Dark</p>
+                      <p className="text-primary capitalize">{user?.theme_mode || 'dark'}</p>
                     )}
                   </div>
                 </div>

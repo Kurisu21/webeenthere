@@ -13,6 +13,9 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isUnverified, setIsUnverified] = useState(false);
+  const [isResendingCode, setIsResendingCode] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -90,8 +93,44 @@ const LoginForm: React.FC = () => {
       // Display the specific error message from backend
       const errorMessage = error.message || 'Login failed. Please check your connection and try again.';
       setError(errorMessage);
+      
+      // Check if error is about unverified account
+      if (errorMessage.toLowerCase().includes('not verified') || 
+          errorMessage.toLowerCase().includes('verify')) {
+        setIsUnverified(true);
+      } else {
+        setIsUnverified(false);
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (!email) {
+      setError('Please enter your email address first');
+      return;
+    }
+
+    setIsResendingCode(true);
+    setResendSuccess(false);
+    setError('');
+
+    try {
+      const response = await apiPost(`${API_ENDPOINTS.USERS}/resend-code`, {
+        email: email.trim(),
+      });
+
+      if (response.message) {
+        setResendSuccess(true);
+        // Redirect to verify page with email
+        router.push(`/verify-code?email=${encodeURIComponent(email.trim())}`);
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || 'Failed to resend verification code. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setIsResendingCode(false);
     }
   };
 
@@ -115,11 +154,42 @@ const LoginForm: React.FC = () => {
       {/* Error Message */}
       {error && (
         <div className="mb-6 p-4 bg-red-900/50 border border-red-500/30 rounded-lg">
-          <div className="flex items-center">
-            <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-start">
+            <svg className="w-5 h-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
-            <span className="text-red-300 text-sm">{error}</span>
+            <div className="flex-1">
+              <span className="text-red-300 text-sm block">{error}</span>
+              
+              {/* Show resend code options for unverified accounts */}
+              {isUnverified && (
+                <div className="mt-3 pt-3 border-t border-red-700/50">
+                  <p className="text-red-200 text-xs mb-3">
+                    Your account needs to be verified before you can login. You can:
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      onClick={handleResendCode}
+                      disabled={isResendingCode || !email}
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white text-xs font-medium py-2 px-3 rounded transition-colors disabled:cursor-not-allowed"
+                    >
+                      {isResendingCode ? 'Sending...' : 'Resend Verification Code'}
+                    </button>
+                    <Link
+                      href={`/verify-code?email=${encodeURIComponent(email || '')}`}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-2 px-3 rounded text-center transition-colors"
+                    >
+                      Go to Verify Page
+                    </Link>
+                  </div>
+                  {resendSuccess && (
+                    <p className="text-green-300 text-xs mt-2">
+                      ✓ Verification code sent! Redirecting...
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

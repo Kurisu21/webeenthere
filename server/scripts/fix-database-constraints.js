@@ -12,6 +12,16 @@ async function fixDatabase() {
     database: process.env.DB_NAME || 'u875409848_jumaoas'
   });
 
+  // Add error handler to prevent unhandled errors
+  connection.on('error', (err) => {
+    console.error('❌ Database connection error:', err.message);
+    if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
+      console.log('🔄 Database connection lost.');
+    } else if (err.fatal) {
+      console.error('💥 Fatal database connection error:', err);
+    }
+  });
+
   try {
     console.log('🔧 Fixing database foreign key constraints...');
     

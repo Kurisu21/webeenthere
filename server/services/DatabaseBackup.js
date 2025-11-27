@@ -19,6 +19,17 @@ class DatabaseBackup {
       console.log(`💾 Creating database backup: ${outputPath}`);
       
       const connection = mysql.createConnection(this.dbConfig);
+      
+      // Add error handler to prevent unhandled errors
+      connection.on('error', (err) => {
+        console.error('❌ Database backup connection error:', err.message);
+        if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
+          console.log('🔄 Backup connection lost.');
+        } else if (err.fatal) {
+          console.error('💥 Fatal backup connection error:', err);
+        }
+      });
+      
       const db = connection.promise();
       
       // Get all tables
@@ -106,6 +117,16 @@ class DatabaseBackup {
         multipleStatements: true
       });
       
+      // Add error handler to prevent unhandled errors
+      connection.on('error', (err) => {
+        console.error('❌ Database restore connection error:', err.message);
+        if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
+          console.log('🔄 Restore connection lost.');
+        } else if (err.fatal) {
+          console.error('💥 Fatal restore connection error:', err);
+        }
+      });
+      
       const db = connection.promise();
       
       // Execute backup SQL
@@ -127,6 +148,17 @@ class DatabaseBackup {
       console.log(`💾 Creating incremental database backup since: ${sinceDate.toISOString()}`);
       
       const connection = mysql.createConnection(this.dbConfig);
+      
+      // Add error handler to prevent unhandled errors
+      connection.on('error', (err) => {
+        console.error('❌ Incremental backup connection error:', err.message);
+        if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
+          console.log('🔄 Incremental backup connection lost.');
+        } else if (err.fatal) {
+          console.error('💥 Fatal incremental backup connection error:', err);
+        }
+      });
+      
       const db = connection.promise();
       
       // Get all tables

@@ -3,538 +3,527 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webeenthere Module Checklist</title>
+    <title>WEBeenThere - Module Checklist</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 20px;
-            background-color: #f5f5f5;
-            line-height: 1.6;
         }
-        
+
         .container {
+            max-width: 1400px;
+            margin: 0 auto;
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             padding: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        h1 {
-            color: #333;
             text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
         }
-        
-        h2 {
-            color: #4a5568;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 10px;
-            margin-top: 30px;
-            margin-bottom: 20px;
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
         }
-        
-        .module-item {
-            display: grid;
-            grid-template-columns: 20px 1fr 60px 60px;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #f0f0f0;
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-box .number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-box .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        th:first-child {
+            width: 50px;
+            text-align: center;
+        }
+
+        th:nth-child(2) {
+            width: 60px;
+            text-align: center;
+        }
+
+        th:nth-child(3) {
+            width: 35%;
+        }
+
+        th:nth-child(4) {
+            width: 25%;
+        }
+
+        th:nth-child(5) {
+            width: 15%;
+        }
+
+        th:nth-child(6) {
+            width: 20%;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #e5e7eb;
             transition: background-color 0.2s;
-            gap: 15px;
         }
-        
-        .module-item:hover {
-            background-color: #f8f9fa;
+
+        tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        tbody tr:nth-child(even):hover {
+            background-color: #f3f4f6;
+        }
+
+        td {
+            padding: 12px;
+            vertical-align: top;
+        }
+
+        .module-number {
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .module-category {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .module-name {
+            color: #111827;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #d1d5db;
             border-radius: 6px;
-            padding-left: 8px;
-            padding-right: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        
-        .module-item:last-child {
-            border-bottom: none;
+
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
-        
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        select {
+            cursor: pointer;
+            background: white;
+        }
+
+        .status-passed {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .status-failed {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .status-pending {
+            background-color: #f59e0b;
+            color: white;
+        }
+
+        .checkbox-cell {
+            text-align: center;
+        }
+
         input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             cursor: pointer;
             accent-color: #667eea;
         }
-        
-        .module-text {
-            font-size: 16px;
-            color: #2d3748;
+
+        .category-header {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            font-weight: 700;
+            color: #374151;
         }
-        
-        .role-column {
-            text-align: center;
-            font-size: 14px;
-            font-weight: 500;
+
+        .category-header td {
+            padding: 15px 12px;
+            font-size: 1rem;
         }
-        
-        .role-column.user {
-            color: #2f855a;
-        }
-        
-        .role-column.admin {
-            color: #c53030;
-        }
-        
-        .role-checkbox {
-            width: 16px;
-            height: 16px;
-            margin: 0 auto;
-        }
-        
-        .table-header {
-            display: grid;
-            grid-template-columns: 20px 1fr 60px 60px;
-            align-items: center;
-            padding: 15px 0;
-            border-bottom: 2px solid #e2e8f0;
-            gap: 15px;
-            font-weight: 600;
-            color: #4a5568;
-            background: #f8f9fa;
-            border-radius: 8px 8px 0 0;
-            margin-top: 20px;
-        }
-        
-        .table-header:first-child {
-            margin-top: 0;
-        }
-        
-        .stats {
-            background: #f7fafc;
-            border-radius: 8px;
+
+        .footer {
             padding: 20px;
-            margin-top: 30px;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
             text-align: center;
+            color: #6b7280;
         }
-        
-        .stats h3 {
-            margin: 0 0 15px 0;
-            color: #2d3748;
+
+        .export-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        
-        .progress-bar {
-            width: 100%;
-            height: 20px;
-            background: #e2e8f0;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 10px 0;
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            transition: width 0.3s ease;
-            border-radius: 10px;
+
+        .export-btn:active {
+            transform: translateY(0);
         }
-        
-        .progress-text {
-            font-size: 14px;
-            color: #4a5568;
-            margin-top: 10px;
-        }
-        
-        .completed {
-            text-decoration: line-through;
-            color: #a0aec0;
-        }
-        
-        .completed .role-badge {
-            opacity: 0.6;
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+            }
+            .export-btn {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📋 Module Checklist</h1>
-        
-        <div class="stats">
-            <h3>Progress</h3>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        <div class="header">
+            <h1>WEBeenThere</h1>
+            <p>Module Development Checklist & Status Report</p>
+            <div class="stats">
+                <div class="stat-box">
+                    <span class="number" id="total-modules">32</span>
+                    <span class="label">Total Modules</span>
+                </div>
+                <div class="stat-box">
+                    <span class="number" id="completed-modules">0</span>
+                    <span class="label">Completed</span>
+                </div>
+                <div class="stat-box">
+                    <span class="number" id="pending-modules">0</span>
+                    <span class="label">Pending</span>
+                </div>
+                <div class="stat-box">
+                    <span class="number" id="failed-modules">0</span>
+                    <span class="label">Failed</span>
+                </div>
             </div>
-            <div class="progress-text" id="progressText">0 of 40 modules completed</div>
         </div>
 
-        <h2>👤 User Management</h2>
-        <div class="table-header">
-            <div></div>
-            <div>Module</div>
-            <div>User</div>
-            <div>Admin</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="user-auth" onchange="updateProgress()">
-            <label for="user-auth" class="module-text">User Registration & Authentication</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="profile-mgmt" onchange="updateProgress()">
-            <label for="profile-mgmt" class="module-text">Profile Management</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="account-settings" onchange="updateProgress()">
-            <label for="account-settings" class="module-text">Account Settings</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="role-permissions" onchange="updateProgress()">
-            <label for="role-permissions" class="module-text">Role & Permission Management</label>
-            <div class="role-column user">❌</div>
-            <div class="role-column admin">✅</div>
+        <div class="table-container">
+            <table id="checklist-table">
+                <thead>
+                    <tr>
+                        <th>✓</th>
+                        <th>#</th>
+                        <th>Module Name</th>
+                        <th>Data Used</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Modules will be inserted here -->
+                </tbody>
+            </table>
         </div>
 
-        <h2>🏗️ Website Builder</h2>
-        <div class="table-header">
-            <div></div>
-            <div>Module</div>
-            <div>User</div>
-            <div>Admin</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="drag-drop" onchange="updateProgress()">
-            <label for="drag-drop" class="module-text">Drag-and-Drop Interface</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="template-selection" onchange="updateProgress()">
-            <label for="template-selection" class="module-text">Template Selection</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="element-library" onchange="updateProgress()">
-            <label for="element-library" class="module-text">Element Library</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="responsive-tools" onchange="updateProgress()">
-            <label for="responsive-tools" class="module-text">Responsive Design Tools</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="website-preview" onchange="updateProgress()">
-            <label for="website-preview" class="module-text">Website Preview</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-
-        <h2>📝 Content Management</h2>
-        <div class="table-header">
-            <div></div>
-            <div>Module</div>
-            <div>User</div>
-            <div>Admin</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="text-editing" onchange="updateProgress()">
-            <label for="text-editing" class="module-text">Text Editing</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="image-mgmt" onchange="updateProgress()">
-            <label for="image-mgmt" class="module-text">Image Management</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="media-library" onchange="updateProgress()">
-            <label for="media-library" class="module-text">Media Library</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="section-mgmt" onchange="updateProgress()">
-            <label for="section-mgmt" class="module-text">Section Management</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-
-        <h2>🎨 Template System</h2>
-        <div class="table-header">
-            <div></div>
-            <div>Module</div>
-            <div>User</div>
-            <div>Admin</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="template-browsing" onchange="updateProgress()">
-            <label for="template-browsing" class="module-text">Template Browsing</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="template-customization" onchange="updateProgress()">
-            <label for="template-customization" class="module-text">Template Customization</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="template-mgmt" onchange="updateProgress()">
-            <label for="template-mgmt" class="module-text">Template Management</label>
-            <div class="role-column user">❌</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="community-sharing" onchange="updateProgress()">
-            <label for="community-sharing" class="module-text">Community Template Sharing</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-
-        <h2>🤖 AI Integration</h2>
-        <div class="table-header">
-            <div></div>
-            <div>Module</div>
-            <div>User</div>
-            <div>Admin</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="ai-creation" onchange="updateProgress()">
-            <label for="ai-creation" class="module-text">Prompt-Based Website Creation</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="ai-suggestions" onchange="updateProgress()">
-            <label for="ai-suggestions" class="module-text">AI Design Suggestions</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="content-generation" onchange="updateProgress()">
-            <label for="content-generation" class="module-text">Content Generation</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="ai-config" onchange="updateProgress()">
-            <label for="ai-config" class="module-text">AI Configuration</label>
-            <div class="role-column user">❌</div>
-            <div class="role-column admin">✅</div>
-        </div>
-
-        <h2>🚀 Hosting & Publication</h2>
-        <div class="table-header">
-            <div></div>
-            <div>Module</div>
-            <div>User</div>
-            <div>Admin</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="website-publishing" onchange="updateProgress()">
-            <label for="website-publishing" class="module-text">Website Publishing</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="custom-url" onchange="updateProgress()">
-            <label for="custom-url" class="module-text">Custom URL Management</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="website-export" onchange="updateProgress()">
-            <label for="website-export" class="module-text">Website Export</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="hosting-mgmt" onchange="updateProgress()">
-            <label for="hosting-mgmt" class="module-text">Hosting Management</label>
-            <div class="role-column user">❌</div>
-            <div class="role-column admin">✅</div>
-        </div>
-
-        <h2>📊 Dashboard & Analytics</h2>
-        <div class="table-header">
-            <div></div>
-            <div>Module</div>
-            <div>User</div>
-            <div>Admin</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="user-dashboard" onchange="updateProgress()">
-            <label for="user-dashboard" class="module-text">User Dashboard</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="website-stats" onchange="updateProgress()">
-            <label for="website-stats" class="module-text">Website Statistics</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="performance-metrics" onchange="updateProgress()">
-            <label for="performance-metrics" class="module-text">Performance Metrics</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="activity-history" onchange="updateProgress()">
-            <label for="activity-history" class="module-text">Activity History</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-
-        <h2>🎨 Customization & Styling</h2>
-        <div class="table-header">
-            <div></div>
-            <div>Module</div>
-            <div>User</div>
-            <div>Admin</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="theme-mgmt" onchange="updateProgress()">
-            <label for="theme-mgmt" class="module-text">Theme Management</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="color-scheme" onchange="updateProgress()">
-            <label for="color-scheme" class="module-text">Color Scheme Editor</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="font-mgmt" onchange="updateProgress()">
-            <label for="font-mgmt" class="module-text">Font Management</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="dark-mode" onchange="updateProgress()">
-            <label for="dark-mode" class="module-text">Light/Dark Mode Support</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-
-        <h2>⚙️ System Administration</h2>
-        <div class="table-header">
-            <div></div>
-            <div>Module</div>
-            <div>User</div>
-            <div>Admin</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="user-mgmt" onchange="updateProgress()">
-            <label for="user-mgmt" class="module-text">User Management</label>
-            <div class="role-column user">❌</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="system-settings" onchange="updateProgress()">
-            <label for="system-settings" class="module-text">System Settings</label>
-            <div class="role-column user">❌</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="activity-logging" onchange="updateProgress()">
-            <label for="activity-logging" class="module-text">Activity Logging</label>
-            <div class="role-column user">❌</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="backup-recovery" onchange="updateProgress()">
-            <label for="backup-recovery" class="module-text">Backup & Recovery</label>
-            <div class="role-column user">❌</div>
-            <div class="role-column admin">✅</div>
-        </div>
-
-        <h2>🤝 Community & Support</h2>
-        <div class="table-header">
-            <div></div>
-            <div>Module</div>
-            <div>User</div>
-            <div>Admin</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="help-center" onchange="updateProgress()">
-            <label for="help-center" class="module-text">Help Center</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="community-forum" onchange="updateProgress()">
-            <label for="community-forum" class="module-text">Community Forum</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="feedback-mgmt" onchange="updateProgress()">
-            <label for="feedback-mgmt" class="module-text">Feedback Management</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
-        </div>
-        <div class="module-item">
-            <input type="checkbox" id="support-tickets" onchange="updateProgress()">
-            <label for="support-tickets" class="module-text">Support Ticketing</label>
-            <div class="role-column user">✅</div>
-            <div class="role-column admin">✅</div>
+        <div class="footer">
+            <button class="export-btn" onclick="exportToCSV()">Export to CSV</button>
+            <button class="export-btn" onclick="window.print()">Print / Save as PDF</button>
+            <p style="margin-top: 15px;">Last Updated: <span id="last-updated"></span></p>
         </div>
     </div>
 
     <script>
-        function updateProgress() {
-            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-            const checkedBoxes = document.querySelectorAll('input[type="checkbox"]:checked');
-            const totalModules = checkboxes.length;
-            const completedModules = checkedBoxes.length;
-            const percentage = Math.round((completedModules / totalModules) * 100);
+        const modules = [
+            { category: "Users", name: "User Registration & Authentication", completed: true },
+            { category: "Users", name: "Profile Management", completed: true },
+            { category: "Users", name: "Account Settings", completed: true },
+            { category: "Users", name: "Role & Permission Management", completed: false },
             
-            // Update progress bar
-            document.getElementById('progressFill').style.width = percentage + '%';
-            document.getElementById('progressText').textContent = 
-                `${completedModules} of ${totalModules} modules completed (${percentage}%)`;
+            { category: "Website Builder", name: "Drag-and-Drop Interface", completed: true },
+            { category: "Website Builder", name: "Template Selection", completed: true },
+            { category: "Website Builder", name: "Element Library", completed: true },
+            { category: "Website Builder", name: "Responsive Design Tools", completed: true },
+            { category: "Website Builder", name: "Website Preview", completed: true },
             
-            // Update completed items styling
-            checkboxes.forEach(checkbox => {
-                const moduleItem = checkbox.closest('.module-item');
-                const moduleText = moduleItem.querySelector('.module-text');
-                
-                if (checkbox.checked) {
-                    moduleText.classList.add('completed');
-                } else {
-                    moduleText.classList.remove('completed');
+            { category: "Content Management", name: "Text Editing", completed: true },
+            { category: "Content Management", name: "Image Management", completed: true },
+            { category: "Content Management", name: "Media Library", completed: true },
+            { category: "Content Management", name: "Section Management", completed: true },
+            
+            { category: "Template System", name: "Template Browsing", completed: true },
+            { category: "Template System", name: "Template Customization", completed: true },
+            { category: "Template System", name: "Template Management", completed: false },
+            { category: "Template System", name: "Community Template Sharing", completed: true },
+            
+            { category: "AI Integration", name: "Prompt-Based Website Creation", completed: true },
+            { category: "AI Integration", name: "AI Design Suggestions", completed: true },
+            { category: "AI Integration", name: "Content Generation", completed: true },
+            { category: "AI Integration", name: "AI Configuration", completed: false },
+            
+            { category: "Publication", name: "Website Publishing", completed: true },
+            { category: "Publication", name: "Custom URL Management", completed: true },
+            { category: "Publication", name: "Website Export", completed: true },
+            { category: "Publication", name: "Publication Management", completed: false },
+            
+            { category: "Dashboard & Analytics", name: "User Dashboard", completed: true },
+            { category: "Dashboard & Analytics", name: "Website Statistics", completed: true },
+            { category: "Dashboard & Analytics", name: "Performance Metrics", completed: true },
+            { category: "Dashboard & Analytics", name: "Activity History", completed: true },
+            
+            { category: "Community & Support", name: "Help Center", completed: true },
+            { category: "Community & Support", name: "Community Forum", completed: true },
+            { category: "Community & Support", name: "Feedback Management", completed: true }
+        ];
+
+        let moduleNumber = 1;
+        let currentCategory = '';
+
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            modules.forEach((module, index) => {
+                // Add category header if category changed
+                if (module.category !== currentCategory) {
+                    const categoryRow = document.createElement('tr');
+                    categoryRow.className = 'category-header';
+                    const categoryCell = document.createElement('td');
+                    categoryCell.colSpan = 6;
+                    categoryCell.textContent = module.category;
+                    categoryRow.appendChild(categoryCell);
+                    tbody.appendChild(categoryRow);
+                    currentCategory = module.category;
                 }
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="checkbox-cell">
+                        <input type="checkbox" ${module.completed ? 'checked' : ''} 
+                               onchange="updateCompletion(${index}, this.checked)">
+                    </td>
+                    <td class="module-number">${moduleNumber++}</td>
+                    <td>
+                        <div class="module-name">${module.name}</div>
+                    </td>
+                    <td>
+                        <input type="text" placeholder="e.g., MySQL, MongoDB, API" 
+                               value="${module.dataUsed || ''}" 
+                               onchange="updateDataUsed(${index}, this.value)">
+                    </td>
+                    <td>
+                        <select onchange="updateStatus(${index}, this.value)" 
+                                class="status-${module.status || 'pending'}">
+                            <option value="pending" ${module.status === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="passed" ${module.status === 'passed' ? 'selected' : ''}>Passed</option>
+                            <option value="failed" ${module.status === 'failed' ? 'selected' : ''}>Failed</option>
+                        </select>
+                    </td>
+                    <td>
+                        <textarea placeholder="Add remarks, notes, or issues..." 
+                                  onchange="updateRemarks(${index}, this.value)">${module.remarks || ''}</textarea>
+                    </td>
+                `;
+                tbody.appendChild(row);
             });
-            
-            // Save progress to localStorage
-            const checkedIds = Array.from(checkedBoxes).map(cb => cb.id);
-            localStorage.setItem('moduleChecklist', JSON.stringify(checkedIds));
+
+            updateStats();
         }
-        
-        // Load saved progress on page load
-        window.addEventListener('load', function() {
-            const savedProgress = localStorage.getItem('moduleChecklist');
-            if (savedProgress) {
-                const checkedIds = JSON.parse(savedProgress);
-                checkedIds.forEach(id => {
-                    const checkbox = document.getElementById(id);
-                    if (checkbox) {
-                        checkbox.checked = true;
+
+        function updateCompletion(index, completed) {
+            modules[index].completed = completed;
+            updateStats();
+            saveToLocalStorage();
+        }
+
+        function updateDataUsed(index, value) {
+            modules[index].dataUsed = value;
+            saveToLocalStorage();
+        }
+
+        function updateStatus(index, status) {
+            modules[index].status = status;
+            const row = document.querySelector(`#table-body tr:nth-child(${getRowIndex(index) + 1})`);
+            if (row) {
+                const select = row.querySelector('select');
+                select.className = `status-${status}`;
+            }
+            updateStats();
+            saveToLocalStorage();
+        }
+
+        function updateRemarks(index, value) {
+            modules[index].remarks = value;
+            saveToLocalStorage();
+        }
+
+        function getRowIndex(index) {
+            let rowIndex = 0;
+            let currentCat = '';
+            for (let i = 0; i <= index; i++) {
+                if (modules[i].category !== currentCat) {
+                    currentCat = modules[i].category;
+                    rowIndex++; // Category header row
+                }
+                if (i < index) rowIndex++;
+            }
+            return rowIndex;
+        }
+
+        function updateStats() {
+            const completed = modules.filter(m => m.completed).length;
+            const passed = modules.filter(m => m.status === 'passed').length;
+            const failed = modules.filter(m => m.status === 'failed').length;
+            const pending = modules.length - passed - failed;
+
+            document.getElementById('completed-modules').textContent = completed;
+            document.getElementById('pending-modules').textContent = pending;
+            document.getElementById('failed-modules').textContent = failed;
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('webeenthere-checklist', JSON.stringify(modules));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('webeenthere-checklist');
+            if (saved) {
+                const savedModules = JSON.parse(saved);
+                savedModules.forEach((saved, index) => {
+                    if (modules[index]) {
+                        modules[index].dataUsed = saved.dataUsed || '';
+                        modules[index].status = saved.status || 'pending';
+                        modules[index].remarks = saved.remarks || '';
+                        modules[index].completed = saved.completed !== undefined ? saved.completed : modules[index].completed;
                     }
                 });
             }
-            updateProgress();
-        });
+        }
+
+        function exportToCSV() {
+            let csv = 'Module #,Category,Module Name,Completed,Data Used,Status,Remarks\n';
+            
+            let modNum = 1;
+            modules.forEach(module => {
+                const completed = module.completed ? 'Yes' : 'No';
+                const dataUsed = (module.dataUsed || '').replace(/"/g, '""');
+                const status = module.status || 'Pending';
+                const remarks = (module.remarks || '').replace(/"/g, '""').replace(/\n/g, ' ');
+                csv += `${modNum},"${module.category}","${module.name}",${completed},"${dataUsed}","${status}","${remarks}"\n`;
+                modNum++;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `WEBeenThere_Module_Checklist_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initialize
+        document.getElementById('last-updated').textContent = new Date().toLocaleString();
+        loadFromLocalStorage();
+        renderTable();
     </script>
 </body>
 </html>

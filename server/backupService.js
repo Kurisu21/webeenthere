@@ -59,6 +59,16 @@ class BackupService {
         port: process.env.DB_PORT || 3306
       });
       
+      // Add error handler to prevent unhandled errors
+      connection.on('error', (err) => {
+        console.error('❌ Backup connection error:', err.message);
+        if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
+          console.log('🔄 Backup connection lost.');
+        } else if (err.fatal) {
+          console.error('💥 Fatal backup connection error:', err);
+        }
+      });
+      
       const db = connection.promise();
       
       // Get all tables
@@ -174,6 +184,16 @@ class BackupService {
         database: process.env.DB_NAME || 'u875409848_jumaoas',
         port: process.env.DB_PORT || 3306,
         multipleStatements: true
+      });
+      
+      // Add error handler to prevent unhandled errors
+      connection.on('error', (err) => {
+        console.error('❌ Restore connection error:', err.message);
+        if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
+          console.log('🔄 Restore connection lost.');
+        } else if (err.fatal) {
+          console.error('💥 Fatal restore connection error:', err);
+        }
       });
       
       const db = connection.promise();

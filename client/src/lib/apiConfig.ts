@@ -71,6 +71,9 @@ export const API_ENDPOINTS = {
   // Media endpoints
   MEDIA_UPLOAD: `${API_BASE_URL}/api/media/upload`,
   MEDIA_IMAGES: `${API_BASE_URL}/api/media/images`,
+  
+  // Profile image upload
+  PROFILE_IMAGE_UPLOAD: `${API_BASE_URL}/api/users/profile/upload-image`,
 } as const;
 
 // Helper function to get authentication token

@@ -114,7 +114,7 @@ export default function BuildWebsitePage() {
   const handlePublish = async () => {
     try {
       // Convert layout to HTML and save
-      const { convertLayoutToHTML } = await import('../../../_components/builder-v2/utils/jsonToHtml');
+      const { convertLayoutToHTML } = await import('../../../_components/builder/utils/jsonToHtml');
       const html = convertLayoutToHTML(websiteData.layout);
       
       const response = await apiPut(`${API_ENDPOINTS.WEBSITES}/${websiteId}`, {

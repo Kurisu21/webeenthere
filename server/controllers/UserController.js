@@ -740,6 +740,36 @@ class UserController {
     }
   }
 
+  // Upload profile image
+  async uploadProfileImage(req, res) {
+    try {
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'No image file provided' });
+      }
+
+      // Create file URL (must match the route path - /api/media/uploads/...)
+      const fileUrl = `/api/media/uploads/user_${userId}/${req.file.filename}`;
+      
+      // Update user's profile_image in database
+      await this.userModel.updateProfile(userId, { profile_image: fileUrl });
+
+      res.json({ 
+        success: true,
+        profile_image: fileUrl,
+        message: 'Profile image uploaded successfully'
+      });
+    } catch (error) {
+      console.error('Upload profile image error:', error);
+      res.status(500).json({ error: 'Failed to upload profile image' });
+    }
+  }
+
   // Get dashboard statistics
   async getDashboardStats(req, res) {
     try {
@@ -748,6 +778,146 @@ class UserController {
     } catch (err) {
       console.error('Get dashboard stats error:', err);
       res.status(500).json({ error: 'Server error' });
+    }
+  }
+
+  // Delete user with cascading deletes (admin only)
+  async deleteUser(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = parseInt(id);
+
+      if (!userId || isNaN(userId)) {
+        return res.status(400).json({ error: 'Invalid user ID' });
+      }
+
+      // Check if user exists
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Prevent deleting admin users (safety check)
+      if (user.role === 'admin') {
+        return res.status(403).json({ error: 'Cannot delete admin users' });
+      }
+
+      const connection = await this.db.getConnection();
+      
+      try {
+        await connection.beginTransaction();
+
+        // Delete related records in order (respecting foreign key constraints)
+        // 1. Delete user_plan entries
+        await connection.execute('DELETE FROM user_plan WHERE user_id = ?', [userId]);
+        console.log(`Deleted user_plan entries for user ${userId}`);
+
+        // 2. Delete website analytics (via websites) - get website IDs first
+        const [websiteRows] = await connection.execute('SELECT id FROM websites WHERE user_id = ?', [userId]);
+        const websiteIds = websiteRows.map((row) => row.id);
+        if (websiteIds.length > 0) {
+          const placeholders = websiteIds.map(() => '?').join(',');
+          await connection.execute(
+            `DELETE FROM website_analytics WHERE website_id IN (${placeholders})`,
+            websiteIds
+          );
+          console.log(`Deleted website_analytics for user ${userId}`);
+        }
+
+        // 3. Delete media assets
+        await connection.execute('DELETE FROM media_assets WHERE user_id = ?', [userId]);
+        console.log(`Deleted media_assets for user ${userId}`);
+
+        // 4. Delete AI prompts
+        await connection.execute('DELETE FROM ai_prompts WHERE user_id = ?', [userId]);
+        console.log(`Deleted ai_prompts for user ${userId}`);
+
+        // 5. Delete custom blocks
+        await connection.execute('DELETE FROM custom_blocks WHERE user_id = ?', [userId]);
+        console.log(`Deleted custom_blocks for user ${userId}`);
+
+        // 6. Delete forum replies (by author)
+        await connection.execute('DELETE FROM forum_replies WHERE author_id = ?', [userId]);
+        console.log(`Deleted forum_replies for user ${userId}`);
+
+        // 7. Delete forum threads (by author) - this will cascade delete replies via FK
+        await connection.execute('DELETE FROM forum_threads WHERE author_id = ?', [userId]);
+        console.log(`Deleted forum_threads for user ${userId}`);
+
+        // 8. Delete support messages (via tickets) - get ticket IDs first
+        const [ticketRows] = await connection.execute('SELECT id FROM support_tickets WHERE user_id = ?', [userId]);
+        const ticketIds = ticketRows.map((row) => row.id);
+        if (ticketIds.length > 0) {
+          const placeholders = ticketIds.map(() => '?').join(',');
+          await connection.execute(
+            `DELETE FROM support_messages WHERE ticket_id IN (${placeholders})`,
+            ticketIds
+          );
+          console.log(`Deleted support_messages for user ${userId}`);
+        }
+
+        // 9. Delete support tickets
+        await connection.execute('DELETE FROM support_tickets WHERE user_id = ?', [userId]);
+        console.log(`Deleted support_tickets for user ${userId}`);
+
+        // 10. Delete feedback responses
+        await connection.execute('DELETE FROM feedback_responses WHERE user_id = ?', [userId]);
+        console.log(`Deleted feedback_responses for user ${userId}`);
+
+        // 11. Delete feedback
+        await connection.execute('DELETE FROM feedback WHERE user_id = ?', [userId]);
+        console.log(`Deleted feedback for user ${userId}`);
+
+        // 12. Delete activity logs
+        await connection.execute('DELETE FROM activity_logs WHERE user_id = ?', [userId]);
+        console.log(`Deleted activity_logs for user ${userId}`);
+
+        // 13. Delete websites (this will cascade delete website_analytics if FK is set up)
+        await connection.execute('DELETE FROM websites WHERE user_id = ?', [userId]);
+        console.log(`Deleted websites for user ${userId}`);
+
+        // 14. Update templates created by this user (set creator_user_id to NULL)
+        await connection.execute('UPDATE templates SET creator_user_id = NULL WHERE creator_user_id = ?', [userId]);
+        console.log(`Updated templates for user ${userId}`);
+
+        // 15. Finally, delete the user
+        await connection.execute('DELETE FROM users WHERE id = ?', [userId]);
+        console.log(`Deleted user ${userId}`);
+
+        await connection.commit();
+
+        // Log deletion activity
+        await databaseActivityLogger.logActivity({
+          userId: req.user?.id || null,
+          action: 'user_deleted',
+          entityType: 'user',
+          entityId: userId,
+          ipAddress: req.ip,
+          userAgent: req.get('User-Agent'),
+          details: {
+            deleted_user_id: userId,
+            deleted_username: user.username,
+            deleted_email: user.email,
+            timestamp: new Date().toISOString()
+          }
+        });
+
+        res.json({ 
+          message: 'User and all related data deleted successfully',
+          deletedUserId: userId
+        });
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    } catch (err) {
+      console.error('Delete user error:', err);
+      res.status(500).json({ 
+        error: 'Failed to delete user',
+        details: err.message 
+      });
     }
   }
 

@@ -16,6 +16,17 @@ async function populateTemplates() {
   try {
     // Connect to database
     connection = await mysql.createConnection(dbConfig);
+    
+    // Add error handler to prevent unhandled errors
+    connection.on('error', (err) => {
+      console.error('❌ Database connection error:', err.message);
+      if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
+        console.log('🔄 Database connection lost.');
+      } else if (err.fatal) {
+        console.error('💥 Fatal database connection error:', err);
+      }
+    });
+    
     console.log('Connected to database');
 
     // Clear existing templates

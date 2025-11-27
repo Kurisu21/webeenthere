@@ -309,7 +309,13 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
                       <p className="text-white">{user.profile_image || 'Not set'}</p>
                     )}
                   </div>
+                </div>
+              </div>
 
+              {/* Account Settings */}
+              <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Account Settings</h3>
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Theme Mode
@@ -327,13 +333,7 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
                       <p className="text-white capitalize">{user.theme_mode}</p>
                     )}
                   </div>
-                </div>
-              </div>
 
-              {/* Account Settings */}
-              <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Account Settings</h3>
-                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Role

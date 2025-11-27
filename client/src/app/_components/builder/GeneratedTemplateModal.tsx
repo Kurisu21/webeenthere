@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { convertTemplateElementsToElements } from './utils/templateConverter';
 
 interface GeneratedTemplateModalProps {
@@ -20,44 +20,7 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
   reasoning,
   suggestions = []
 }) => {
-  const [previewHtml, setPreviewHtml] = useState('');
-  
   console.log('GeneratedTemplateModal render:', { isOpen, template: !!template, templateData: template });
-  
-  useEffect(() => {
-    if (isOpen && template) {
-      const html = template.html || '';
-      const css = template.css || template.css_base || '';
-      
-      // Combine HTML and CSS for preview in iframe
-      const fullHtml = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Template Preview</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-    }
-    ${css}
-  </style>
-</head>
-<body>
-  ${html}
-</body>
-</html>`;
-      setPreviewHtml(fullHtml);
-    }
-  }, [isOpen, template]);
   
   if (!isOpen || !template) {
     console.log('Modal not showing because:', { isOpen, hasTemplate: !!template });
@@ -78,7 +41,7 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div>
@@ -108,25 +71,46 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
                 Template Preview
               </h3>
               
-              <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mb-4 border border-gray-200 dark:border-gray-800">
-                <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm relative overflow-hidden" style={{ height: '500px' }}>
-                  {/* Real HTML preview with CSS in iframe */}
-                  {previewHtml ? (
-                    <iframe
-                      srcDoc={previewHtml}
-                      className="w-full h-full border-0"
-                      title="Template Preview"
-                      sandbox="allow-same-origin allow-scripts"
-                      style={{ minHeight: '500px' }}
-                    />
-                  ) : (
-                    <div className="text-center text-gray-500 py-8 flex items-center justify-center h-full">
-                      <div>
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                        <p>Loading preview...</p>
-                      </div>
+              <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mb-4">
+                <div className="bg-white dark:bg-gray-800 rounded border shadow-sm min-h-[300px] relative overflow-hidden">
+                  {/* Real HTML preview with CSS */}
+                  <div className="w-full h-full">
+                    <style dangerouslySetInnerHTML={{ __html: template.css || template.css_base || '' }} />
+                    <div className="template-preview" style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      overflow: 'auto',
+                      fontSize: '12px', // Scale down for preview
+                      transform: 'scale(0.5)',
+                      transformOrigin: 'top left',
+                      width: '200%',
+                      height: '200%'
+                    }}>
+                      {/* Render HTML directly if available, otherwise render elements */}
+                      {template.html ? (
+                        <div dangerouslySetInnerHTML={{ __html: template.html }} />
+                      ) : template.elements && template.elements.length > 0 ? (
+                        template.elements.map((element: any, index: number) => (
+                          <div
+                            key={element.id || index}
+                            style={{
+                              position: element.position ? 'absolute' : 'relative',
+                              left: element.position?.x || 'auto',
+                              top: element.position?.y || 'auto',
+                              width: element.size?.width || 'auto',
+                              height: element.size?.height || 'auto',
+                              ...element.styles
+                            }}
+                            dangerouslySetInnerHTML={{ __html: element.content || '' }}
+                          />
+                        ))
+                      ) : (
+                        <div className="text-center text-gray-500 py-8">
+                          No elements to preview
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
 

@@ -82,6 +82,22 @@ export default function UserManagementPage() {
     router.push(`/admin/users/${userId}`);
   };
 
+  const handleDeleteUser = async (userId: number) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone and will delete all related data.')) {
+      return;
+    }
+
+    try {
+      await adminApi.deleteUser(userId);
+      // Refresh the users list
+      fetchUsers(currentPage, searchTerm, roleFilter, statusFilter);
+      alert('User deleted successfully');
+    } catch (err: any) {
+      console.error('Failed to delete user:', err);
+      alert(err.message || 'Failed to delete user');
+    }
+  };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -217,6 +233,7 @@ export default function UserManagementPage() {
               onToggleActive={handleToggleActive}
               onToggleVerified={handleToggleVerified}
               onViewDetails={handleViewDetails}
+              onDeleteUser={handleDeleteUser}
               isLoading={isLoading}
             />
 

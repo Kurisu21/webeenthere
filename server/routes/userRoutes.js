@@ -8,9 +8,11 @@ const { authMiddleware } = require('../middleware/auth');
 const { getDatabaseConnection } = require('../database/database');
 const User = require('../models/User');
 const UserController = require('../controllers/UserController');
+const MediaController = require('../controllers/MediaController');
 
 const userModel = new User(getDatabaseConnection());
 const userController = new UserController(userModel);
+const mediaController = new MediaController(getDatabaseConnection());
 
 // Register route
 router.post(
@@ -149,14 +151,31 @@ router.put(
       .normalizeEmail(),
     body('profile_image')
       .optional()
-      .isURL()
-      .withMessage('Profile image must be a valid URL'),
+      .custom((value) => {
+        // Allow empty string, or valid URL
+        if (!value || value === '') return true;
+        try {
+          new URL(value);
+          return true;
+        } catch {
+          return false;
+        }
+      })
+      .withMessage('Profile image must be a valid URL or empty'),
     body('theme_mode')
       .optional()
       .isIn(['light', 'dark'])
       .withMessage('Theme mode must be either light or dark'),
   ],
   (req, res) => userController.updateProfile(req, res)
+);
+
+// Upload profile image route
+router.post(
+  '/profile/upload-image',
+  authMiddleware,
+  mediaController.getUploadMiddleware(),
+  (req, res) => userController.uploadProfileImage(req, res)
 );
 
 module.exports = router; 

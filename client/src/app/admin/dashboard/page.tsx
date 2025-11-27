@@ -16,11 +16,20 @@ export default function AdminDashboardPage() {
     const fetchStats = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         const userStats = await adminApi.getUserStats();
         setStats(userStats);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch dashboard stats:', err);
-        setError('Failed to load dashboard statistics');
+        setError(err.message || 'Failed to load dashboard statistics');
+        // Set default stats on error so UI doesn't break
+        setStats({
+          totalUsers: 0,
+          activeUsers: 0,
+          verifiedUsers: 0,
+          adminUsers: 0,
+          recentUsers: [],
+        });
       } finally {
         setIsLoading(false);
       }
