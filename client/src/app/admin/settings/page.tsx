@@ -6,7 +6,6 @@ import AdminSidebar from '../../_components/layout/AdminSidebar';
 import MainContentWrapper from '../../_components/layout/MainContentWrapper';
 import { useAuth } from '../../_components/auth/AuthContext';
 import { API_ENDPOINTS, apiPut } from '../../../lib/apiConfig';
-import { useAuth } from '../../_components/auth/AuthContext';
 
 export default function AdminSettingsPage() {
   const { user, token, updateUser } = useAuth();

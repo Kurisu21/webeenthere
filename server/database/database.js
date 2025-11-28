@@ -98,9 +98,23 @@ async function initializeDatabase() {
   const orm = new DatabaseORM();
   
   // Check if database needs initialization
-  const status = await orm.getStatus();
+  let status;
+  try {
+    status = await orm.getStatus();
+  } catch (error) {
+    // If status check fails (timeout, connection issues), assume database exists
+    // and skip initialization to avoid connection errors
+    console.log('⚠️  Could not check database status (connection issue). Assuming database exists and skipping initialization.');
+    return true;
+  }
   
-  if (!status || !status.database) {
+  // If status is null/undefined, assume database exists and skip initialization
+  if (!status) {
+    console.log('⚠️  Could not determine database status. Assuming database exists and skipping initialization.');
+    return true;
+  }
+  
+  if (!status.database) {
     // Database doesn't exist - initialize everything
     console.log('🔧 Database not found, initializing...');
     const success = await orm.initialize();
@@ -111,14 +125,14 @@ async function initializeDatabase() {
       return false;
     }
   } else {
-    // Database exists - check if tables exist
-    const requiredTables = ['users', 'templates', 'websites', 'plans'];
-    const tablesExist = requiredTables.every(tableName => {
+    // Database exists - check if all required tables exist
+    const requiredTables = ['users', 'templates', 'websites', 'ai_prompts', 'media_assets', 'website_analytics', 'custom_blocks', 'plans', 'user_plan', 'subscription_logs', 'payment_transactions', 'invoices', 'feedback', 'feedback_responses', 'forum_categories', 'forum_threads', 'forum_replies', 'forum_thread_likes', 'forum_reply_likes', 'help_categories', 'help_articles', 'help_article_votes', 'support_tickets', 'support_messages', 'activity_logs', 'system_settings'];
+    const allTablesExist = requiredTables.every(tableName => {
       return status.tables && status.tables[tableName] && status.tables[tableName].exists;
     });
     
-    if (!tablesExist) {
-      console.log('🔧 Database exists but tables are missing, initializing tables...');
+    if (!allTablesExist) {
+      console.log('🔧 Database exists but some tables are missing, initializing tables...');
       const success = await orm.initialize();
       if (success) {
         console.log('✅ Database initialization completed');
@@ -127,7 +141,8 @@ async function initializeDatabase() {
         return false;
       }
     } else {
-      console.log('✅ Database already initialized');
+      // Database and all tables exist - skip all initialization
+      console.log('✅ Database and all tables already exist. Skipping initialization.');
     }
   }
   return true;

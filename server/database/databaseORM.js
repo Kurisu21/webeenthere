@@ -3604,7 +3604,25 @@ class DatabaseORM {
         console.log(`ℹ️  Database '${this.dbName}' already exists`);
       }
 
-      // Create tables
+      // Check if all required tables already exist
+      const requiredTables = ['users', 'templates', 'websites', 'ai_prompts', 'media_assets', 'website_analytics', 'custom_blocks', 'plans', 'user_plan', 'subscription_logs', 'payment_transactions', 'invoices', 'feedback', 'feedback_responses', 'forum_categories', 'forum_threads', 'forum_replies', 'forum_thread_likes', 'forum_reply_likes', 'help_categories', 'help_articles', 'help_article_votes', 'support_tickets', 'support_messages', 'activity_logs', 'system_settings'];
+      
+      let allTablesExist = true;
+      for (const tableName of requiredTables) {
+        const exists = await this.tableExists(tableName);
+        if (!exists) {
+          allTablesExist = false;
+          break;
+        }
+      }
+
+      if (allTablesExist) {
+        console.log('✅ All required tables already exist. Skipping table creation and data seeding.');
+        console.log('✅ Database initialization completed successfully!');
+        return true;
+      }
+
+      // Create tables only if some are missing
       console.log('📋 Creating tables...');
       await this.createTables();
 

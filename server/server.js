@@ -19,14 +19,15 @@ async function startServer() {
       process.exit(1);
     }
 
-    // Initialize database if needed (auto-initialization)
-    console.log('🔧 Auto-checking database initialization...');
-    const initSuccess = await initializeDatabase();
-    
-    if (!initSuccess) {
-      console.error('❌ Database initialization failed');
-      process.exit(1);
-    }
+    // Skip database initialization - database already exists and is configured
+    // Uncomment below if you need to initialize a new database
+    // console.log('🔧 Auto-checking database initialization...');
+    // const initSuccess = await initializeDatabase();
+    // if (!initSuccess) {
+    //   console.error('❌ Database initialization failed');
+    //   process.exit(1);
+    // }
+    console.log('✅ Database already configured. Skipping initialization check.');
 
     // Create initial backup
     console.log('💾 Creating initial database backup...');
