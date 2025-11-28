@@ -97,7 +97,7 @@ export const adminApi = {
     return apiRequest(`/api/admin/users/${id}`);
   },
 
-  updateUserRole: async (id: number, role: string) => {
+  updateUserRole: async (id: number, role: 'user' | 'admin') => {
     return apiRequest(`/api/admin/users/${id}/role`, {
       method: 'PUT',
       body: JSON.stringify({ role }),
@@ -120,6 +120,26 @@ export const adminApi = {
     return apiRequest(`/api/admin/users/${id}/profile`, {
       method: 'PUT',
       body: JSON.stringify(profileData),
+    });
+  },
+
+  updateUserPassword: async (id: number, password: string) => {
+    return apiRequest(`/api/admin/users/${id}/password`, {
+      method: 'PUT',
+      body: JSON.stringify({ password }),
+    });
+  },
+
+  createUser: async (userData: {
+    username: string;
+    email: string;
+    password: string;
+    role?: 'user' | 'admin';
+    is_verified?: boolean;
+  }) => {
+    return apiRequest('/api/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(userData),
     });
   },
 

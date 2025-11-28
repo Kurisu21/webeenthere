@@ -18,11 +18,13 @@ router.use(adminAuthMiddleware);
 router.get('/stats', (req, res) => userController.getDashboardStats(req, res));
 
 // User management routes
+router.post('/users', (req, res) => userController.createUser(req, res));
 router.get('/users', (req, res) => userController.getAllUsers(req, res));
 router.get('/users/:id', (req, res) => userController.getUserById(req, res));
 router.put('/users/:id/role', (req, res) => userController.updateUserRole(req, res));
 router.put('/users/:id/status', (req, res) => userController.updateUserStatus(req, res));
 router.put('/users/:id/profile', (req, res) => userController.updateUserProfile(req, res));
+router.put('/users/:id/password', (req, res) => userController.updateUserPassword(req, res));
 router.delete('/users/:id', (req, res) => userController.deleteUser(req, res));
 
 module.exports = router;

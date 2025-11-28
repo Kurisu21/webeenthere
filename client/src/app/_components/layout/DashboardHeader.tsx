@@ -1,6 +1,7 @@
 'use client';
 
 import React, { memo, useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSidebar } from './SidebarContext';
 import { useAuth } from '../auth/AuthContext';
@@ -17,6 +18,7 @@ const DashboardHeader = memo(() => {
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -117,68 +119,228 @@ const DashboardHeader = memo(() => {
               </div>
             )}
             
-            <div className="flex items-center space-x-2">
-              {user?.id && getProfileImageUrl(user.id) ? (
-                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-app">
-                  <img
-                    src={getProfileImageUrl(user.id) || ''}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const parent = target.parentElement;
-                      if (parent) {
-                        parent.innerHTML = `<div class="w-full h-full bg-surface-elevated border border-app rounded-full flex items-center justify-center"><svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>`;
-                      }
-                    }}
+            {/* User Profile Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center focus:outline-none"
+              >
+                {user?.id && getProfileImageUrl(user.id) ? (
+                  <div className="w-8 h-8 rounded-full overflow-hidden border-4 border-app cursor-pointer hover:opacity-80 transition-opacity">
+                    <img
+                      src={getProfileImageUrl(user.id) || ''}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = `<div class="w-full h-full bg-surface-elevated border border-app rounded-full flex items-center justify-center"><svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>`;
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 bg-surface-elevated border-4 border-app rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
+                    <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  </div>
+                )}
+              </button>
+
+              {/* Dropdown Menu */}
+              {showUserMenu && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowUserMenu(false)}
                   />
-                </div>
-              ) : (
-                <div className="w-8 h-8 bg-surface-elevated border border-app rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                  </svg>
-                </div>
+                  <div className="absolute right-0 mt-2 w-56 bg-surface-elevated border border-app rounded-lg shadow-xl z-50 overflow-hidden">
+                    {/* User Info Section */}
+                    <div className="px-4 py-3 border-b border-app">
+                      <div className="flex items-center gap-3">
+                        {user?.id && getProfileImageUrl(user.id) ? (
+                          <div className="w-10 h-10 rounded-full overflow-hidden border-4 border-app flex-shrink-0">
+                            <img
+                              src={getProfileImageUrl(user.id) || ''}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = `<div class="w-full h-full bg-surface-elevated border border-app rounded-full flex items-center justify-center"><svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>`;
+                                }
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 bg-surface-elevated border-4 border-app rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-primary font-semibold text-sm truncate">
+                            {user?.username || 'User'}
+                          </div>
+                          <div className="text-secondary text-xs truncate">
+                            {user?.email || ''}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Navigation Links */}
+                    <div className="py-1">
+                      <Link
+                        href={user?.role === 'admin' ? '/admin/settings' : '/user/profile'}
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-primary hover:bg-surface transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span className="text-sm">Profile</span>
+                      </Link>
+                    </div>
+
+                    {/* Sign Out */}
+                    <div className="border-t border-app py-1">
+                      <button
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          setShowLogoutConfirm(true);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-primary hover:bg-surface transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        <span className="text-sm">Sign out</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
-              <span className="text-primary text-sm font-medium">
-                {user ? user.username : 'User'}
-              </span>
             </div>
-            <button
-              onClick={() => setShowLogoutConfirm(true)}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
-            >
-              Logout
-            </button>
           </div>
           
           {/* Mobile user avatar and theme toggle */}
           <div className="md:hidden flex items-center space-x-2">
             <ThemeToggle />
-            {user?.id && getProfileImageUrl(user.id) ? (
-              <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-app">
-                <img
-                  src={getProfileImageUrl(user.id) || ''}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const parent = target.parentElement;
-                    if (parent) {
-                      parent.innerHTML = `<div class="w-full h-full bg-surface-elevated border border-app rounded-full flex items-center justify-center"><svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>`;
-                    }
-                  }}
-                />
-              </div>
-            ) : (
-              <div className="w-8 h-8 bg-surface-elevated border border-app rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-              </div>
-            )}
+            <div className="relative">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center focus:outline-none"
+              >
+                {user?.id && getProfileImageUrl(user.id) ? (
+                  <div className="w-8 h-8 rounded-full overflow-hidden border-4 border-app">
+                    <img
+                      src={getProfileImageUrl(user.id) || ''}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = `<div class="w-full h-full bg-surface-elevated border border-app rounded-full flex items-center justify-center"><svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>`;
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 bg-surface-elevated border-4 border-app rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  </div>
+                )}
+              </button>
+
+              {/* Mobile Dropdown Menu */}
+              {showUserMenu && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowUserMenu(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-56 bg-surface-elevated border border-app rounded-lg shadow-xl z-50 overflow-hidden">
+                    {/* User Info Section */}
+                    <div className="px-4 py-3 border-b border-app">
+                      <div className="flex items-center gap-3">
+                        {user?.id && getProfileImageUrl(user.id) ? (
+                          <div className="w-10 h-10 rounded-full overflow-hidden border-4 border-app flex-shrink-0">
+                            <img
+                              src={getProfileImageUrl(user.id) || ''}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = `<div class="w-full h-full bg-surface-elevated border border-app rounded-full flex items-center justify-center"><svg class="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>`;
+                                }
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 bg-surface-elevated border-4 border-app rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-primary font-semibold text-sm truncate">
+                            {user?.username || 'User'}
+                          </div>
+                          <div className="text-secondary text-xs truncate">
+                            {user?.email || ''}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Navigation Links */}
+                    <div className="py-1">
+                      <Link
+                        href={user?.role === 'admin' ? '/admin/settings' : '/user/profile'}
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-primary hover:bg-surface transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span className="text-sm">Profile</span>
+                      </Link>
+                    </div>
+
+                    {/* Sign Out */}
+                    <div className="border-t border-app py-1">
+                      <button
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          setShowLogoutConfirm(true);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-primary hover:bg-surface transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        <span className="text-sm">Sign out</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>

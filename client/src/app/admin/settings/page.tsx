@@ -148,7 +148,7 @@ export default function AdminSettingsPage() {
                 {!isEditing ? (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105"
+                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-md"
                   >
                     Edit Profile
                   </button>
@@ -156,14 +156,14 @@ export default function AdminSettingsPage() {
                   <div className="flex space-x-2">
                     <button
                       onClick={handleCancel}
-                      className="bg-surface-elevated hover:bg-surface border border-app text-primary px-4 py-2 rounded-lg font-medium transition-colors"
+                      className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg font-medium transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSaveProfile}
                       disabled={isSaving}
-                      className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105"
+                      className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-md"
                     >
                       {isSaving ? 'Saving...' : 'Save Changes'}
                     </button>
@@ -209,7 +209,7 @@ export default function AdminSettingsPage() {
                         type="text"
                         value={formData.username}
                         onChange={(e) => handleInputChange('username', e.target.value)}
-                        className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     ) : (
                       <p className="text-primary">{user?.username}</p>
@@ -225,7 +225,7 @@ export default function AdminSettingsPage() {
                         type="email"
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
-                        className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     ) : (
                       <p className="text-primary">{user?.email}</p>
@@ -285,7 +285,7 @@ export default function AdminSettingsPage() {
                       value={formData.currentPassword}
                       onChange={(e) => handleInputChange('currentPassword', e.target.value)}
                       placeholder="Enter current password"
-                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
 
@@ -298,7 +298,7 @@ export default function AdminSettingsPage() {
                       value={formData.newPassword}
                       onChange={(e) => handleInputChange('newPassword', e.target.value)}
                       placeholder="Enter new password"
-                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
 
@@ -311,14 +311,14 @@ export default function AdminSettingsPage() {
                       value={formData.confirmPassword}
                       onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                       placeholder="Confirm new password"
-                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
 
                   <button
                     onClick={handleChangePassword}
                     disabled={isSaving || !formData.currentPassword || !formData.newPassword || !formData.confirmPassword}
-                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105"
+                    className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-md"
                   >
                     {isSaving ? 'Changing Password...' : 'Change Password'}
                   </button>
@@ -346,14 +346,14 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* Security Notice */}
-            <div className="mt-6 p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
+            <div className="mt-6 p-4 bg-surface-elevated border border-app rounded-lg">
               <div className="flex items-start">
-                <svg className="w-5 h-5 text-yellow-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-primary mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
                 <div>
-                  <p className="text-yellow-300 text-sm font-medium">Security Notice</p>
-                  <p className="text-yellow-200 text-xs mt-1">
+                  <p className="text-primary text-sm font-medium">Security Notice</p>
+                  <p className="text-secondary text-xs mt-1">
                     Keep your admin credentials secure. Use strong passwords and enable two-factor authentication when available.
                   </p>
                 </div>

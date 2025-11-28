@@ -799,20 +799,34 @@ class UserController {
     }
   }
 
-  // Update user role (only user to user, not admin)
+  // Update user role (admin can change to any role)
   async updateUserRole(req, res) {
     try {
       const { id } = req.params;
       const { role } = req.body;
 
-      if (role !== 'user') {
+      if (!role || (role !== 'user' && role !== 'admin')) {
         return res.status(400).json({ 
-          error: 'Can only assign user role. Admin role cannot be assigned through this endpoint.' 
+          error: 'Role must be either "user" or "admin"' 
         });
       }
 
       const success = await this.userModel.updateRole(id, role);
       if (success) {
+        // Log role change activity
+        await databaseActivityLogger.logActivity({
+          userId: id,
+          action: 'role_changed',
+          entityType: 'user',
+          entityId: id,
+          ipAddress: req.ip,
+          userAgent: req.get('User-Agent'),
+          details: {
+            new_role: role,
+            timestamp: new Date().toISOString()
+          }
+        });
+        
         res.json({ message: 'User role updated successfully' });
       } else {
         res.status(404).json({ error: 'User not found' });
@@ -849,7 +863,26 @@ class UserController {
 
       const updateData = {};
       if (username) updateData.username = username;
-      if (email) updateData.email = email;
+      if (email) {
+        // Check if email is being changed
+        const user = await this.userModel.findById(id);
+        if (user && user.email !== email) {
+          // Email is being changed, mark as unverified and send verification code
+          updateData.email = email;
+          // Mark user as unverified when email changes
+          await this.userModel.updateStatus(id, { is_verified: false });
+          
+          // Generate verification code
+          const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+          const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+          await this.userModel.storeVerificationCode(id, verificationCode, expiresAt);
+          
+          // Send verification code to new email
+          await this.emailService.sendVerificationCodeEmail(email, username || user.username, verificationCode);
+        } else {
+          updateData.email = email;
+        }
+      }
       if (profile_image !== undefined) updateData.profile_image = profile_image;
       if (theme_mode) updateData.theme_mode = theme_mode;
 
@@ -877,6 +910,145 @@ class UserController {
       }
     } catch (err) {
       console.error('Update user profile error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+
+  // Update user password (admin can change any user's password)
+  async updateUserPassword(req, res) {
+    try {
+      const { id } = req.params;
+      const { password } = req.body;
+
+      if (!password || password.length < 8) {
+        return res.status(400).json({ 
+          error: 'Password must be at least 8 characters' 
+        });
+      }
+
+      // Hash the new password
+      const passwordHash = await bcrypt.hash(password, 10);
+      
+      const success = await this.userModel.updatePassword(id, passwordHash);
+      if (success) {
+        // Log password change activity
+        await databaseActivityLogger.logActivity({
+          userId: id,
+          action: 'password_changed',
+          entityType: 'user',
+          entityId: id,
+          ipAddress: req.ip,
+          userAgent: req.get('User-Agent'),
+          details: {
+            method: 'admin_password_reset',
+            timestamp: new Date().toISOString()
+          }
+        });
+        
+        res.json({ message: 'User password updated successfully' });
+      } else {
+        res.status(404).json({ error: 'User not found' });
+      }
+    } catch (err) {
+      console.error('Update user password error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+
+  // Create user (admin can create users)
+  async createUser(req, res) {
+    try {
+      const { username, email, password, role, is_verified } = req.body;
+
+      // Validation
+      if (!username || !email || !password) {
+        return res.status(400).json({ 
+          error: 'Username, email, and password are required' 
+        });
+      }
+
+      if (password.length < 8) {
+        return res.status(400).json({ 
+          error: 'Password must be at least 8 characters' 
+        });
+      }
+
+      // Check if username already exists
+      const existingUsername = await this.userModel.findByUsername(username);
+      if (existingUsername) {
+        return res.status(400).json({ error: 'Username is already taken' });
+      }
+
+      // Check if email already exists
+      const existingEmail = await this.userModel.findByEmail(email);
+      if (existingEmail) {
+        return res.status(400).json({ error: 'Email is already registered' });
+      }
+
+      // Create user
+      const userId = await this.userModel.create({ 
+        username, 
+        email, 
+        password
+      });
+
+      // Set auth_provider to 'email'
+      await this.db.execute(
+        'UPDATE users SET auth_provider = ? WHERE id = ?',
+        ['email', userId]
+      );
+
+      // Set role if provided (default to 'user')
+      const userRole = role === 'admin' ? 'admin' : 'user';
+      await this.userModel.updateRole(userId, userRole);
+
+      // Set verification status (default to verified if admin creates)
+      const verified = is_verified !== undefined ? is_verified : true;
+      await this.userModel.updateStatus(userId, { is_verified: verified, is_active: true });
+
+      // Automatically assign free plan to new user
+      try {
+        const Plan = require('../models/Plan');
+        const planModel = new Plan(this.db);
+        const freePlan = await planModel.findActiveByType('free');
+        if (freePlan) {
+          await this.subscriptionService.createSubscription(userId, freePlan.id, 'ADMIN_CREATED_USER');
+          console.log(`✅ Assigned free plan to admin-created user ${userId}`);
+        }
+      } catch (subscriptionError) {
+        console.error('Failed to assign free plan to admin-created user:', subscriptionError);
+      }
+
+      // Log user creation activity
+      await databaseActivityLogger.logActivity({
+        userId: req.user?.id, // Admin who created the user
+        action: 'user_created',
+        entityType: 'user',
+        entityId: userId,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        details: {
+          created_user_id: userId,
+          username,
+          email,
+          role: userRole,
+          is_verified: verified,
+          timestamp: new Date().toISOString()
+        }
+      });
+
+      res.json({ 
+        message: 'User created successfully',
+        user: {
+          id: userId,
+          username,
+          email,
+          role: userRole,
+          is_verified: verified
+        }
+      });
+    } catch (err) {
+      console.error('Create user error:', err);
       res.status(500).json({ error: 'Server error' });
     }
   }
