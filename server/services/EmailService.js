@@ -347,7 +347,13 @@ class EmailService {
     };
 
     try {
-      await this.transporter.sendMail(mailOptions);
+      // Add timeout to prevent hanging (10 seconds)
+      const sendPromise = this.transporter.sendMail(mailOptions);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Email send timeout')), 10000)
+      );
+      
+      await Promise.race([sendPromise, timeoutPromise]);
       console.log(`Verification code email sent to ${email}`);
       return true;
     } catch (error) {
@@ -633,7 +639,13 @@ class EmailService {
     };
 
     try {
-      await this.transporter.sendMail(mailOptions);
+      // Add timeout to prevent hanging (10 seconds)
+      const sendPromise = this.transporter.sendMail(mailOptions);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Email send timeout')), 10000)
+      );
+      
+      await Promise.race([sendPromise, timeoutPromise]);
       console.log(`Welcome email sent to ${email}`);
       return true;
     } catch (error) {

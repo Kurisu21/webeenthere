@@ -137,3 +137,5 @@ Thumbs.db
 # package-lock.json
 # yarn.lock
 DEPLOYMENT_SETUP.md
+
+assets/
