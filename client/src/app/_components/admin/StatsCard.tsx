@@ -58,17 +58,6 @@ export const StatsCard: React.FC<StatsCardProps> = ({
         )}
       </div>
 
-      {/* Progress Bar */}
-      <div className="mb-4">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-xs text-secondary">Progress</span>
-          <span className="text-xs text-primary">85%</span>
-        </div>
-        <div className="w-full bg-surface rounded-full h-2">
-          <div className={`h-2 rounded-full ${colorClasses[color]} transition-all duration-500`} style={{width: '85%'}}></div>
-        </div>
-      </div>
-
       {/* Trend Indicator */}
       {trend && (
         <div className="flex items-center justify-between">

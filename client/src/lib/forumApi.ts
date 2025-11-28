@@ -17,17 +17,25 @@ export interface ForumCategory {
 export interface ForumThread {
   id: string;
   categoryId: string;
+  category_id?: number | string;
   title: string;
   content: string;
   authorId: string;
+  author_id?: number | string;
+  author_name?: string;
+  authorName?: string;
+  category_name?: string;
   tags: string[];
   views: number;
   replies: number;
+  replies_count?: number;
   likes: number;
+  userLiked?: boolean | null;
   isPinned: boolean;
   isLocked: boolean;
   isDeleted: boolean;
   createdAt: string;
+  created_at?: string;
   updatedAt: string;
 }
 
@@ -36,9 +44,14 @@ export interface ForumReply {
   threadId: string;
   content: string;
   authorId: string;
+  author_id?: number | string;
+  author_name?: string;
+  authorName?: string;
   likes: number;
+  userLiked?: boolean | null;
   isDeleted: boolean;
   createdAt: string;
+  created_at?: string;
   updatedAt: string;
 }
 
@@ -102,19 +115,26 @@ class ForumApi {
     page?: number;
     limit?: number;
     sortBy?: string;
+    authorId?: string;
+    pinned?: boolean;
   }): Promise<ThreadListResponse> {
     const queryParams = new URLSearchParams();
     if (params?.categoryId) queryParams.append('categoryId', params.categoryId);
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params?.authorId) queryParams.append('authorId', params.authorId);
+    if (params?.pinned) queryParams.append('pinned', 'true');
 
     const data = await apiGet(`${API_BASE_URL}/api/forum/threads?${queryParams}`);
     return data.data;
   }
 
-  async getThread(id: string): Promise<ForumThread> {
-    const data = await apiGet(`${API_BASE_URL}/api/forum/threads/${id}`);
+  async getThread(id: string, incrementView: boolean = true): Promise<ForumThread> {
+    const url = incrementView 
+      ? `${API_BASE_URL}/api/forum/threads/${id}`
+      : `${API_BASE_URL}/api/forum/threads/${id}?noIncrement=true`;
+    const data = await apiGet(url);
     return data.data;
   }
 
@@ -176,6 +196,18 @@ class ForumApi {
 
   async deleteReply(id: string): Promise<void> {
     await apiCall(`${API_BASE_URL}/api/forum/replies/${id}`, { method: 'DELETE' });
+  }
+
+  // Like/Unlike thread
+  async toggleThreadLike(threadId: string): Promise<ForumThread> {
+    const data = await apiPost(`${API_BASE_URL}/api/forum/threads/${threadId}/like`, {});
+    return data.data;
+  }
+
+  // Like/Unlike reply
+  async toggleReplyLike(replyId: string): Promise<ForumReply> {
+    const data = await apiPost(`${API_BASE_URL}/api/forum/replies/${replyId}/like`, {});
+    return data.data;
   }
 
   // Statistics

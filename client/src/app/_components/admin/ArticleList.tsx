@@ -165,7 +165,7 @@ export default function ArticleList({ onEdit, onDelete, refreshTrigger }: Articl
         </div>
         <button
           onClick={handleSearch}
-          className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200"
+          className="px-6 py-2 bg-surface-elevated dark:bg-surface hover:bg-surface dark:hover:bg-surface-elevated text-primary dark:text-primary border border-app hover:border-primary/50 dark:hover:border-primary/50 rounded-lg transition-all duration-200 font-medium"
         >
           Search
         </button>
@@ -206,25 +206,10 @@ export default function ArticleList({ onEdit, onDelete, refreshTrigger }: Articl
                       <div className="text-secondary text-sm mt-1">
                         {article.content.substring(0, 100)}...
                       </div>
-                      {article.tags && Array.isArray(article.tags) && article.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {article.tags.slice(0, 3).map(tag => (
-                            <span
-                              key={tag}
-                              className="inline-flex items-center px-2 py-1 bg-purple-600/20 text-purple-300 rounded text-xs"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                          {article.tags.length > 3 && (
-                            <span className="text-secondary text-xs">+{article.tags.length - 3} more</span>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-secondary">
-                    {categories.find(c => c.id === article.category)?.name || article.category}
+                    {article.categoryName || categories.find(c => String(c.id) === String(article.category))?.name || article.category}
                   </td>
                   <td className="px-6 py-4 text-secondary">
                     {article.views.toLocaleString()}

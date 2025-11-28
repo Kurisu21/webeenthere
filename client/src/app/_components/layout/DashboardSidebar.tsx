@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo, useEffect, useRef, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from './SidebarContext';
@@ -68,11 +68,6 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0zM4 4v4h4" />
     </svg>
   ),
-  changelog: (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M7 20h10a2 2 0 002-2V6a2 2 0 00-2-2h-5.586a1 1 0 00-.707.293L9.293 6.707A1 1 0 019 7.414V8H7a2 2 0 00-2 2v8a2 2 0 002 2z" />
-    </svg>
-  ),
   support: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636A9 9 0 105.636 18.364 9 9 0 0018.364 5.636zM9 10h.01M15 10h.01M8 15h8" />
@@ -106,7 +101,7 @@ const sections: NavSection[] = [
       { id: 'main', label: 'Main', icon: Icons.main, href: '/user/main' },
       { id: 'create', label: '+ Create', icon: Icons.create, href: '/user/create' },
       { id: 'pages', label: 'My Pages', icon: Icons.pages, href: '/user/pages' },
-      { id: 'images', label: 'Added Images', icon: Icons.images, href: '/user/images' },
+      { id: 'images', label: 'Media Library', icon: Icons.images, href: '/user/images' },
     ],
   },
   {
@@ -116,7 +111,6 @@ const sections: NavSection[] = [
       { id: 'profile', label: 'User Details', icon: Icons.profile, href: '/user/profile' },
       { id: 'subscription', label: 'Subscription', icon: Icons.subscription, href: '/user/subscription' },
       { id: 'history', label: 'History', icon: Icons.history, href: '/user/history' },
-      { id: 'changelog', label: 'Changelog', icon: Icons.changelog, href: '/user/changelog' },
     ],
   },
   {
@@ -134,6 +128,36 @@ const sections: NavSection[] = [
 const DashboardSidebar = memo(() => {
   const pathname = usePathname();
   const { isCollapsed, isMobileOpen, toggleSidebar, closeMobileSidebar } = useSidebar();
+  
+  // Accordion state management
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['general', 'account', 'support']));
+  
+  // Load saved preferences from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('user-sidebar-sections');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setExpandedSections(new Set(parsed));
+      } catch (error) {
+        console.warn('Failed to parse saved sidebar sections:', error);
+      }
+    }
+  }, []);
+  
+  // Save preferences to localStorage
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId);
+      } else {
+        newSet.add(sectionId);
+      }
+      localStorage.setItem('user-sidebar-sections', JSON.stringify([...newSet]));
+      return newSet;
+    });
+  };
 
   return (
     <>
@@ -196,57 +220,77 @@ const DashboardSidebar = memo(() => {
       </div>
 
       {/* Navigation */}
-      <div className="relative flex-1">
-        {/* Slider for long menus */}
-        <div className="absolute right-0 top-0 bottom-0 pr-1 hidden md:flex items-center">
-          {/* We'll show via JS if needed (CSS kept minimal) */}
-        </div>
-        <nav className="flex md:flex-col flex-1 space-y-4 pr-2 overflow-y-auto">
-          {sections.map((section) => (
-            <div key={section.id}>
+      <nav className="flex md:flex-col flex-1 space-y-1 overflow-x-auto md:overflow-x-visible overflow-y-auto max-h-[calc(100vh-200px)] pr-2 scrollbar-thin">
+        {sections.map((section) => {
+          const isExpanded = expandedSections.has(section.id);
+          const hasActiveItem = section.items.some(item => pathname === item.href);
+          
+          return (
+            <div key={section.id} className="space-y-1 w-full">
+              {/* Section Header */}
               {!isCollapsed && (
-                <div className="px-2 text-xs uppercase tracking-wide text-secondary">
-                  {section.title}
-                </div>
+                <button
+                  onClick={() => toggleSection(section.id)}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group text-secondary hover:text-primary hover:bg-surface-elevated/30"
+                >
+                  <span className="font-semibold text-xs uppercase tracking-wider">
+                    {section.title}
+                  </span>
+                  <svg 
+                    className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
               )}
-              <div className="mt-1 space-y-2">
-                {section.items.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      className={`
-                        flex-shrink-0 md:w-full flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg transition-all duration-300 transform hover:scale-105 md:hover:translate-x-2 group
-                        ${isActive
-                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/50'
-                          : 'hover:bg-surface-elevated text-secondary hover:text-primary'
-                        }
-                        ${isCollapsed ? 'justify-center' : ''}
-                      `}
-                      title={isCollapsed ? item.label : ''}
-                    >
-                      <span className="flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
-                        {item.icon}
-                      </span>
-                      {!isCollapsed && (
-                        <>
-                          <span className="font-medium text-sm md:text-base whitespace-nowrap">
-                            {item.label}
-                          </span>
-                          {isActive && (
-                            <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
-                          )}
-                        </>
-                      )}
-                    </Link>
-                  );
-                })}
+              
+              {/* Section Items */}
+              <div className={`
+                transition-all duration-300 ease-in-out overflow-hidden w-full
+                ${isExpanded || isCollapsed ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}
+              `}>
+                <div className="space-y-2 pl-2">
+                  {section.items.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        className={`
+                          flex-shrink-0 md:w-full flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg transition-all duration-300 transform hover:scale-105 md:hover:translate-x-2 group
+                          ${isActive
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/50'
+                            : 'hover:bg-surface-elevated text-secondary hover:text-primary'
+                          }
+                          ${isCollapsed ? 'justify-center' : ''}
+                        `}
+                        title={isCollapsed ? item.label : ''}
+                      >
+                        <span className="flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
+                          {item.icon}
+                        </span>
+                        {!isCollapsed && (
+                          <>
+                            <span className="font-medium text-sm md:text-base whitespace-nowrap">
+                              {item.label}
+                            </span>
+                            {isActive && (
+                              <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
+                            )}
+                          </>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          ))}
-        </nav>
-      </div>
+          );
+        })}
+      </nav>
     </aside>
     </>
   );

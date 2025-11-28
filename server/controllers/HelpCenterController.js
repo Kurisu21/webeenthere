@@ -15,10 +15,11 @@ class HelpCenterController {
       }
 
       const article = await databaseHelpCenterService.createArticle({
-        category,
+        category: category, // Service will handle both category and categoryId
         title,
         content,
         authorId,
+        isPublished: req.body.isPublished !== undefined ? req.body.isPublished : true,
         tags: tags || []
       });
 
@@ -134,11 +135,24 @@ class HelpCenterController {
     try {
       const { id } = req.params;
 
+      // Increment view count when article is viewed (no user tracking - simple count increment)
+      // Views are incremented every time this endpoint is called, regardless of user authentication
+      await databaseHelpCenterService.incrementArticleViews(id);
+      
       const article = await databaseHelpCenterService.getArticleById(id);
+      
+      // Get user's vote if they're logged in
+      let userVote = null;
+      if (req.user?.id) {
+        userVote = await databaseHelpCenterService.getUserVote(id, req.user.id);
+      }
 
       res.json({
         success: true,
-        data: article
+        data: {
+          ...article,
+          userVote: userVote
+        }
       });
     } catch (error) {
       console.error('Error getting article:', error);
@@ -279,6 +293,9 @@ class HelpCenterController {
     try {
       const { id } = req.params;
       const { isHelpful } = req.body;
+      // Get user ID from auth middleware or use a default for anonymous users
+      // For now, we'll use IP address or session ID as fallback
+      const userId = req.user?.id || req.ip || 'anonymous';
 
       if (typeof isHelpful !== 'boolean') {
         return res.status(400).json({
@@ -287,19 +304,35 @@ class HelpCenterController {
         });
       }
 
-      await databaseHelpCenterService.rateArticle(id, isHelpful);
+      // For anonymous users, we'll use a combination of IP and user agent
+      // In production, you should require authentication for voting
+      const voteUserId = req.user?.id || null;
+      
+      if (!voteUserId) {
+        return res.status(401).json({
+          success: false,
+          message: 'You must be logged in to vote'
+        });
+      }
+
+      await databaseHelpCenterService.rateArticle(id, isHelpful, voteUserId);
       const article = await databaseHelpCenterService.getArticleById(id);
+      const userVote = await databaseHelpCenterService.getUserVote(id, voteUserId);
 
       res.json({
         success: true,
         message: 'Article rated successfully',
-        data: article
+        data: {
+          ...article,
+          userVote: userVote // Include user's vote status
+        }
       });
     } catch (error) {
       console.error('Error rating article:', error);
-      res.status(500).json({
+      const statusCode = error.message.includes('already voted') ? 400 : 500;
+      res.status(statusCode).json({
         success: false,
-        message: 'Failed to rate article',
+        message: error.message || 'Failed to rate article',
         error: error.message
       });
     }

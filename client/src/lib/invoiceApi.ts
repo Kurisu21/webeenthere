@@ -1,5 +1,5 @@
 // lib/invoiceApi.ts
-import { API_ENDPOINTS, apiGet } from './apiConfig';
+import { API_ENDPOINTS, apiGet, apiCall } from './apiConfig';
 
 export interface Invoice {
   id: number;
@@ -62,33 +62,18 @@ export const invoiceApi = {
 
   // Download invoice as PDF
   async downloadInvoice(id: number): Promise<Blob> {
-    const response = await fetch(`${API_ENDPOINTS.INVOICES}/${id}/download`, {
+    const response = await apiCall(`${API_ENDPOINTS.INVOICES}/${id}/download`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
     });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Failed to download invoice' }));
-      throw new Error(errorData.error || 'Failed to download invoice');
-    }
 
     return await response.blob();
   },
 
   // View invoice as PDF (inline)
   async viewInvoice(id: number): Promise<string> {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_ENDPOINTS.INVOICES}/${id}/view`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+    const response = await apiCall(`${API_ENDPOINTS.INVOICES}/${id}/view`, {
+      method: 'GET',
     });
-
-    if (!response.ok) {
-      throw new Error('Failed to view invoice');
-    }
 
     const blob = await response.blob();
     return URL.createObjectURL(blob);

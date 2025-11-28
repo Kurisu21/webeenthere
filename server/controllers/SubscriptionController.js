@@ -254,6 +254,19 @@ class SubscriptionController {
       const userId = req.user.id;
       const { limit = 50 } = req.query;
       
+      // First, fix any pending logs that have payment references (Stripe payment IDs)
+      // This fixes logs that were created before the fix
+      await this.db.execute(
+        `UPDATE subscription_logs 
+         SET payment_status = 'completed' 
+         WHERE user_id = ? 
+         AND payment_status = 'pending' 
+         AND payment_reference IS NOT NULL 
+         AND payment_reference != '' 
+         AND payment_reference LIKE 'pi_%'`,
+        [userId]
+      );
+      
       const logs = await this.subscriptionService.subscriptionLogModel.findByUserId(userId, parseInt(limit));
       
       res.json({

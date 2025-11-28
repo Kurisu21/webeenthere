@@ -14,12 +14,9 @@ export default function ArticleEditor({ article, onSave, onCancel, isOpen }: Art
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    category: '',
-    tags: [] as string[],
-    isPublished: true
+    category: ''
   });
   const [categories, setCategories] = useState<HelpCategory[]>([]);
-  const [tagInput, setTagInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,17 +27,13 @@ export default function ArticleEditor({ article, onSave, onCancel, isOpen }: Art
         setFormData({
           title: article.title,
           content: article.content,
-          category: article.category,
-          tags: article.tags,
-          isPublished: article.isPublished
+          category: article.category
         });
       } else {
         setFormData({
           title: '',
           content: '',
-          category: '',
-          tags: [],
-          isPublished: true
+          category: ''
         });
       }
     }
@@ -69,7 +62,7 @@ export default function ArticleEditor({ article, onSave, onCancel, isOpen }: Art
           title: formData.title,
           content: formData.content,
           category: formData.category,
-          tags: formData.tags
+          isPublished: true // Always publish for admin
         });
         onSave(newArticle);
       }
@@ -81,29 +74,6 @@ export default function ArticleEditor({ article, onSave, onCancel, isOpen }: Art
     }
   };
 
-  const handleAddTag = () => {
-    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tagInput.trim()]
-      }));
-      setTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
-    }));
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag();
-    }
-  };
 
   if (!isOpen) return null;
 
@@ -141,7 +111,7 @@ export default function ArticleEditor({ article, onSave, onCancel, isOpen }: Art
               type="text"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Enter article title"
               required
             />
@@ -154,7 +124,7 @@ export default function ArticleEditor({ article, onSave, onCancel, isOpen }: Art
             <select
               value={formData.category}
               onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-              className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               required
             >
               <option value="">Select a category</option>
@@ -174,79 +144,25 @@ export default function ArticleEditor({ article, onSave, onCancel, isOpen }: Art
               value={formData.content}
               onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
               rows={12}
-              className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
+              className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical"
               placeholder="Enter article content (Markdown supported)"
               required
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-secondary mb-2">
-              Tags
-            </label>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="flex-1 px-4 py-2 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="Add a tag and press Enter"
-              />
-              <button
-                type="button"
-                onClick={handleAddTag}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-primary rounded-lg transition-colors"
-              >
-                Add
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {formData.tags.map(tag => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-purple-600/20 text-purple-300 rounded-full text-sm"
-                >
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTag(tag)}
-                    className="text-purple-400 hover:text-purple-200"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="isPublished"
-              checked={formData.isPublished}
-              onChange={(e) => setFormData(prev => ({ ...prev, isPublished: e.target.checked }))}
-              className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500 focus:ring-2"
-            />
-            <label htmlFor="isPublished" className="ml-2 text-sm text-secondary">
-              Publish immediately
-            </label>
-          </div>
 
           <div className="flex justify-end gap-4 pt-4 border-t border-app">
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-2 text-secondary hover:text-primary transition-colors"
+              className="px-6 py-2 text-secondary hover:text-primary transition-colors font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-surface-elevated dark:bg-surface hover:bg-surface dark:hover:bg-surface-elevated text-primary dark:text-primary border border-app hover:border-primary/50 dark:hover:border-primary/50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm hover:shadow"
             >
               {isLoading ? 'Saving...' : (article ? 'Update Article' : 'Create Article')}
             </button>

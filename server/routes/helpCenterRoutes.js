@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const HelpCenterController = require('../controllers/HelpCenterController');
-const { authMiddleware, adminAuthMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminAuthMiddleware, optionalAuthMiddleware } = require('../middleware/auth');
 
-// Public routes (no authentication required)
+// Public routes (no authentication required, but optional auth for user-specific data)
 router.get('/articles', HelpCenterController.getArticles);
-router.get('/articles/:id', HelpCenterController.getArticle);
+router.get('/articles/:id', optionalAuthMiddleware, HelpCenterController.getArticle);
 router.get('/search', HelpCenterController.searchArticles);
 router.get('/categories', HelpCenterController.getCategories);
-router.post('/articles/:id/rate', HelpCenterController.rateArticle);
+router.post('/articles/:id/rate', authMiddleware, HelpCenterController.rateArticle);
 
 // Admin routes (require authentication and admin role)
 router.post('/articles', authMiddleware, adminAuthMiddleware, HelpCenterController.createArticle);

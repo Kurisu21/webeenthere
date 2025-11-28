@@ -2,6 +2,7 @@
 const AiService = require('../services/AiService');
 const AiPrompt = require('../models/AiPrompt');
 const SubscriptionService = require('../services/SubscriptionService');
+const ContentModerationService = require('../services/ContentModerationService');
 
 class AiController {
   constructor(db) {
@@ -9,6 +10,7 @@ class AiController {
     this.aiService = new AiService();
     this.aiPromptModel = new AiPrompt(db);
     this.subscriptionService = new SubscriptionService(db);
+    this.contentModeration = new ContentModerationService();
   }
 
   async generateTemplate(req, res) {
@@ -39,11 +41,31 @@ class AiController {
         });
       }
 
+      // Validate and moderate input
+      const moderationResult = this.contentModeration.validateInput(description, {
+        checkProfanity: true,
+        checkInjection: true,
+        checkLength: true,
+        checkSuspicious: true
+      });
+
+      if (!moderationResult.isValid) {
+        console.log('ERROR: Content moderation failed:', moderationResult.reason);
+        return res.status(400).json({
+          success: false,
+          error: moderationResult.reason,
+          errorCode: moderationResult.errorCode
+        });
+      }
+
+      // Use sanitized input
+      const sanitizedDescription = moderationResult.sanitized;
+
       // Check AI chat limits if authenticated
       if (authUserId) {
         const aiChatLimits = await this.subscriptionService.checkAiChatLimit(authUserId);
         if (!aiChatLimits.canUse) {
-          console.log('ERROR: AI chat limit reached for user:', userId);
+          console.log('ERROR: AI chat limit reached for user:', authUserId);
           return res.status(403).json({
             success: false,
             error: `AI chat limit reached. You have used ${aiChatLimits.used || 0} of ${aiChatLimits.limit} AI messages allowed.`,
@@ -54,11 +76,11 @@ class AiController {
         }
       }
 
-      console.log('Generating template for:', { description, userId: authUserId, websiteType, style, colorScheme });
+      console.log('Generating template for:', { description: sanitizedDescription, userId: authUserId, websiteType, style, colorScheme });
 
       // Generate template using AI service (strict html/css)
       const templateResult = await this.aiService.generateCompleteTemplate({
-        description,
+        description: sanitizedDescription,
         websiteType,
         style,
         colorScheme,
@@ -106,7 +128,7 @@ class AiController {
         aiPromptId = await this.aiPromptModel.create({
           user_id: authUserId || null,
           prompt_type: 'template_generate',
-          prompt_text: JSON.stringify({ description, websiteType, style, colorScheme, includeSections }),
+          prompt_text: JSON.stringify({ description: sanitizedDescription, websiteType, style, colorScheme, includeSections }),
           response_html: JSON.stringify(savedTemplate),
           used_on_site: 0
         });
@@ -196,6 +218,24 @@ class AiController {
         return res.status(400).json({ success: false, error: 'HTML or CSS is required' });
       }
 
+      // Validate and moderate brandHints if provided
+      if (brandHints && typeof brandHints === 'string') {
+        const moderationResult = this.contentModeration.validateInput(brandHints, {
+          checkProfanity: true,
+          checkInjection: true,
+          checkLength: true,
+          checkSuspicious: true
+        });
+
+        if (!moderationResult.isValid) {
+          return res.status(400).json({
+            success: false,
+            error: moderationResult.reason,
+            errorCode: moderationResult.errorCode
+          });
+        }
+      }
+
       // Optional: enforce AI chat limits similar to generation
       if (req.user?.id) {
         const aiChatLimits = await this.subscriptionService.checkAiChatLimit(req.user.id);
@@ -255,6 +295,27 @@ class AiController {
         });
       }
 
+      // Validate and moderate user input (check userInput if provided, otherwise check prompt)
+      const inputToValidate = userInput || prompt;
+      const moderationResult = this.contentModeration.validateInput(inputToValidate, {
+        checkProfanity: true,
+        checkInjection: true,
+        checkLength: true,
+        checkSuspicious: true
+      });
+
+      if (!moderationResult.isValid) {
+        console.log('[AI Assistant] Content moderation failed:', moderationResult.reason);
+        return res.status(400).json({
+          success: false,
+          error: moderationResult.reason,
+          errorCode: moderationResult.errorCode
+        });
+      }
+
+      // Use sanitized input
+      const sanitizedInput = moderationResult.sanitized;
+
       // Generate conversation_id if not provided (for new conversations)
       const currentConversationId = conversation_id || `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -273,8 +334,8 @@ class AiController {
         }
       }
 
-      // Store user message in chat history BEFORE calling AI (use userInput if provided, otherwise extract from prompt)
-      const userMessageText = userInput || (isUserPrompt ? this.extractUserInputFromPrompt(prompt) : 'Auto-suggestion request');
+      // Store user message in chat history BEFORE calling AI (use sanitized input)
+      const userMessageText = isUserPrompt ? sanitizedInput : (userInput ? sanitizedInput : 'Auto-suggestion request');
       let userMessageId = null;
       try {
         userMessageId = await this.aiPromptModel.create({

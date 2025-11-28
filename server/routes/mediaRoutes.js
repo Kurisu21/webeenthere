@@ -22,7 +22,7 @@ module.exports = (db) => {
     await mediaController.deleteImage(req, res);
   });
 
-  // Serve uploaded images
+  // Serve uploaded media files (images, videos, audio)
   router.get('/uploads/user_:userId/:filename', async (req, res) => {
     try {
       const { userId, filename } = req.params;
@@ -31,25 +31,43 @@ module.exports = (db) => {
       
       const filePath = path.join(__dirname, '../uploads', `user_${userId}`, filename);
       
-      console.log('[MediaRoutes] Serving image:', { userId, filename, filePath });
+      console.log('[MediaRoutes] Serving media file:', { userId, filename, filePath });
       
       // Check if file exists
       try {
         await fs.access(filePath);
       } catch (err) {
         console.error('[MediaRoutes] File not found:', filePath, err.message);
-        return res.status(404).json({ success: false, error: 'Image not found' });
+        return res.status(404).json({ success: false, error: 'Media file not found' });
       }
       
       // Set proper content type
       const ext = path.extname(filename).toLowerCase();
       const contentTypes = {
+        // Images
         '.jpg': 'image/jpeg',
         '.jpeg': 'image/jpeg',
         '.png': 'image/png',
         '.gif': 'image/gif',
         '.webp': 'image/webp',
-        '.svg': 'image/svg+xml'
+        '.svg': 'image/svg+xml',
+        // Videos
+        '.mp4': 'video/mp4',
+        '.webm': 'video/webm',
+        '.ogg': 'video/ogg',
+        '.mov': 'video/quicktime',
+        '.avi': 'video/x-msvideo',
+        '.wmv': 'video/x-ms-wmv',
+        '.flv': 'video/x-flv',
+        '.mkv': 'video/x-matroska',
+        // Audio
+        '.mp3': 'audio/mpeg',
+        '.wav': 'audio/wav',
+        '.aac': 'audio/aac',
+        '.m4a': 'audio/mp4',
+        '.flac': 'audio/flac',
+        '.wma': 'audio/x-ms-wma',
+        '.oga': 'audio/ogg'
       };
       const contentType = contentTypes[ext] || 'application/octet-stream';
       
@@ -65,13 +83,13 @@ module.exports = (db) => {
             res.status(500).json({ success: false, error: 'Error serving image' });
           }
         } else {
-          console.log('[MediaRoutes] Successfully served image:', filename);
+          console.log('[MediaRoutes] Successfully served media file:', filename);
         }
       });
     } catch (error) {
-      console.error('[MediaRoutes] Serve image error:', error);
+      console.error('[MediaRoutes] Serve media file error:', error);
       if (!res.headersSent) {
-        res.status(500).json({ success: false, error: 'Error serving image' });
+        res.status(500).json({ success: false, error: 'Error serving media file' });
       }
     }
   });

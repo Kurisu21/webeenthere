@@ -6,6 +6,7 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     session_token VARCHAR(255) NULL, -- NEW: Session Token Storage - Stores JWT tokens for active user sessions. Enables server-side session management and token revocation. NULL for users not currently logged in or using OAuth.
     profile_image LONGBLOB,
+    auth_provider ENUM('email', 'google') DEFAULT 'email', -- NEW: Auth Provider - Stores the authentication method used by the user ('email' for email/password users, 'google' for Google Auth0 users). This replaces the previous method of detecting Auth0 users by checking if profile_image is a URL, which was unreliable. Essential for features like password changes (only available for email users) and account management.
     role ENUM('user', 'admin') DEFAULT 'user',
     theme_mode ENUM('light', 'dark') DEFAULT 'light',
     is_verified BOOLEAN DEFAULT FALSE,
@@ -84,6 +85,7 @@ CREATE TABLE media_assets (
     file_name VARCHAR(255) NOT NULL,
     file_type VARCHAR(50),
     file_url TEXT NOT NULL,
+    file_size BIGINT NULL, -- NEW: File Size - Stores the size of the media file in bytes. Allows tracking of storage usage and displaying file sizes to users. NULL for files uploaded before this column was added.
     uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (website_id) REFERENCES websites(id)
@@ -257,6 +259,36 @@ CREATE TABLE forum_replies (
     INDEX idx_thread_id (thread_id),
     INDEX idx_author_id (author_id),
     INDEX idx_is_deleted (is_deleted)
+);
+
+-- NEW: Forum Thread Likes (adjusted to module implementation) - Track user likes on forum threads. Users can like once per thread and can remove their like. Stores 0 or 1 in likes column for unique user likes per thread.
+CREATE TABLE forum_thread_likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    thread_id INT NOT NULL,
+    user_id INT NOT NULL,
+    likes TINYINT DEFAULT 1, -- 0 or 1: 1 = liked, 0 = not liked (for tracking removal)
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_user_thread_like (user_id, thread_id),
+    FOREIGN KEY (thread_id) REFERENCES forum_threads(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_thread_id (thread_id),
+    INDEX idx_user_id (user_id)
+);
+
+-- NEW: Forum Reply Likes (adjusted to module implementation) - Track user likes on forum replies. Users can like once per reply and can remove their like. Stores 0 or 1 in likes column for unique user likes per reply.
+CREATE TABLE forum_reply_likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reply_id INT NOT NULL,
+    user_id INT NOT NULL,
+    likes TINYINT DEFAULT 1, -- 0 or 1: 1 = liked, 0 = not liked (for tracking removal)
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_user_reply_like (user_id, reply_id),
+    FOREIGN KEY (reply_id) REFERENCES forum_replies(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_reply_id (reply_id),
+    INDEX idx_user_id (user_id)
 );
 
 -- NEW: Help Center Categories (adjusted to module implementation) - Organize help articles into categories for easy navigation and user support

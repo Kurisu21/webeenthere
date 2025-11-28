@@ -6,9 +6,22 @@ class DatabaseHelpCenterService {
   async getAllCategories() {
     const connection = await getDatabaseConnection();
     const [rows] = await connection.execute(
-      'SELECT * FROM help_categories ORDER BY name ASC'
+      `SELECT c.*, COUNT(a.id) as article_count
+       FROM help_categories c
+       LEFT JOIN help_articles a ON c.id = a.category_id
+       GROUP BY c.id
+       ORDER BY c.name ASC`
     );
-    return rows;
+    // Map database fields to client-expected format
+    return rows.map(row => ({
+      id: row.id.toString(),
+      name: row.name,
+      description: row.description || '',
+      icon: row.icon || '',
+      articleCount: row.article_count || 0,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }));
   }
 
   async getCategoryById(id) {
@@ -102,14 +115,37 @@ class DatabaseHelpCenterService {
       [id]
     );
     if (rows.length === 0) throw new Error('Article not found');
-    return rows[0];
+    
+    // Map database fields to client-expected format
+    const row = rows[0];
+    return {
+      id: row.id.toString(),
+      category: row.category_id.toString(),
+      title: row.title,
+      content: row.content,
+      authorId: row.author_id.toString(),
+      tags: [], // Default empty array since tags column doesn't exist
+      views: row.views || 0,
+      helpful: row.helpful_count || 0,
+      notHelpful: row.not_helpful_count || 0,
+      isPublished: Boolean(row.is_published),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      authorName: row.author_name,
+      categoryName: row.category_name
+    };
   }
 
   async createArticle(data) {
     const connection = await getDatabaseConnection();
+    // Handle both categoryId and category for compatibility
+    const categoryId = data.categoryId || data.category;
+    if (!categoryId) {
+      throw new Error('Category ID is required');
+    }
     const [result] = await connection.execute(
       'INSERT INTO help_articles (category_id, title, content, author_id, is_published) VALUES (?, ?, ?, ?, ?)',
-      [data.categoryId, data.title, data.content, data.authorId, data.isPublished || false]
+      [categoryId, data.title, data.content, data.authorId, data.isPublished !== undefined ? data.isPublished : false]
     );
     return this.getArticleById(result.insertId);
   }
@@ -121,7 +157,17 @@ class DatabaseHelpCenterService {
     
     if (data.title) { updates.push('title = ?'); params.push(data.title); }
     if (data.content) { updates.push('content = ?'); params.push(data.content); }
-    if (data.is_published !== undefined) { updates.push('is_published = ?'); params.push(data.is_published); }
+    if (data.category !== undefined) { 
+      updates.push('category_id = ?'); 
+      params.push(data.category); 
+    }
+    if (data.isPublished !== undefined) { 
+      updates.push('is_published = ?'); 
+      params.push(data.isPublished); 
+    } else if (data.is_published !== undefined) { 
+      updates.push('is_published = ?'); 
+      params.push(data.is_published); 
+    }
     
     if (updates.length === 0) return this.getArticleById(id);
     
@@ -138,18 +184,76 @@ class DatabaseHelpCenterService {
     await connection.execute('DELETE FROM help_articles WHERE id = ?', [id]);
   }
 
+  // Increment article view count - simple counter, no user tracking
+  // Called automatically when an article is viewed via getArticle endpoint
   async incrementArticleViews(id) {
     const connection = await getDatabaseConnection();
     await connection.execute('UPDATE help_articles SET views = views + 1 WHERE id = ?', [id]);
   }
 
-  async rateArticle(id, helpful) {
+  async rateArticle(id, helpful, userId) {
     const connection = await getDatabaseConnection();
-    if (helpful) {
-      await connection.execute('UPDATE help_articles SET helpful_count = helpful_count + 1 WHERE id = ?', [id]);
+    
+    // Check if user has already voted
+    const [existingVotes] = await connection.execute(
+      'SELECT * FROM help_article_votes WHERE article_id = ? AND user_id = ?',
+      [id, userId]
+    );
+    
+    if (existingVotes.length > 0) {
+      const existingVote = existingVotes[0];
+      // If user is voting the same way, return early
+      if (existingVote.is_helpful === helpful) {
+        throw new Error('You have already voted on this article');
+      }
+      
+      // User is changing their vote - update the vote and adjust counts
+      await connection.execute(
+        'UPDATE help_article_votes SET is_helpful = ? WHERE article_id = ? AND user_id = ?',
+        [helpful, id, userId]
+      );
+      
+      // Adjust counts: remove old vote, add new vote
+      if (existingVote.is_helpful) {
+        await connection.execute('UPDATE help_articles SET helpful_count = helpful_count - 1 WHERE id = ?', [id]);
+      } else {
+        await connection.execute('UPDATE help_articles SET not_helpful_count = not_helpful_count - 1 WHERE id = ?', [id]);
+      }
+      
+      if (helpful) {
+        await connection.execute('UPDATE help_articles SET helpful_count = helpful_count + 1 WHERE id = ?', [id]);
+      } else {
+        await connection.execute('UPDATE help_articles SET not_helpful_count = not_helpful_count + 1 WHERE id = ?', [id]);
+      }
     } else {
-      await connection.execute('UPDATE help_articles SET not_helpful_count = not_helpful_count + 1 WHERE id = ?', [id]);
+      // New vote - insert and increment count
+      await connection.execute(
+        'INSERT INTO help_article_votes (article_id, user_id, is_helpful) VALUES (?, ?, ?)',
+        [id, userId, helpful]
+      );
+      
+      if (helpful) {
+        await connection.execute('UPDATE help_articles SET helpful_count = helpful_count + 1 WHERE id = ?', [id]);
+      } else {
+        await connection.execute('UPDATE help_articles SET not_helpful_count = not_helpful_count + 1 WHERE id = ?', [id]);
+      }
     }
+  }
+
+  async getUserVote(articleId, userId) {
+    const connection = await getDatabaseConnection();
+    const [votes] = await connection.execute(
+      'SELECT is_helpful FROM help_article_votes WHERE article_id = ? AND user_id = ?',
+      [articleId, userId]
+    );
+    // Convert MySQL TINYINT(1) to JavaScript boolean
+    // MySQL returns 1 for true, 0 for false, so we need to convert
+    if (votes.length > 0) {
+      const isHelpful = votes[0].is_helpful;
+      // Handle both number (1/0) and boolean (true/false) from database
+      return isHelpful === 1 || isHelpful === true;
+    }
+    return null;
   }
 
   // Search
@@ -271,12 +375,30 @@ class DatabaseHelpCenterService {
     const [viewStats] = await connection.execute(
       'SELECT SUM(views) as total_views FROM help_articles'
     );
+    const [helpfulStats] = await connection.execute(
+      'SELECT SUM(helpful_count) as total_helpful, SUM(not_helpful_count) as total_not_helpful FROM help_articles'
+    );
+    
+    // Ensure proper number conversion (MySQL SUM can return null or string)
+    const totalHelpful = Number(helpfulStats[0]?.total_helpful) || 0;
+    const totalNotHelpful = Number(helpfulStats[0]?.total_not_helpful) || 0;
+    const totalVotes = totalHelpful + totalNotHelpful;
+    
+    // Calculate helpful rating percentage
+    let helpfulRating = '0.0';
+    if (totalVotes > 0) {
+      const percentage = (totalHelpful / totalVotes) * 100;
+      helpfulRating = percentage.toFixed(1);
+    }
     
     return {
       totalCategories: categoryStats[0].total_categories,
       totalArticles: articleStats[0].total_articles,
       publishedArticles: publishedStats[0].published_articles,
-      totalViews: viewStats[0].total_views || 0
+      totalViews: viewStats[0].total_views || 0,
+      totalHelpful: totalHelpful,
+      totalNotHelpful: totalNotHelpful,
+      averageRating: helpfulRating
     };
   }
 }

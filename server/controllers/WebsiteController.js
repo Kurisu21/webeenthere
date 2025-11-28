@@ -93,10 +93,31 @@ class WebsiteController {
         });
       }
 
-      // Generate unique slug
-      const { generateUniqueSlug, sanitizeSlug } = require('../utils/slugGenerator');
-      const baseSlug = slug || title;
-      const websiteSlug = await generateUniqueSlug(this.websiteModel, baseSlug);
+      // Generate unique slug - if slug is provided, use it; otherwise generate username-based slug
+      const { generateUniqueSlug, generateUsernameBasedSlug, sanitizeSlug } = require('../utils/slugGenerator');
+      let websiteSlug;
+      
+      if (slug) {
+        // If slug is provided, use it and ensure uniqueness
+        const baseSlug = slug || title;
+        websiteSlug = await generateUniqueSlug(this.websiteModel, baseSlug);
+      } else {
+        // Auto-generate slug in format: username-random_number
+        // Get username from database
+        const User = require('../models/User');
+        const userModel = new User(this.db);
+        const user = await userModel.findById(userId);
+        
+        if (!user || !user.username) {
+          return res.status(400).json({
+            success: false,
+            message: 'User not found or username missing'
+          });
+        }
+        
+        // Generate username-based slug
+        websiteSlug = await generateUsernameBasedSlug(this.websiteModel, user.username);
+      }
 
       // If template_id is provided, get template content
       let htmlContent = html_content || '';

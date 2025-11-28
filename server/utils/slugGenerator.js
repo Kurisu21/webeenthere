@@ -70,6 +70,45 @@ async function generateUniqueSlug(websiteModel, baseSlug, excludeId = null) {
 }
 
 /**
+ * Generate a unique slug in the format: username-random_number
+ * @param {Object} websiteModel - The website model instance
+ * @param {string} username - The username to use in the slug
+ * @returns {Promise<string>} - A unique slug in format username-random_number
+ */
+async function generateUsernameBasedSlug(websiteModel, username) {
+  // Sanitize username
+  const sanitizedUsername = sanitizeSlug(username);
+  
+  // If username is empty after sanitization, use a default
+  const baseUsername = sanitizedUsername || 'user';
+  
+  // Generate a random number (4-6 digits for better uniqueness)
+  const randomNumber = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
+  
+  let finalSlug = `${baseUsername}-${randomNumber}`;
+  let counter = 1;
+  const maxAttempts = 100; // Prevent infinite loops
+
+  // Check if slug exists, if so, try with a new random number
+  while (counter <= maxAttempts) {
+    const existing = await websiteModel.findBySlug(finalSlug);
+    
+    // If no existing website found, use this slug
+    if (!existing) {
+      return finalSlug;
+    }
+
+    // Generate a new random number and try again
+    const newRandomNumber = Math.floor(1000 + Math.random() * 9000);
+    finalSlug = `${baseUsername}-${newRandomNumber}`;
+    counter++;
+  }
+
+  // Fallback: use timestamp if we can't find a unique slug
+  return `${baseUsername}-${Date.now()}`;
+}
+
+/**
  * Generate a slug from a template name for a new website
  * @param {string} templateName - The template name
  * @param {number} userId - The user ID to make it more unique
@@ -107,6 +146,7 @@ module.exports = {
   sanitizeSlug,
   generateUniqueSlug,
   generateSlugFromTemplate,
+  generateUsernameBasedSlug,
   isSlugAvailable
 };
 

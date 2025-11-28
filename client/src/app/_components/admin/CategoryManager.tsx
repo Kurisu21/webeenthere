@@ -113,69 +113,82 @@ export default function CategoryManager({ onCategoryChange }: CategoryManagerPro
     );
   }
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-semibold text-white">Categories</h3>
+        <h3 className="text-xl font-semibold text-primary">Categories</h3>
         <button
           onClick={() => setIsCreating(true)}
-          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200"
+          className="px-4 py-2 bg-surface-elevated dark:bg-surface hover:bg-surface dark:hover:bg-surface-elevated text-primary dark:text-primary border border-app hover:border-primary/50 dark:hover:border-primary/50 rounded-lg transition-all duration-200 font-medium"
         >
           Add Category
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4">
-          <p className="text-red-400">{error}</p>
+        <div className="bg-surface-elevated dark:bg-surface border border-app text-secondary dark:text-secondary rounded-lg p-4">
+          <p className="text-secondary dark:text-secondary">{error}</p>
         </div>
       )}
 
       {/* Create/Edit Form */}
       {isCreating && (
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
-          <h4 className="text-lg font-medium text-white mb-4">
+        <div className="bg-surface-elevated rounded-lg border border-app p-6">
+          <h4 className="text-lg font-medium text-primary mb-4">
             {editingCategory ? 'Edit Category' : 'Create New Category'}
           </h4>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-secondary mb-2">
                 Name
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Category name"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-secondary mb-2">
                 Description
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
+                className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical"
                 placeholder="Category description"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-secondary mb-2">
                 Icon
               </label>
               <select
                 value={formData.icon}
                 onChange={(e) => setFormData(prev => ({ ...prev, icon: e.target.value }))}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               >
                 {iconOptions.map(option => (
                   <option key={option.value} value={option.value}>
@@ -189,14 +202,14 @@ export default function CategoryManager({ onCategoryChange }: CategoryManagerPro
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-surface-elevated dark:bg-surface hover:bg-surface dark:hover:bg-surface-elevated text-primary dark:text-primary border border-app hover:border-primary/50 dark:hover:border-primary/50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm hover:shadow"
               >
                 {isLoading ? 'Saving...' : (editingCategory ? 'Update' : 'Create')}
               </button>
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-6 py-2 text-gray-400 hover:text-white transition-colors"
+                className="px-6 py-2 text-secondary hover:text-primary transition-colors font-medium"
               >
                 Cancel
               </button>
@@ -206,50 +219,41 @@ export default function CategoryManager({ onCategoryChange }: CategoryManagerPro
       )}
 
       {/* Categories List */}
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+      <div className="bg-surface-elevated rounded-lg border border-app overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-800 border-b border-gray-700">
+            <thead className="bg-surface border-b border-app">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Category
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Articles
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-700">
+            <tbody className="divide-y divide-app">
               {categories.map((category) => (
-                <tr key={category.id} className="hover:bg-gray-800/50 transition-colors">
+                <tr key={category.id} className="hover:bg-surface transition-colors">
                   <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-purple-600/20 rounded-lg flex items-center justify-center mr-4">
-                        <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="text-white font-medium">{category.name}</div>
-                        <div className="text-gray-400 text-sm">{category.description}</div>
+                    <div>
+                      <div className="text-primary font-medium">{category.name}</div>
+                      <div className="text-secondary text-sm mt-1">
+                        {category.description || 'No description'}
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-300">
+                  <td className="px-6 py-4 text-secondary">
                     {category.articleCount || 0}
                   </td>
-                  <td className="px-6 py-4 text-gray-400 text-sm">
-                    {new Date(category.createdAt).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })}
+                  <td className="px-6 py-4 text-secondary text-sm">
+                    {formatDate(category.createdAt)}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
@@ -281,12 +285,12 @@ export default function CategoryManager({ onCategoryChange }: CategoryManagerPro
 
         {categories.length === 0 && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
             </div>
-            <p className="text-gray-400">No categories found</p>
+            <p className="text-secondary">No categories found</p>
           </div>
         )}
       </div>

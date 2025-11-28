@@ -70,6 +70,12 @@ class Auth0Service {
           password: placeholderPassword // Placeholder, user will use OAuth to login
         });
 
+        // Set auth_provider to 'google' for OAuth users
+        await this.db.execute(
+          'UPDATE users SET auth_provider = ? WHERE id = ?',
+          ['google', userId]
+        );
+
         // Update profile image if available
         if (picture) {
           await this.userModel.updateProfile(userId, { profile_image: picture });
@@ -82,9 +88,16 @@ class Auth0Service {
 
         // Automatically assign free plan to new OAuth user
         try {
-          const freePlanId = 1; // Free plan is always plan_id 1
-          await this.subscriptionService.createSubscription(userId, freePlanId, 'OAUTH_REGISTRATION_FREE_PLAN');
-          console.log(`✅ Assigned free plan to new OAuth user ${userId}`);
+          // Find free plan dynamically by type instead of hardcoding plan_id
+          const Plan = require('../models/Plan');
+          const planModel = new Plan(this.db);
+          const freePlan = await planModel.findActiveByType('free');
+          if (freePlan) {
+            await this.subscriptionService.createSubscription(userId, freePlan.id, 'OAUTH_REGISTRATION_FREE_PLAN');
+            console.log(`✅ Assigned free plan to new OAuth user ${userId}`);
+          } else {
+            console.error('Free plan not found - cannot assign to new OAuth user');
+          }
         } catch (subscriptionError) {
           console.error('Failed to assign free plan to new OAuth user:', subscriptionError);
         }
@@ -92,6 +105,16 @@ class Auth0Service {
         // Get the created user
         user = await this.userModel.findById(userId);
       } else {
+        // Update auth_provider to 'google' if not already set (for existing users created before this change)
+        if (user.auth_provider !== 'google') {
+          await this.db.execute(
+            'UPDATE users SET auth_provider = ? WHERE id = ?',
+            ['google', user.id]
+          );
+          // Update user object to reflect the change
+          user.auth_provider = 'google';
+        }
+        
         // Update profile image if available and different
         if (picture && user.profile_image !== picture) {
           await this.userModel.updateProfile(user.id, { profile_image: picture });
@@ -115,14 +138,28 @@ class Auth0Service {
         console.error('Failed to store session token:', tokenError);
       }
 
+      // Include profile_image only if it's a URL (Auth0 users), exclude blob data
+      const userResponse = {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role
+      };
+      
+      // Check if user is Auth0 user using auth_provider column
+      const isAuth0User = user.auth_provider === 'google';
+      
+      // If profile_image is a URL (starts with http/https), include it (Auth0 users)
+      if (isAuth0User && user.profile_image && typeof user.profile_image === 'string' && 
+          (user.profile_image.startsWith('http://') || user.profile_image.startsWith('https://'))) {
+        userResponse.profile_image = user.profile_image;
+      }
+      
+      // Include isAuth0User flag for frontend
+      userResponse.isAuth0User = isAuth0User;
+      
       return {
-        user: {
-          id: user.id,
-          email: user.email,
-          username: user.username,
-          role: user.role,
-          profile_image: user.profile_image
-        },
+        user: userResponse,
         token
       };
     } catch (error) {

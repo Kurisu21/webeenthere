@@ -52,7 +52,7 @@ export default function AdminForumPage() {
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                 <p className="text-primary">Loading forum...</p>
               </div>
             </div>
@@ -141,7 +141,7 @@ export default function AdminForumPage() {
                     onClick={() => setActiveTab('categories')}
                     className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'categories'
-                        ? 'border-purple-500 text-purple-400'
+                        ? 'border-primary text-primary'
                         : 'border-transparent text-secondary hover:text-primary hover:border-app'
                     }`}
                   >
@@ -151,7 +151,7 @@ export default function AdminForumPage() {
                     onClick={() => setActiveTab('threads')}
                     className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'threads'
-                        ? 'border-purple-500 text-purple-400'
+                        ? 'border-primary text-primary'
                         : 'border-transparent text-secondary hover:text-primary hover:border-app'
                     }`}
                   >
@@ -174,10 +174,10 @@ export default function AdminForumPage() {
             )}
 
             {/* Additional Stats */}
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="mt-8">
               <div className="bg-surface-elevated rounded-lg border border-app p-6">
                 <h3 className="text-lg font-semibold text-primary mb-4">Community Engagement</h3>
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex justify-between items-center">
                     <span className="text-secondary">Total Likes</span>
                     <span className="text-primary font-medium">{stats?.totalLikes || 0}</span>
@@ -186,21 +186,6 @@ export default function AdminForumPage() {
                     <span className="text-secondary">Avg Replies per Thread</span>
                     <span className="text-primary font-medium">{stats?.averageRepliesPerThread || 0}</span>
                   </div>
-                </div>
-              </div>
-
-              <div className="bg-surface-elevated rounded-lg border border-app p-6">
-                <h3 className="text-lg font-semibold text-primary mb-4">Quick Actions</h3>
-                <div className="space-y-3">
-                  <button className="w-full text-left px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded-lg transition-colors">
-                    Create New Category
-                  </button>
-                  <button className="w-full text-left px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 rounded-lg transition-colors">
-                    View Recent Activity
-                  </button>
-                  <button className="w-full text-left px-4 py-2 bg-green-600/20 hover:bg-green-600/30 text-green-300 rounded-lg transition-colors">
-                    Export Forum Data
-                  </button>
                 </div>
               </div>
             </div>

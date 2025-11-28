@@ -74,11 +74,11 @@ class StripeWebhookController {
         [paymentIntent.id]
       );
 
-      // Update subscription log payment status
+      // Update subscription log payment status (update all matching payment references, not just pending)
       await this.db.execute(
         `UPDATE subscription_logs 
          SET payment_status = 'completed' 
-         WHERE payment_reference = ? AND payment_status = 'pending'`,
+         WHERE payment_reference = ?`,
         [paymentIntent.id]
       );
 

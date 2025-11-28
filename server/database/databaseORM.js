@@ -179,6 +179,7 @@ class DatabaseORM {
           password_hash VARCHAR(255) NOT NULL,
           session_token VARCHAR(255) NULL,
           profile_image LONGBLOB,
+          auth_provider ENUM('email', 'google') DEFAULT 'email',
           role ENUM('user', 'admin') DEFAULT 'user',
           theme_mode ENUM('light', 'dark') DEFAULT 'light',
           is_verified BOOLEAN DEFAULT FALSE,
@@ -260,6 +261,7 @@ class DatabaseORM {
           file_name VARCHAR(255) NOT NULL,
           file_type VARCHAR(50),
           file_url TEXT NOT NULL,
+          file_size BIGINT NULL,
           uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id),
           FOREIGN KEY (website_id) REFERENCES websites(id)
@@ -466,6 +468,36 @@ class DatabaseORM {
           INDEX idx_is_deleted (is_deleted)
         )
       `,
+      forum_thread_likes: `
+        CREATE TABLE IF NOT EXISTS forum_thread_likes (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          thread_id INT NOT NULL,
+          user_id INT NOT NULL,
+          likes TINYINT DEFAULT 1,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          UNIQUE KEY unique_user_thread_like (user_id, thread_id),
+          FOREIGN KEY (thread_id) REFERENCES forum_threads(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_thread_id (thread_id),
+          INDEX idx_user_id (user_id)
+        )
+      `,
+      forum_reply_likes: `
+        CREATE TABLE IF NOT EXISTS forum_reply_likes (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          reply_id INT NOT NULL,
+          user_id INT NOT NULL,
+          likes TINYINT DEFAULT 1,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          UNIQUE KEY unique_user_reply_like (user_id, reply_id),
+          FOREIGN KEY (reply_id) REFERENCES forum_replies(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_reply_id (reply_id),
+          INDEX idx_user_id (user_id)
+        )
+      `,
       help_categories: `
         CREATE TABLE IF NOT EXISTS help_categories (
           id INT AUTO_INCREMENT PRIMARY KEY,
@@ -493,6 +525,20 @@ class DatabaseORM {
           FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
           INDEX idx_category_id (category_id),
           INDEX idx_is_published (is_published)
+        )
+      `,
+      help_article_votes: `
+        CREATE TABLE IF NOT EXISTS help_article_votes (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          article_id INT NOT NULL,
+          user_id INT NOT NULL,
+          is_helpful BOOLEAN NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE KEY unique_user_article_vote (user_id, article_id),
+          FOREIGN KEY (article_id) REFERENCES help_articles(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_article_id (article_id),
+          INDEX idx_user_id (user_id)
         )
       `,
       support_tickets: `
@@ -2833,25 +2879,25 @@ class DatabaseORM {
             name: 'Free',
             type: 'free',
             price: 0.00,
-            features: '3 websites max, 200 AI chat messages',
-            website_limit: 3,
-            ai_chat_limit: 200
+            features: '1 website, 20 AI messages per month',
+            website_limit: 1,
+            ai_chat_limit: 20
           },
           {
             name: 'Monthly',
             type: 'monthly',
-            price: 9.99,
-            features: 'Unlimited websites, Unlimited AI chat',
-            website_limit: null,
-            ai_chat_limit: null
+            price: 5.40,
+            features: '5 websites, 300 AI messages per month',
+            website_limit: 5,
+            ai_chat_limit: 300
           },
           {
             name: 'Yearly',
             type: 'yearly',
-            price: 99.00,
-            features: 'Unlimited websites, Unlimited AI chat, Premium features',
-            website_limit: null,
-            ai_chat_limit: null
+            price: 64.80,
+            features: '20 websites, 4,000 AI messages per month',
+            website_limit: 20,
+            ai_chat_limit: 4000
           }
         ];
 
@@ -2868,14 +2914,14 @@ class DatabaseORM {
 
       // Assign free plan to all seeded users (must happen after plans are seeded)
       if (this.seededUserIds && this.seededUserIds.length > 0) {
-        const freePlanId = 1; // Free plan is always plan_id 1
-        // Verify free plan exists
-        const [planCheck] = await connection.promise().execute(
-          'SELECT id FROM plans WHERE id = ?',
-          [freePlanId]
+        // Find free plan dynamically by type instead of hardcoding plan_id
+        const [freePlanRows] = await connection.promise().execute(
+          'SELECT id FROM plans WHERE type = ? AND is_active = TRUE LIMIT 1',
+          ['free']
         );
         
-        if (planCheck.length > 0) {
+        if (freePlanRows.length > 0) {
+          const freePlanId = freePlanRows[0].id;
           for (const userId of this.seededUserIds) {
             // Check if user already has a plan
             const [existingPlan] = await connection.promise().execute(
@@ -2899,7 +2945,7 @@ class DatabaseORM {
           }
           console.log(`✅ Assigned free plan to ${this.seededUserIds.length} seeded users`);
         } else {
-          console.log(`⚠️  Free plan (id: ${freePlanId}) not found, skipping plan assignment`);
+          console.log(`⚠️  Free plan not found, skipping plan assignment`);
         }
         // Clear the stored user IDs
         this.seededUserIds = null;
@@ -3593,8 +3639,11 @@ class DatabaseORM {
             forum_categories: { exists: false, hasData: false },
             forum_threads: { exists: false, hasData: false },
             forum_replies: { exists: false, hasData: false },
+            forum_thread_likes: { exists: false, hasData: false },
+            forum_reply_likes: { exists: false, hasData: false },
             help_categories: { exists: false, hasData: false },
             help_articles: { exists: false, hasData: false },
+            help_article_votes: { exists: false, hasData: false },
             support_tickets: { exists: false, hasData: false },
             support_messages: { exists: false, hasData: false },
             activity_logs: { exists: false, hasData: false },
@@ -3608,7 +3657,7 @@ class DatabaseORM {
       try {
         connection = await this.createConnectionWithDB();
         
-        const tables = ['users', 'templates', 'websites', 'plans', 'feedback', 'feedback_responses', 'forum_categories', 'forum_threads', 'forum_replies', 'help_categories', 'help_articles', 'support_tickets', 'support_messages', 'activity_logs', 'system_settings'];
+        const tables = ['users', 'templates', 'websites', 'plans', 'feedback', 'feedback_responses', 'forum_categories', 'forum_threads', 'forum_replies', 'forum_thread_likes', 'forum_reply_likes', 'help_categories', 'help_articles', 'help_article_votes', 'support_tickets', 'support_messages', 'activity_logs', 'system_settings'];
         const status = {
           database: dbExists,
           tables: {}

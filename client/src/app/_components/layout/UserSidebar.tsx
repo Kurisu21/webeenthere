@@ -6,7 +6,7 @@ const navItems = [
   { label: 'Host', href: '/user/host' },
   { label: 'Extensions', href: '/user/extensions' },
   { label: 'Share', href: '/user/share' },
-  { label: 'Added Images', href: '/user/images' },
+  { label: 'Media Library', href: '/user/images' },
   { label: 'Problems & Goals', href: '/user/goals' },
   { label: 'Help Center', href: '/user/help' },
   { label: 'Community Forum', href: '/user/forum' },

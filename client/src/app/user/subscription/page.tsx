@@ -9,7 +9,8 @@ import StripePaymentModal from '../../_components/subscription/StripePaymentModa
 import InvoiceReceipt from '../../_components/subscription/InvoiceReceipt';
 import UsageStats from '../../_components/subscription/UsageStats';
 import SubscriptionBadge from '../../_components/subscription/SubscriptionBadge';
-import { subscriptionApi, Plan, Subscription, UsageLimits } from '../../../lib/subscriptionApi';
+import SubscriptionHistory from '../../_components/subscription/SubscriptionHistory';
+import { subscriptionApi, Plan, Subscription, UsageLimits, SubscriptionLog } from '../../../lib/subscriptionApi';
 import { Invoice } from '../../../lib/invoiceApi';
 import { useAuth } from '../../_components/auth/AuthContext';
 
@@ -26,6 +27,8 @@ export default function SubscriptionPage() {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [subscriptionHistory, setSubscriptionHistory] = useState<SubscriptionLog[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   useEffect(() => {
     loadSubscriptionData();
@@ -36,10 +39,11 @@ export default function SubscriptionPage() {
       setIsLoading(true);
       setError(null);
 
-      const [plansResponse, subscriptionResponse, limitsResponse] = await Promise.all([
+      const [plansResponse, subscriptionResponse, limitsResponse, historyResponse] = await Promise.all([
         subscriptionApi.getPlans(),
         subscriptionApi.getCurrentSubscription(),
-        subscriptionApi.checkLimits()
+        subscriptionApi.checkLimits(),
+        subscriptionApi.getHistory(50)
       ]);
 
       if (plansResponse.success) {
@@ -52,6 +56,10 @@ export default function SubscriptionPage() {
 
       if (limitsResponse.success) {
         setUsageLimits(limitsResponse.data);
+      }
+
+      if (historyResponse.success) {
+        setSubscriptionHistory(historyResponse.data);
       }
     } catch (err) {
       console.error('Failed to load subscription data:', err);
@@ -77,6 +85,11 @@ export default function SubscriptionPage() {
         if (response.success) {
           setSuccess('Subscription updated successfully!');
           await loadSubscriptionData();
+          // Reload history
+          const historyResponse = await subscriptionApi.getHistory(50);
+          if (historyResponse.success) {
+            setSubscriptionHistory(historyResponse.data);
+          }
         } else {
           setError(response.error || 'Failed to update subscription');
         }
@@ -121,6 +134,11 @@ export default function SubscriptionPage() {
         
         // Reload subscription data
         await loadSubscriptionData();
+        // Reload history
+        const historyResponse = await subscriptionApi.getHistory(50);
+        if (historyResponse.success) {
+          setSubscriptionHistory(historyResponse.data);
+        }
       } else {
         setError(response.error || 'Failed to update subscription');
       }
@@ -150,6 +168,11 @@ export default function SubscriptionPage() {
         setSuccess('Subscription cancelled successfully');
         // Reload subscription data
         await loadSubscriptionData();
+        // Reload history
+        const historyResponse = await subscriptionApi.getHistory(50);
+        if (historyResponse.success) {
+          setSubscriptionHistory(historyResponse.data);
+        }
       } else {
         setError(response.error || 'Failed to cancel subscription');
       }
@@ -290,6 +313,9 @@ export default function SubscriptionPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Subscription History */}
+                <SubscriptionHistory history={subscriptionHistory} isLoading={isLoadingHistory} />
               </div>
             )}
 

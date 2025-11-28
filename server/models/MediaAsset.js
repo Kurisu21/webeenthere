@@ -5,12 +5,24 @@ class MediaAsset {
   }
 
   async create({ user_id, website_id, file_name, file_type, file_url, file_size }) {
-    // Insert without file_size (column may not exist in older schemas)
-    const [result] = await this.db.execute(
-      'INSERT INTO media_assets (user_id, website_id, file_name, file_type, file_url) VALUES (?, ?, ?, ?, ?)',
-      [user_id, website_id, file_name, file_type, file_url]
-    );
-    return result.insertId;
+    // Insert with file_size if provided
+    try {
+      const [result] = await this.db.execute(
+        'INSERT INTO media_assets (user_id, website_id, file_name, file_type, file_url, file_size) VALUES (?, ?, ?, ?, ?, ?)',
+        [user_id, website_id, file_name, file_type, file_url, file_size || null]
+      );
+      return result.insertId;
+    } catch (error) {
+      // Fallback if file_size column doesn't exist (for older databases)
+      if (error.message && error.message.includes('file_size')) {
+        const [result] = await this.db.execute(
+          'INSERT INTO media_assets (user_id, website_id, file_name, file_type, file_url) VALUES (?, ?, ?, ?, ?)',
+          [user_id, website_id, file_name, file_type, file_url]
+        );
+        return result.insertId;
+      }
+      throw error;
+    }
   }
 
   async findById(id) {

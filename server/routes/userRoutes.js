@@ -186,4 +186,28 @@ router.get(
   (req, res) => userController.getProfileImage(req, res)
 );
 
+// Change password route (authenticated)
+router.post(
+  '/change-password',
+  authMiddleware,
+  [
+    body('currentPassword')
+      .notEmpty()
+      .withMessage('Current password is required'),
+    body('newPassword')
+      .isLength({ min: 8 })
+      .withMessage('New password must be at least 8 characters')
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+      .withMessage('New password must contain at least one lowercase letter, one uppercase letter, and one number'),
+  ],
+  (req, res) => userController.changePassword(req, res)
+);
+
+// Check user type (Auth0 vs email/password) - for frontend
+router.get(
+  '/profile/user-type',
+  authMiddleware,
+  (req, res) => userController.checkUserType(req, res)
+);
+
 module.exports = router; 

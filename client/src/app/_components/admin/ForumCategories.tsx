@@ -131,7 +131,7 @@ export default function ForumCategories({ onCategoryChange }: ForumCategoriesPro
         <h3 className="text-xl font-semibold text-primary">Forum Categories</h3>
         <button
           onClick={() => setIsCreating(true)}
-          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200"
+          className="px-4 py-2 bg-surface-elevated dark:bg-surface hover:bg-surface dark:hover:bg-surface-elevated text-primary dark:text-primary border border-app hover:border-primary/50 dark:hover:border-primary/50 rounded-lg transition-all duration-200"
         >
           Add Category
         </button>
@@ -219,7 +219,7 @@ export default function ForumCategories({ onCategoryChange }: ForumCategoriesPro
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-surface-elevated dark:bg-surface hover:bg-surface dark:hover:bg-surface-elevated text-primary dark:text-primary border border-app hover:border-primary/50 dark:hover:border-primary/50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Saving...' : (editingCategory ? 'Update' : 'Create')}
               </button>
@@ -286,17 +286,26 @@ export default function ForumCategories({ onCategoryChange }: ForumCategoriesPro
                     </div>
                   </td>
                   <td className="px-6 py-4 text-secondary">
-                    {category.threadCount}
+                    {category.threadCount || category.thread_count || 0}
                   </td>
                   <td className="px-6 py-4 text-secondary text-sm">
-                    {category.lastActivity 
-                      ? new Date(category.lastActivity).toLocaleDateString('en-US', {
+                    {(() => {
+                      const lastActivity = category.lastActivity || category.last_activity;
+                      if (!lastActivity) return 'No activity';
+                      try {
+                        const date = new Date(lastActivity);
+                        if (isNaN(date.getTime())) return 'Invalid Date';
+                        return date.toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'short',
-                          day: 'numeric'
-                        })
-                      : 'No activity'
-                    }
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        });
+                      } catch (error) {
+                        return 'Invalid Date';
+                      }
+                    })()}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">

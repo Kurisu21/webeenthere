@@ -1,4 +1,4 @@
-﻿import { API_BASE_URL, apiCall, apiPost, apiGet, apiPut } from './apiConfig';
+import { API_BASE_URL, apiCall, apiPost, apiGet, apiPut } from './apiConfig';
 
 // Types
 export interface HelpArticle {
@@ -14,6 +14,9 @@ export interface HelpArticle {
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
+  userVote?: boolean | null; // true = helpful, false = not helpful, null = no vote
+  categoryName?: string; // Category name from database join
+  authorName?: string; // Author name from database join
 }
 
 export interface HelpCategory {
@@ -38,8 +41,8 @@ export interface HelpStats {
   totalArticles: number;
   totalCategories: number;
   totalViews: number;
-  totalHelpful: number;
-  totalNotHelpful: number;
+  totalHelpful?: number;
+  totalNotHelpful?: number;
   averageRating: string;
 }
 
@@ -74,6 +77,7 @@ class HelpCenterApi {
     title: string;
     content: string;
     tags?: string[];
+    isPublished?: boolean;
   }): Promise<HelpArticle> {
     const data = await apiPost(`${API_BASE_URL}/api/help/articles`, article);
     return data.data;

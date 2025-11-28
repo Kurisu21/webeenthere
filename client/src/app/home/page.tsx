@@ -418,6 +418,12 @@ export default function Home() {
                   <svg className="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
+                  20 AI Messages/month
+                </li>
+                <li className="flex items-center text-gray-300">
+                  <svg className="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
                   Basic Templates
                 </li>
                 <li className="flex items-center text-gray-300">
@@ -433,14 +439,20 @@ export default function Home() {
             </div>
             
             <div className="bg-gradient-to-br from-blue-600 to-purple-600 p-8 rounded-lg transform scale-105">
-              <h3 className="text-2xl font-bold text-white mb-4">Pro</h3>
-              <div className="text-4xl font-bold text-white mb-6">$9<span className="text-lg text-blue-200">/month</span></div>
+              <h3 className="text-2xl font-bold text-white mb-4">Monthly</h3>
+              <div className="text-4xl font-bold text-white mb-6">$5.40<span className="text-lg text-blue-200">/month</span></div>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center text-white">
                   <svg className="w-5 h-5 text-blue-200 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Unlimited Websites
+                  5 Websites
+                </li>
+                <li className="flex items-center text-white">
+                  <svg className="w-5 h-5 text-blue-200 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  300 AI Messages/month
                 </li>
                 <li className="flex items-center text-white">
                   <svg className="w-5 h-5 text-blue-200 mr-3" fill="currentColor" viewBox="0 0 20 20">
@@ -454,49 +466,44 @@ export default function Home() {
                   </svg>
                   Priority Support
                 </li>
-                <li className="flex items-center text-white">
-                  <svg className="w-5 h-5 text-blue-200 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  Custom Domain
-                </li>
               </ul>
               <Link href="/register" className="w-full bg-white hover:bg-gray-100 text-blue-600 py-3 rounded-lg transition-colors block text-center font-medium">
-                Start Pro Trial
+                Start Monthly Plan
               </Link>
             </div>
             
             <div className="bg-gray-700 p-8 rounded-lg border border-gray-600">
-              <h3 className="text-2xl font-bold text-white mb-4">Enterprise</h3>
-              <div className="text-4xl font-bold text-white mb-6">$29<span className="text-lg text-gray-400">/month</span></div>
+              <h3 className="text-2xl font-bold text-white mb-4">Yearly</h3>
+              <div className="text-4xl font-bold text-white mb-6">$64.80<span className="text-lg text-gray-400">/year</span></div>
+              <div className="text-sm text-green-400 mb-4 font-medium">Save $0.00/year (Same as monthly)</div>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center text-gray-300">
                   <svg className="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Everything in Pro
+                  20 Websites
                 </li>
                 <li className="flex items-center text-gray-300">
                   <svg className="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Team Collaboration
+                  4,000 AI Messages/month
                 </li>
                 <li className="flex items-center text-gray-300">
                   <svg className="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Advanced Analytics
+                  Premium Templates
                 </li>
                 <li className="flex items-center text-gray-300">
                   <svg className="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Dedicated Support
+                  Priority Support
                 </li>
               </ul>
               <Link href="/register" className="w-full bg-gray-600 hover:bg-gray-500 text-white py-3 rounded-lg transition-colors block text-center">
-                Contact Sales
+                Start Yearly Plan
               </Link>
             </div>
           </div>

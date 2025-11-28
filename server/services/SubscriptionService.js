@@ -59,14 +59,31 @@ class SubscriptionService {
     });
 
     // Create subscription log
+    // If paymentReference exists and is not empty, payment was successful, otherwise pending
+    const paymentStatus = plan.type === 'free' 
+      ? 'completed' 
+      : (paymentReference && paymentReference.trim() !== '' ? 'completed' : 'pending');
+    
     await this.subscriptionLogModel.create({
       user_id: userId,
       plan_id: planId,
       action: action,
-      payment_status: plan.type === 'free' ? 'completed' : 'pending',
+      payment_status: paymentStatus,
       amount: plan.price,
       payment_reference: paymentReference
     });
+    
+    // If paymentReference exists but status was set to pending (shouldn't happen, but safety check)
+    // Update it immediately
+    if (paymentReference && paymentReference.trim() !== '' && paymentStatus === 'pending') {
+      console.warn(`Payment reference exists but status is pending. Updating log for payment: ${paymentReference}`);
+      await this.db.execute(
+        `UPDATE subscription_logs 
+         SET payment_status = 'completed' 
+         WHERE payment_reference = ? AND payment_status = 'pending'`,
+        [paymentReference]
+      );
+    }
 
     // Create payment transaction if not free
     if (plan.type !== 'free') {
@@ -141,7 +158,7 @@ class SubscriptionService {
     const subscription = await this.userPlanModel.findByUserId(userId);
     if (!subscription) {
       // Default to free plan limits
-      return { canUse: false, remaining: 0, limit: 200 };
+      return { canUse: false, remaining: 0, limit: 20 };
     }
 
     // If unlimited (null limit), return true

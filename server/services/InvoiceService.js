@@ -101,13 +101,21 @@ class InvoiceService {
         throw new Error('Invoice not found');
       }
 
+      // Verify email address exists
+      if (!invoice.email) {
+        console.error('No email address found for invoice:', invoice);
+        throw new Error('User email address not found');
+      }
+
+      console.log(`Sending invoice email to: ${invoice.email} for invoice ${invoice.invoice_number}`);
+
       // Generate PDF
       const pdfBuffer = await this.generatePDF(transactionId);
 
       // Send email with PDF attachment
       const mailOptions = {
         from: process.env.EMAIL_USER || 'your-email@gmail.com',
-        to: invoice.email,
+        to: invoice.email, // User's email from the database
         subject: `Payment Receipt - Invoice ${invoice.invoice_number}`,
         html: `
           <!DOCTYPE html>
@@ -236,10 +244,16 @@ class InvoiceService {
         ]
       };
 
-      await this.emailService.transporter.sendMail(mailOptions);
+      const info = await this.emailService.transporter.sendMail(mailOptions);
+      console.log(`Invoice email sent successfully to ${invoice.email}. Message ID: ${info.messageId}`);
       return true;
     } catch (error) {
       console.error('Error sending invoice email:', error);
+      console.error('Email details:', {
+        transactionId,
+        email: invoice?.email,
+        invoiceNumber: invoice?.invoice_number
+      });
       return false;
     }
   }
@@ -270,14 +284,15 @@ class InvoiceService {
         doc.fontSize(10).text('Invoice', 50, 80);
         doc.moveDown();
 
-        // Invoice Details
+        // Invoice Details (Right aligned)
         doc.fontSize(12);
-        doc.text(`Invoice #: ${invoice.invoice_number}`, 400, 50);
-        doc.text(`Issue Date: ${new Date(invoice.issue_date).toLocaleDateString()}`, 400, 70);
+        const rightColumnX = 450;
+        doc.text(`Invoice #: ${invoice.invoice_number}`, rightColumnX, 50, { align: 'right', width: 100 });
+        doc.text(`Issue Date: ${new Date(invoice.issue_date).toLocaleDateString()}`, rightColumnX, 70, { align: 'right', width: 100 });
         if (invoice.due_date) {
-          doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, 400, 90);
+          doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, rightColumnX, 90, { align: 'right', width: 100 });
         }
-        doc.text(`Status: ${invoice.status.toUpperCase()}`, 400, 110);
+        doc.text(`Status: ${invoice.status.toUpperCase()}`, rightColumnX, 110, { align: 'right', width: 100 });
 
         // Bill To
         doc.moveDown(2);
@@ -320,18 +335,30 @@ class InvoiceService {
           .lineTo(550, totalsTop)
           .stroke();
 
-        doc.font('Helvetica-Bold');
-        doc.text('Subtotal:', 400, totalsTop + 10, { align: 'right' });
-        doc.text(`$${parseFloat(invoice.amount).toFixed(2)}`, 500, totalsTop + 10, { align: 'right' });
+        // Totals section - properly spaced to avoid overlap
+        // Use fixed positions: labels at 400, values at 500 (right-aligned from 550)
+        const totalsLabelStart = 400;  // Start position for labels
+        const totalsValueStart = 500;   // Start position for values (right edge at 550)
+        
+        doc.font('Helvetica-Bold').fontSize(10);
+        // Subtotal - label left-aligned, value right-aligned
+        doc.text('Subtotal:', totalsLabelStart, totalsTop + 10);
+        doc.text(`$${parseFloat(invoice.amount).toFixed(2)}`, totalsValueStart, totalsTop + 10, { align: 'right', width: 50 });
 
         if (parseFloat(invoice.tax_amount) > 0) {
-          doc.text('Tax:', 400, totalsTop + 30, { align: 'right' });
-          doc.text(`$${parseFloat(invoice.tax_amount).toFixed(2)}`, 500, totalsTop + 30, { align: 'right' });
+          doc.text('Tax:', totalsLabelStart, totalsTop + 30);
+          doc.text(`$${parseFloat(invoice.tax_amount).toFixed(2)}`, totalsValueStart, totalsTop + 30, { align: 'right', width: 50 });
         }
 
-        doc.fontSize(12);
-        doc.text('Total:', 400, totalsTop + 50, { align: 'right' });
-        doc.text(`$${parseFloat(invoice.total_amount).toFixed(2)}`, 500, totalsTop + 50, { align: 'right' });
+        // Total - with separator line and larger font
+        const totalTop = totalsTop + (parseFloat(invoice.tax_amount) > 0 ? 50 : 30);
+        doc.moveTo(400, totalTop)
+          .lineTo(550, totalTop)
+          .stroke();
+        
+        doc.fontSize(12).font('Helvetica-Bold');
+        doc.text('Total:', totalsLabelStart, totalTop + 10);
+        doc.text(`$${parseFloat(invoice.total_amount).toFixed(2)}`, totalsValueStart, totalTop + 10, { align: 'right', width: 50 });
 
         // Payment Info
         if (invoice.transaction_reference) {

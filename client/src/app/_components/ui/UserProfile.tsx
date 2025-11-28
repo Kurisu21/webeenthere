@@ -22,7 +22,17 @@ const UserProfile = memo(() => {
   const [emailVerificationCode, setEmailVerificationCode] = useState('');
   const [isRequestingEmailCode, setIsRequestingEmailCode] = useState(false);
   const [emailCodeSent, setEmailCodeSent] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Check if user is Auth0 user - use auth_provider if available, otherwise fall back to isAuth0User flag
+  const isAuth0User = (user as any)?.auth_provider === 'google' || 
+                      (user as any)?.isAuth0User || false;
 
   useEffect(() => {
     if (user) {
@@ -271,6 +281,62 @@ const UserProfile = memo(() => {
     setSuccess(null);
     setEmailCodeSent(false);
     setEmailVerificationCode('');
+    setPasswordData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
+  };
+
+  const handlePasswordChange = async () => {
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      setError('All password fields are required');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      setError('New password must be at least 8 characters');
+      return;
+    }
+
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(passwordData.newPassword)) {
+      setError('New password must contain at least one lowercase letter, one uppercase letter, and one number');
+      return;
+    }
+
+    if (!user || !token) return;
+
+    try {
+      setIsChangingPassword(true);
+      setError(null);
+      setSuccess(null);
+
+      const response = await apiPost(`${API_ENDPOINTS.USERS}/change-password`, {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+
+      if (response.success) {
+        setSuccess('Password changed successfully!');
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+        });
+      } else {
+        setError(response.error || 'Failed to change password');
+      }
+    } catch (err: any) {
+      console.error('Failed to change password:', err);
+      setError(err.message || err.error || 'Failed to change password');
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   if (!user) {
@@ -400,65 +466,81 @@ const UserProfile = memo(() => {
             </label>
             {isEditing ? (
               <div className="space-y-3">
-                <input
-                  type="email"
-                  value={formData.email || ''}
-                  onChange={(e) => {
-                    handleInputChange('email', e.target.value);
-                    // Reset verification state when email changes
-                    if (emailCodeSent) {
-                      setEmailCodeSent(false);
-                      setEmailVerificationCode('');
-                    }
-                  }}
-                  placeholder="Enter email address"
-                  className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-colors-fast"
-                />
-                
-                {/* Email Verification UI - Show when email is changing */}
-                {isEmailChanging && (
-                  <div className="space-y-2 p-3 bg-blue-900/20 border border-blue-500/30 rounded-md">
-                    <p className="text-sm text-blue-300">
-                      Email address is changing. Verification required.
-                    </p>
+                {isAuth0User ? (
+                  <div className="p-3 bg-yellow-900/20 dark:bg-yellow-900/30 border border-yellow-500/30 dark:border-yellow-500/50 rounded-md">
+                    <div className="flex items-start">
+                      <svg className="w-5 h-5 text-yellow-500 dark:text-yellow-400 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="text-sm text-primary">
+                        <p className="font-medium mb-1">Google Auth0 Account</p>
+                        <p className="text-secondary">Email changes are not available for Google Auth0 accounts. Your email is managed by your Google account.</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="email"
+                      value={formData.email || ''}
+                      onChange={(e) => {
+                        handleInputChange('email', e.target.value);
+                        // Reset verification state when email changes
+                        if (emailCodeSent) {
+                          setEmailCodeSent(false);
+                          setEmailVerificationCode('');
+                        }
+                      }}
+                      placeholder="Enter email address"
+                      className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-colors-fast"
+                    />
                     
-                    {!emailCodeSent ? (
-                      <button
-                        type="button"
-                        onClick={handleRequestEmailCode}
-                        disabled={isRequestingEmailCode || !formData.email}
-                        className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-md text-sm font-medium transition-colors"
-                      >
-                        {isRequestingEmailCode ? 'Sending Code...' : 'Send Verification Code to New Email'}
-                      </button>
-                    ) : (
-                      <div className="space-y-2">
-                        <p className="text-sm text-green-300">
-                          ✓ Verification code sent! Check your new email address.
+                    {/* Email Verification UI - Show when email is changing */}
+                    {isEmailChanging && (
+                      <div className="space-y-2 p-3 bg-blue-900/20 border border-blue-500/30 rounded-md">
+                        <p className="text-sm text-blue-300">
+                          Email address is changing. Verification required.
                         </p>
-                        <input
-                          type="text"
-                          value={emailVerificationCode}
-                          onChange={(e) => {
-                            // Only allow 6 digits
-                            const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                            setEmailVerificationCode(value);
-                          }}
-                          placeholder="Enter 6-digit code"
-                          maxLength={6}
-                          className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors-fast text-center text-2xl tracking-widest font-mono"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleRequestEmailCode}
-                          disabled={isRequestingEmailCode}
-                          className="w-full px-3 py-1.5 text-xs bg-surface-elevated border border-app text-secondary hover:text-primary rounded-md transition-colors"
-                        >
-                          {isRequestingEmailCode ? 'Sending...' : 'Resend Code'}
-                        </button>
+                        
+                        {!emailCodeSent ? (
+                          <button
+                            type="button"
+                            onClick={handleRequestEmailCode}
+                            disabled={isRequestingEmailCode || !formData.email}
+                            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-md text-sm font-medium transition-colors"
+                          >
+                            {isRequestingEmailCode ? 'Sending Code...' : 'Send Verification Code to New Email'}
+                          </button>
+                        ) : (
+                          <div className="space-y-2">
+                            <p className="text-sm text-green-300">
+                              ✓ Verification code sent! Check your new email address.
+                            </p>
+                            <input
+                              type="text"
+                              value={emailVerificationCode}
+                              onChange={(e) => {
+                                // Only allow 6 digits
+                                const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                setEmailVerificationCode(value);
+                              }}
+                              placeholder="Enter 6-digit code"
+                              maxLength={6}
+                              className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors-fast text-center text-2xl tracking-widest font-mono"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleRequestEmailCode}
+                              disabled={isRequestingEmailCode}
+                              className="w-full px-3 py-1.5 text-xs bg-surface-elevated border border-app text-secondary hover:text-primary rounded-md transition-colors"
+                            >
+                              {isRequestingEmailCode ? 'Sending...' : 'Resend Code'}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
+                  </>
                 )}
               </div>
             ) : (
@@ -475,19 +557,39 @@ const UserProfile = memo(() => {
             {isEditing ? (
               <div className="space-y-3">
                 {/* Image Preview */}
-                {(imagePreview || (user?.id && getProfileImageUrl(user.id, imageCacheBust))) && (
-                  <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-app">
-                    <img
-                      key={`preview-${imageCacheBust || imagePreview || 'default'}`}
-                      src={imagePreview || getProfileImageUrl(user?.id || '', imageCacheBust) || ''}
-                      alt="Profile preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
+                {(() => {
+                  const userProfileImage = (user as any)?.profile_image;
+                  const isUrl = userProfileImage && (typeof userProfileImage === 'string' && (userProfileImage.startsWith('http://') || userProfileImage.startsWith('https://')));
+                  const previewSrc = imagePreview || (isUrl ? userProfileImage : (user?.id ? getProfileImageUrl(user.id, imageCacheBust) : null));
+                  
+                  return previewSrc ? (
+                    <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-app bg-surface-elevated">
+                      <img
+                        key={`preview-${imageCacheBust || imagePreview || 'default'}`}
+                        src={previewSrc}
+                        alt="Profile preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          try {
+                            const target = e.target as HTMLImageElement;
+                            if (target) {
+                              target.style.display = 'none';
+                              const placeholder = target.parentElement?.querySelector('.preview-placeholder') as HTMLElement;
+                              if (placeholder) {
+                                placeholder.style.display = 'flex';
+                              }
+                            }
+                          } catch (err) {
+                            // Silently handle any errors in error handler
+                          }
+                        }}
+                      />
+                      <div className="preview-placeholder absolute inset-0 hidden items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-2xl">
+                        {user?.username?.charAt(0).toUpperCase() || 'U'}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
                 
                 {/* File Upload Button */}
                 <div>
@@ -532,28 +634,53 @@ const UserProfile = memo(() => {
               </div>
             ) : (
               <div className="space-y-2">
-                {user?.id && getProfileImageUrl(user.id, imageCacheBust) ? (
-                  <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-app">
-                    <img
-                      key={`profile-${user.id}-${imageCacheBust || 'default'}`}
-                      src={getProfileImageUrl(user.id, imageCacheBust) || ''}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                      onLoad={() => {
-                        // Image loaded successfully
-                        console.log('Profile image loaded');
-                      }}
-                      onError={(e) => {
-                        console.error('Profile image failed to load');
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="px-3 py-2 bg-surface-elevated border border-app rounded-md text-secondary">
-                    Not set
-                  </div>
-                )}
+                {/* Check if user has profile_image (could be URL from Auth0 or blob) */}
+                {(() => {
+                  // Check if profile_image is a URL (Auth0 users) or if we should use blob endpoint
+                  const userProfileImage = (user as any)?.profile_image;
+                  const isUrl = userProfileImage && (typeof userProfileImage === 'string' && (userProfileImage.startsWith('http://') || userProfileImage.startsWith('https://')));
+                  const profileImageSrc = isUrl 
+                    ? userProfileImage 
+                    : (user?.id ? getProfileImageUrl(user.id, imageCacheBust) : null);
+                  
+                  return profileImageSrc ? (
+                    <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-app bg-surface-elevated">
+                      <img
+                        key={`profile-${user.id}-${imageCacheBust || 'default'}`}
+                        src={profileImageSrc}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                        onLoad={() => {
+                          // Image loaded successfully - no action needed
+                        }}
+                        onError={(e) => {
+                          try {
+                            // Show placeholder instead of hiding
+                            const target = e.target as HTMLImageElement;
+                            if (target) {
+                              target.style.display = 'none';
+                              // Show placeholder avatar
+                              const placeholder = target.parentElement?.querySelector('.profile-placeholder') as HTMLElement;
+                              if (placeholder) {
+                                placeholder.style.display = 'flex';
+                              }
+                            }
+                          } catch (err) {
+                            // Silently handle any errors in error handler to prevent console errors
+                          }
+                        }}
+                      />
+                      {/* Placeholder avatar - hidden by default, shown on error */}
+                      <div className="profile-placeholder absolute inset-0 hidden items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-2xl">
+                        {user?.username?.charAt(0).toUpperCase() || 'U'}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-app bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl">
+                      {user?.username?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -616,6 +743,70 @@ const UserProfile = memo(() => {
               </div>
             )}
           </div>
+
+          {/* Password Change Section - Only for email/password users */}
+          {!isAuth0User && (
+            <div className="group">
+              <label className="block text-sm font-medium text-secondary mb-2 transition-colors duration-300">
+                Change Password
+              </label>
+              {isEditing ? (
+                <div className="space-y-3">
+                  <input
+                    type="password"
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    placeholder="Current password"
+                    className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-colors-fast"
+                  />
+                  <input
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                    placeholder="New password"
+                    className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-colors-fast"
+                  />
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    placeholder="Confirm new password"
+                    className="w-full px-3 py-2 bg-surface-elevated border border-app rounded-md text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-colors-fast"
+                  />
+                  <button
+                    type="button"
+                    onClick={handlePasswordChange}
+                    disabled={isChangingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+                    className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-md text-sm font-medium transition-colors"
+                  >
+                    {isChangingPassword ? 'Changing Password...' : 'Change Password'}
+                  </button>
+                  <p className="text-xs text-secondary">
+                    Password must be at least 8 characters and contain uppercase, lowercase, and a number.
+                  </p>
+                </div>
+              ) : (
+                <div className="px-3 py-2 bg-surface-elevated border border-app rounded-md text-secondary">
+                  ••••••••
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Auth0 User Note */}
+          {isAuth0User && (
+            <div className="p-3 bg-blue-900/20 dark:bg-blue-900/30 border border-blue-500/30 dark:border-blue-500/50 rounded-md">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-blue-500 dark:text-blue-400 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="text-sm text-primary">
+                  <p className="font-medium mb-1">Google Auth0 Account</p>
+                  <p className="text-secondary">Your account is managed by Google. Password changes and email changes are not available. Please manage your account through your Google account settings.</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

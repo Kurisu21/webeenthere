@@ -259,7 +259,7 @@ class User {
   // Get user by ID
   async findById(userId) {
     const [rows] = await this.db.execute(
-      'SELECT id, username, email, profile_image, role, theme_mode, is_verified, is_active, created_at FROM users WHERE id = ?',
+      'SELECT id, username, email, profile_image, auth_provider, role, theme_mode, is_verified, is_active, created_at FROM users WHERE id = ?',
       [userId]
     );
     return rows[0];
@@ -267,7 +267,7 @@ class User {
 
   // Find all users with pagination and filters
   async findAll({ page, limit, offset, search, role, status }) {
-    let query = 'SELECT id, username, email, profile_image, role, theme_mode, is_verified, is_active, created_at FROM users';
+    let query = 'SELECT id, username, email, profile_image, auth_provider, role, theme_mode, is_verified, is_active, created_at FROM users';
     const conditions = [];
     const params = [];
 

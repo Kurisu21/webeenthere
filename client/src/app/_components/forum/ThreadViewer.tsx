@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { forumApi, ForumThread, ForumReply, ReplyListResponse } from '../../../lib/forumApi';
+import { getProfileImageUrl } from '../../../lib/apiConfig';
+import { useAuth } from '../auth/AuthContext';
 
 interface ThreadViewerProps {
   threadId: string;
@@ -9,6 +11,7 @@ interface ThreadViewerProps {
 }
 
 export default function ThreadViewer({ threadId, onBack }: ThreadViewerProps) {
+  const { user } = useAuth();
   const [thread, setThread] = useState<ForumThread | null>(null);
   const [replies, setReplies] = useState<ReplyListResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,10 +19,19 @@ export default function ThreadViewer({ threadId, onBack }: ThreadViewerProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isReplying, setIsReplying] = useState(false);
   const [replyContent, setReplyContent] = useState('');
+  const [isLikingThread, setIsLikingThread] = useState(false);
+  const [likingReplyId, setLikingReplyId] = useState<string | null>(null);
+  const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
+  const [editingReplyContent, setEditingReplyContent] = useState<string>('');
+  const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
+  const viewCountedRef = useRef<boolean>(false);
 
   useEffect(() => {
-    fetchThread();
-  }, [threadId]);
+    // Reset view counter when threadId changes
+    viewCountedRef.current = false;
+    fetchThread(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadId]); // Only depend on threadId, fetchThread is stable
 
   useEffect(() => {
     if (thread) {
@@ -27,12 +39,17 @@ export default function ThreadViewer({ threadId, onBack }: ThreadViewerProps) {
     }
   }, [thread, currentPage]);
 
-  const fetchThread = async () => {
+  const fetchThread = async (shouldIncrementView: boolean = false) => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await forumApi.getThread(threadId);
+      // Only increment view on initial load (first time viewing this thread)
+      const incrementView = shouldIncrementView && !viewCountedRef.current;
+      const data = await forumApi.getThread(threadId, incrementView);
       setThread(data);
+      if (incrementView) {
+        viewCountedRef.current = true;
+      }
     } catch (error) {
       setError('Failed to load thread');
       console.error('Error fetching thread:', error);
@@ -66,33 +83,166 @@ export default function ThreadViewer({ threadId, onBack }: ThreadViewerProps) {
     e.preventDefault();
     if (!replyContent.trim()) return;
 
+    // Check if thread is locked (handle both isLocked and is_locked from backend)
+    if (thread?.isLocked || (thread as any)?.is_locked === 1 || (thread as any)?.is_locked === true) {
+      setError('This thread is locked. You cannot add replies.');
+      return;
+    }
+
     try {
       await forumApi.createReply(threadId, replyContent);
       setReplyContent('');
       setIsReplying(false);
-      fetchReplies();
-      fetchThread(); // Update reply count
-    } catch (error) {
+      setError(null);
+      // Refresh both replies and thread to get updated counts (without incrementing view)
+      await Promise.all([fetchReplies(), fetchThread(false)]);
+    } catch (error: any) {
       console.error('Error creating reply:', error);
+      if (error?.message?.includes('locked')) {
+        setError('This thread is locked. You cannot add replies.');
+      } else {
+        setError(error?.message || 'Failed to create reply');
+      }
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const handleLikeThread = async () => {
+    if (!thread || isLikingThread) return;
+    
+    // Check if thread is locked (handle both isLocked and is_locked from backend)
+    if (thread.isLocked || (thread as any).is_locked === 1 || (thread as any).is_locked === true) {
+      setError('This thread is locked. You cannot like or unlike it.');
+      return;
+    }
+    
+    setIsLikingThread(true);
+    try {
+      const updatedThread = await forumApi.toggleThreadLike(thread.id);
+      setThread(updatedThread);
+      setError(null);
+    } catch (error: any) {
+      console.error('Failed to like thread:', error);
+      if (error?.message?.includes('logged in') || error?.message?.includes('Authentication')) {
+        setError('Please log in to like threads.');
+      } else if (error?.message?.includes('cannot like your own')) {
+        setError('You cannot like your own thread.');
+      } else if (error?.message?.includes('locked')) {
+        setError('This thread is locked. You cannot like or unlike it.');
+      } else {
+        setError(error?.message || 'Failed to like thread.');
+      }
+    } finally {
+      setIsLikingThread(false);
+    }
+  };
+
+  const handleLikeReply = async (replyId: string) => {
+    if (likingReplyId === replyId) return;
+    
+    // Check if thread is locked (handle both isLocked and is_locked from backend)
+    if (thread?.isLocked || (thread as any)?.is_locked === 1 || (thread as any)?.is_locked === true) {
+      setError('This thread is locked. You cannot like or unlike replies.');
+      return;
+    }
+    
+    setLikingReplyId(replyId);
+    try {
+      const updatedReply = await forumApi.toggleReplyLike(replyId);
+      
+      // Update the reply in the replies list
+      if (replies) {
+        const updatedReplies = replies.replies.map(reply => 
+          reply.id === replyId ? updatedReply : reply
+        );
+        setReplies({
+          ...replies,
+          replies: updatedReplies
+        });
+      }
+      setError(null);
+    } catch (error: any) {
+      console.error('Failed to like reply:', error);
+      if (error?.message?.includes('cannot like your own')) {
+        setError('You cannot like your own reply.');
+      } else if (error?.message?.includes('locked')) {
+        setError('This thread is locked. You cannot like or unlike replies.');
+      } else {
+        setError(error?.message || 'Failed to like reply.');
+      }
+    } finally {
+      setLikingReplyId(null);
+    }
+  };
+
+  const handleEditReply = (reply: ForumReply) => {
+    setEditingReplyId(reply.id);
+    setEditingReplyContent(reply.content);
+  };
+
+  const handleCancelEditReply = () => {
+    setEditingReplyId(null);
+    setEditingReplyContent('');
+  };
+
+  const handleSaveReply = async (replyId: string) => {
+    if (!editingReplyContent.trim()) return;
+
+    try {
+      await forumApi.updateReply(replyId, { content: editingReplyContent });
+      setEditingReplyId(null);
+      setEditingReplyContent('');
+      await Promise.all([fetchReplies(), fetchThread(false)]);
+    } catch (error: any) {
+      alert(error?.message || 'Failed to update reply');
+      console.error('Error updating reply:', error);
+    }
+  };
+
+  const handleDeleteReply = async (replyId: string) => {
+    if (!confirm('Are you sure you want to delete this reply? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeletingReplyId(replyId);
+    try {
+      await forumApi.deleteReply(replyId);
+      await Promise.all([fetchReplies(), fetchThread(false)]);
+    } catch (error: any) {
+      alert(error?.message || 'Failed to delete reply');
+      console.error('Error deleting reply:', error);
+    } finally {
+      setDeletingReplyId(null);
+    }
+  };
+
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'Invalid Date';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  };
+
+  const getUserInitial = (name: string | null | undefined) => {
+    if (!name) return 'U';
+    return name.charAt(0).toUpperCase();
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-white">Loading thread...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-primary">Loading thread...</p>
         </div>
       </div>
     );
@@ -107,8 +257,8 @@ export default function ThreadViewer({ threadId, onBack }: ThreadViewerProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <p className="text-white text-lg font-medium mb-2">Error Loading Thread</p>
-          <p className="text-gray-400">{error || 'Thread not found'}</p>
+          <p className="text-primary text-lg font-medium mb-2">Error Loading Thread</p>
+          <p className="text-secondary">{error || 'Thread not found'}</p>
         </div>
       </div>
     );
@@ -117,72 +267,130 @@ export default function ThreadViewer({ threadId, onBack }: ThreadViewerProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="mb-8">
         <button
           onClick={onBack}
-          className="flex items-center text-gray-400 hover:text-white transition-colors"
+          className="flex items-center text-secondary hover:text-primary transition-colors mb-4"
         >
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Back to Forum
         </button>
-        <div className="flex items-center gap-4">
-          <span className="text-gray-400 text-sm">
-            {thread.views} views
-          </span>
-          <span className="text-gray-400 text-sm">
-            {thread.replies} replies
-          </span>
+        
+        <div className="flex items-center gap-2 mb-4">
+          {thread.isPinned && (
+            <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs border border-app flex items-center gap-1">
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+              Pinned
+            </span>
+          )}
+          {(thread.isLocked || (thread as any).is_locked === 1 || (thread as any).is_locked === true) && (
+            <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs border border-app flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Locked
+            </span>
+          )}
+        </div>
+        
+        <h1 className="text-3xl font-bold text-primary mb-4">
+          {thread.title}
+        </h1>
+        
+        <div className="flex items-center gap-4 text-sm text-secondary">
+          <span>{thread.views || 0} views</span>
+          <span>{thread.replies || thread.replies_count || 0} replies</span>
+          <span>{thread.likes || 0} likes</span>
+          <span>{formatDate(thread.createdAt || thread.created_at)}</span>
         </div>
       </div>
 
-      {/* Thread */}
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
+      {/* Thread Content */}
+      <div className="bg-surface-elevated dark:bg-surface rounded-lg border border-app p-8 mb-8">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-purple-600/20 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-            </div>
+            {thread.author_id && getProfileImageUrl(thread.author_id) ? (
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-app">
+                <img
+                  src={getProfileImageUrl(thread.author_id) || ''}
+                  alt={thread.author_name || 'User'}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `<div class="w-full h-full bg-primary/10 dark:bg-primary/20 border border-app rounded-full flex items-center justify-center"><span class="text-primary dark:text-primary font-medium text-sm">${getUserInitial(thread.author_name)}</span></div>`;
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-full flex items-center justify-center border border-app">
+                <span className="text-primary dark:text-primary font-medium text-sm">
+                  {getUserInitial(thread.author_name)}
+                </span>
+              </div>
+            )}
             <div>
-              <h1 className="text-2xl font-bold text-white">{thread.title}</h1>
-              <p className="text-gray-400 text-sm">
-                By User • {formatDate(thread.createdAt)}
+              <p className="text-secondary text-sm">
+                By {thread.author_name || thread.authorName || 'User'} • {formatDate(thread.createdAt || thread.created_at)}
               </p>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {thread.isPinned && (
-              <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs">
-                Pinned
-              </span>
-            )}
-            {thread.isLocked && (
-              <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs">
-                Locked
-              </span>
-            )}
           </div>
         </div>
 
         <div className="prose prose-invert max-w-none">
-          <div className="text-gray-300 whitespace-pre-wrap">
+          <div className="text-secondary whitespace-pre-wrap leading-relaxed">
             {thread.content}
           </div>
         </div>
 
         {Array.isArray(thread.tags) && thread.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4">
+          <div className="flex flex-wrap gap-2 mt-6">
             {thread.tags.map(tag => (
               <span
                 key={tag}
-                className="inline-flex items-center px-3 py-1 bg-purple-600/20 text-purple-300 rounded-full text-sm"
+                className="inline-flex items-center px-3 py-1 bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary rounded-full text-sm border border-app"
               >
                 {tag}
               </span>
             ))}
+          </div>
+        )}
+
+        {/* Like Button for Thread - Only show if thread is not locked */}
+        {user && user.id.toString() !== (thread.author_id || thread.authorId)?.toString() && !(thread.isLocked || (thread as any).is_locked === 1 || (thread as any).is_locked === true) && (
+          <div className="mt-6 pt-6 border-t border-app">
+            <button
+              onClick={handleLikeThread}
+              disabled={isLikingThread}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all border ${
+                thread.userLiked === true
+                  ? 'bg-surface-elevated dark:bg-surface text-primary dark:text-primary border-primary/30 dark:border-primary/30'
+                  : isLikingThread
+                  ? 'bg-surface-elevated dark:bg-surface text-secondary/50 dark:text-secondary/50 border-app cursor-not-allowed'
+                  : 'bg-surface-elevated dark:bg-surface hover:bg-surface text-primary dark:text-primary border-app hover:border-primary/30 dark:hover:border-primary/30'
+              }`}
+            >
+              {isLikingThread ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  Liking...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill={thread.userLiked === true ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  {thread.userLiked === true ? 'Liked' : 'Like'} ({thread.likes})
+                </>
+              )}
+            </button>
           </div>
         )}
       </div>
@@ -190,32 +398,53 @@ export default function ThreadViewer({ threadId, onBack }: ThreadViewerProps) {
       {/* Replies */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-white">
-            Replies ({thread.replies})
-          </h2>
-          {!thread.isLocked && (
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-primary">
+              Replies ({replies?.total ?? thread.replies ?? thread.replies_count ?? 0})
+            </h2>
+            {(thread.isLocked || (thread as any).is_locked === 1 || (thread as any).is_locked === true) && (
+              <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Thread is locked
+              </span>
+            )}
+          </div>
+          {!(thread.isLocked || (thread as any).is_locked === 1 || (thread as any).is_locked === true) && (
             <button
               onClick={() => setIsReplying(!isReplying)}
-              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200"
+              className="px-4 py-2 bg-surface-elevated dark:bg-surface hover:bg-surface dark:hover:bg-surface-elevated text-primary dark:text-primary border border-app hover:border-primary/50 dark:hover:border-primary/50 rounded-lg transition-all duration-200 font-medium"
             >
               {isReplying ? 'Cancel' : 'Reply'}
             </button>
           )}
         </div>
 
+        {(thread.isLocked || (thread as any).is_locked === 1 || (thread as any).is_locked === true) && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-red-400">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <p className="font-medium">This thread is locked. You cannot add, edit, or delete replies.</p>
+            </div>
+          </div>
+        )}
+
         {/* Reply Form */}
-        {isReplying && !thread.isLocked && (
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
+        {isReplying && !(thread.isLocked || (thread as any).is_locked === 1 || (thread as any).is_locked === true) && (
+          <div className="bg-surface-elevated dark:bg-surface rounded-lg border border-app p-6">
             <form onSubmit={handleSubmitReply} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-secondary mb-2">
                   Your Reply
                 </label>
                 <textarea
                   value={replyContent}
                   onChange={(e) => setReplyContent(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
+                  className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical"
                   placeholder="Write your reply..."
                   required
                 />
@@ -223,14 +452,14 @@ export default function ThreadViewer({ threadId, onBack }: ThreadViewerProps) {
               <div className="flex gap-4">
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200"
+                  className="px-6 py-2 bg-surface-elevated dark:bg-surface hover:bg-surface dark:hover:bg-surface-elevated text-primary dark:text-primary border border-app hover:border-primary/50 dark:hover:border-primary/50 rounded-lg transition-all duration-200"
                 >
                   Post Reply
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsReplying(false)}
-                  className="px-6 py-2 text-gray-400 hover:text-white transition-colors"
+                  className="px-6 py-2 text-secondary hover:text-primary transition-colors"
                 >
                   Cancel
                 </button>
@@ -240,39 +469,157 @@ export default function ThreadViewer({ threadId, onBack }: ThreadViewerProps) {
         )}
 
         {/* Replies List */}
-        {(replies?.replies ?? []).map((reply) => (
-          <div key={reply.id} className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg border border-gray-700 p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-blue-600/20 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-white font-medium">User</span>
-                  <span className="text-gray-400 text-sm">
-                    {formatDate(reply.createdAt)}
-                  </span>
-                </div>
-                <div className="text-gray-300 whitespace-pre-wrap">
-                  {reply.content}
+        {(replies?.replies ?? []).map((reply) => {
+          const isOwnReply = user && (reply.author_id?.toString() === user.id.toString() || reply.authorId?.toString() === user.id.toString());
+          const isThreadOwner = user && thread && (thread.author_id?.toString() === user.id.toString() || thread.authorId?.toString() === user.id.toString());
+          const canDelete = isOwnReply || isThreadOwner;
+          const canEdit = isOwnReply;
+          const isEditing = editingReplyId === reply.id;
+
+          return (
+            <div key={reply.id} className="bg-surface-elevated dark:bg-surface rounded-lg border border-app p-6">
+              <div className="flex items-start gap-4">
+                {reply.author_id && getProfileImageUrl(reply.author_id) ? (
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-app flex-shrink-0">
+                    <img
+                      src={getProfileImageUrl(reply.author_id) || ''}
+                      alt={reply.author_name || 'User'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = `<div class="w-full h-full bg-primary/10 dark:bg-primary/20 border border-app rounded-full flex items-center justify-center"><span class="text-primary dark:text-primary font-medium text-xs">${getUserInitial(reply.author_name)}</span></div>`;
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 bg-primary/10 dark:bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0 border border-app">
+                    <span className="text-primary dark:text-primary font-medium text-xs">
+                      {getUserInitial(reply.author_name)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-primary font-medium">{reply.author_name || reply.authorName || 'User'}</span>
+                      <span className="text-secondary text-sm">
+                        {formatDate(reply.createdAt || reply.created_at)}
+                      </span>
+                      {isOwnReply && (
+                        <span className="px-2 py-0.5 bg-primary/20 text-primary rounded text-xs">
+                          Your Reply
+                        </span>
+                      )}
+                    </div>
+                    {user && (canEdit || canDelete) && !isEditing && !(thread.isLocked || (thread as any).is_locked === 1 || (thread as any).is_locked === true) && (
+                      <div className="flex gap-2">
+                        {canEdit && (
+                          <button
+                            onClick={() => handleEditReply(reply)}
+                            className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"
+                            title="Edit reply"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            onClick={() => handleDeleteReply(reply.id)}
+                            disabled={deletingReplyId === reply.id}
+                            className="p-1.5 text-red-400 hover:bg-red-500/10 rounded transition-colors disabled:opacity-50"
+                            title={isThreadOwner && !isOwnReply ? "Delete reply (thread owner)" : "Delete reply"}
+                          >
+                            {deletingReplyId === reply.id ? (
+                              <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {isEditing ? (
+                    <div className="space-y-3 mb-4">
+                      <textarea
+                        value={editingReplyContent}
+                        onChange={(e) => setEditingReplyContent(e.target.value)}
+                        rows={4}
+                        className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical"
+                        placeholder="Edit your reply..."
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleSaveReply(reply.id)}
+                          className="px-4 py-2 bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors text-sm"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={handleCancelEditReply}
+                          className="px-4 py-2 bg-surface border border-app text-secondary rounded-lg hover:bg-surface-elevated transition-colors text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-secondary whitespace-pre-wrap mb-4">
+                      {reply.content}
+                    </div>
+                  )}
+                  {/* Like Button for Reply - Only show if thread is not locked */}
+                  {user && user.id.toString() !== (reply.author_id || reply.authorId)?.toString() && !isEditing && !(thread.isLocked || (thread as any).is_locked === 1 || (thread as any).is_locked === true) && (
+                    <button
+                      onClick={() => handleLikeReply(reply.id)}
+                      disabled={likingReplyId === reply.id}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all border ${
+                        reply.userLiked === true
+                          ? 'bg-surface-elevated dark:bg-surface text-primary dark:text-primary border-primary/30 dark:border-primary/30'
+                          : likingReplyId === reply.id
+                          ? 'bg-surface-elevated dark:bg-surface text-secondary/50 dark:text-secondary/50 border-app cursor-not-allowed'
+                          : 'bg-surface-elevated dark:bg-surface hover:bg-surface text-primary dark:text-primary border-app hover:border-primary/30 dark:hover:border-primary/30'
+                      }`}
+                    >
+                      {likingReplyId === reply.id ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                          Liking...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill={reply.userLiked === true ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          </svg>
+                          {reply.userLiked === true ? 'Liked' : 'Like'} ({reply.likes})
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {(replies?.replies?.length ?? 0) === 0 && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-surface-elevated rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </div>
-            <p className="text-gray-400">No replies yet</p>
-            {!thread.isLocked && (
-              <p className="text-gray-500 text-sm mt-2">Be the first to reply!</p>
+            <p className="text-secondary">No replies yet</p>
+            {!(thread.isLocked || (thread as any).is_locked === 1 || (thread as any).is_locked === true) && (
+              <p className="text-secondary text-sm mt-2">Be the first to reply!</p>
             )}
           </div>
         )}
@@ -284,17 +631,17 @@ export default function ThreadViewer({ threadId, onBack }: ThreadViewerProps) {
           <button
             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-surface-elevated hover:bg-surface disabled:bg-surface-elevated disabled:text-secondary text-primary rounded-lg transition-colors"
           >
             Previous
           </button>
-          <span className="text-gray-300">
+          <span className="text-secondary">
             Page {currentPage} of {replies.totalPages}
           </span>
           <button
             onClick={() => setCurrentPage(prev => Math.min(replies.totalPages, prev + 1))}
             disabled={currentPage === replies.totalPages}
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-surface-elevated hover:bg-surface disabled:bg-surface-elevated disabled:text-secondary text-primary rounded-lg transition-colors"
           >
             Next
           </button>

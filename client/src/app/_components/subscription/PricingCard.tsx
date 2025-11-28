@@ -46,7 +46,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
 
   const getSavingsText = () => {
     if (plan.type === 'yearly') {
-      const monthlyPrice = 9.99; // Monthly plan price
+      const monthlyPrice = 5.40; // Monthly plan price
       const savings = planHelpers.calculateYearlySavings(monthlyPrice, plan.price);
       return `Save $${savings.toFixed(2)}/year`;
     }

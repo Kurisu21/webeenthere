@@ -41,11 +41,24 @@ class UserController {
         password
       });
       
+      // Set auth_provider to 'email' for email/password users
+      await this.db.execute(
+        'UPDATE users SET auth_provider = ? WHERE id = ?',
+        ['email', userId]
+      );
+      
       // Automatically assign free plan to new user
       try {
-        const freePlanId = 1; // Free plan is always plan_id 1
-        await this.subscriptionService.createSubscription(userId, freePlanId, 'REGISTRATION_FREE_PLAN');
-        console.log(`✅ Assigned free plan to new user ${userId}`);
+        // Find free plan dynamically by type instead of hardcoding plan_id
+        const Plan = require('../models/Plan');
+        const planModel = new Plan(this.db);
+        const freePlan = await planModel.findActiveByType('free');
+        if (freePlan) {
+          await this.subscriptionService.createSubscription(userId, freePlan.id, 'REGISTRATION_FREE_PLAN');
+          console.log(`✅ Assigned free plan to new user ${userId}`);
+        } else {
+          console.error('Free plan not found - cannot assign to new user');
+        }
       } catch (subscriptionError) {
         console.error('Failed to assign free plan to new user:', subscriptionError);
         // Continue with registration even if plan assignment fails
@@ -225,14 +238,29 @@ class UserController {
       // Log successful login
       await databaseActivityLogger.logUserLogin(user.id, ipAddress, userAgent);
       
+      // Include profile_image if it's a URL (Auth0 users), otherwise exclude blob data
+      const userResponse = { 
+        id: user.id, 
+        email: user.email, 
+        username: user.username, 
+        role: user.role 
+      };
+      
+      // Check if user is Auth0 user using auth_provider column
+      const isAuth0User = user.auth_provider === 'google';
+      
+      // If profile_image is a URL (starts with http/https), include it (Auth0 users)
+      if (isAuth0User && user.profile_image && typeof user.profile_image === 'string' && 
+          (user.profile_image.startsWith('http://') || user.profile_image.startsWith('https://'))) {
+        userResponse.profile_image = user.profile_image;
+      }
+      
+      // Include isAuth0User flag for frontend
+      userResponse.isAuth0User = isAuth0User;
+      
       res.json({ 
         token, 
-        user: { 
-          id: user.id, 
-          email: user.email, 
-          username: user.username, 
-          role: user.role 
-        } 
+        user: userResponse
       });
     } catch (err) {
       console.error('Login error:', err);
@@ -931,6 +959,145 @@ class UserController {
     } catch (error) {
       console.error('Get profile image error:', error);
       res.status(500).json({ error: 'Failed to retrieve profile image' });
+    }
+  }
+
+  // Change password (for email/password users only)
+  async changePassword(req, res) {
+    try {
+      const userId = req.user.id;
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+          success: false,
+          error: 'Current password and new password are required'
+        });
+      }
+
+      if (newPassword.length < 8) {
+        return res.status(400).json({
+          success: false,
+          error: 'New password must be at least 8 characters'
+        });
+      }
+
+      // Validate password strength (must contain uppercase, lowercase, and number)
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+      if (!passwordRegex.test(newPassword)) {
+        return res.status(400).json({
+          success: false,
+          error: 'New password must contain at least one lowercase letter, one uppercase letter, and one number'
+        });
+      }
+
+      // Get user with password_hash and auth_provider to check if Auth0 user
+      const [userRows] = await this.db.execute(
+        'SELECT id, password_hash, auth_provider FROM users WHERE id = ?',
+        [userId]
+      );
+
+      if (!userRows || userRows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+
+      const user = userRows[0];
+
+      // Check if user is Auth0 user using auth_provider column
+      const isAuth0User = user.auth_provider === 'google';
+
+      if (isAuth0User) {
+        return res.status(400).json({
+          success: false,
+          error: 'Password change is not available for Google Auth0 accounts. Please use Google to sign in.'
+        });
+      }
+
+      // Verify current password
+      const bcrypt = require('bcryptjs');
+      const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+      
+      if (!isMatch) {
+        return res.status(400).json({
+          success: false,
+          error: 'Current password is incorrect'
+        });
+      }
+
+      // Hash new password
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+      
+      // Update password
+      const success = await this.userModel.updatePassword(userId, passwordHash);
+
+      if (success) {
+        // Log password change activity
+        await databaseActivityLogger.logActivity({
+          userId: userId,
+          action: 'password_changed',
+          entityType: 'user',
+          entityId: userId,
+          ipAddress: req.ip || 'unknown',
+          userAgent: req.get('User-Agent') || 'unknown',
+          details: {
+            method: 'profile_change',
+            timestamp: new Date().toISOString()
+          }
+        });
+
+        res.json({
+          success: true,
+          message: 'Password changed successfully'
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: 'Failed to update password'
+        });
+      }
+    } catch (error) {
+      console.error('Change password error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Server error'
+      });
+    }
+  }
+
+
+  // Check if user is Auth0 user (for frontend)
+  async checkUserType(req, res) {
+    try {
+      const userId = req.user.id;
+      
+      const [userRows] = await this.db.execute(
+        'SELECT auth_provider FROM users WHERE id = ?',
+        [userId]
+      );
+
+      if (!userRows || userRows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+
+      const user = userRows[0];
+      const isAuth0User = user.auth_provider === 'google';
+
+      res.json({
+        success: true,
+        isAuth0User: !!isAuth0User
+      });
+    } catch (error) {
+      console.error('Check user type error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Server error'
+      });
     }
   }
 

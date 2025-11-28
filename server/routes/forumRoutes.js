@@ -19,6 +19,10 @@ router.post('/threads/:id/replies', authMiddleware, ForumController.createReply)
 router.put('/replies/:id', authMiddleware, ForumController.updateReply);
 router.delete('/replies/:id', authMiddleware, ForumController.deleteReply);
 
+// Like routes (require authentication)
+router.post('/threads/:id/like', authMiddleware, ForumController.toggleThreadLike);
+router.post('/replies/:id/like', authMiddleware, ForumController.toggleReplyLike);
+
 // Admin routes (require authentication and admin role)
 router.post('/categories', authMiddleware, adminAuthMiddleware, ForumController.createCategory);
 router.put('/categories/:id', authMiddleware, adminAuthMiddleware, ForumController.updateCategory);

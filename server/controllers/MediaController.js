@@ -25,24 +25,42 @@ class MediaController {
       filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const ext = path.extname(file.originalname);
-        cb(null, `image-${uniqueSuffix}${ext}`);
+        // Determine prefix based on file type
+        const isImage = /\.(jpeg|jpg|png|gif|webp|svg)$/i.test(ext);
+        const isVideo = /\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)$/i.test(ext);
+        const isAudio = /\.(mp3|wav|ogg|aac|m4a|flac|wma)$/i.test(ext);
+        const prefix = isImage ? 'image' : isVideo ? 'video' : isAudio ? 'audio' : 'media';
+        cb(null, `${prefix}-${uniqueSuffix}${ext}`);
       }
     });
 
     this.upload = multer({
       storage: storage,
       limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB limit
+        fileSize: 100 * 1024 * 1024, // 100MB limit (for videos and audio)
       },
       fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|gif|webp|svg/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
+        // Allow images, videos, and audio files
+        const allowedImageTypes = /jpeg|jpg|png|gif|webp|svg/;
+        const allowedVideoTypes = /mp4|webm|ogg|mov|avi|wmv|flv|mkv/;
+        const allowedAudioTypes = /mp3|wav|ogg|aac|m4a|flac|wma/;
         
-        if (extname && mimetype) {
+        const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
+        const isImage = allowedImageTypes.test(ext);
+        const isVideo = allowedVideoTypes.test(ext);
+        const isAudio = allowedAudioTypes.test(ext);
+        
+        // Check mimetype as well
+        const mimetype = file.mimetype.toLowerCase();
+        const isValidMimeType = 
+          mimetype.startsWith('image/') ||
+          mimetype.startsWith('video/') ||
+          mimetype.startsWith('audio/');
+        
+        if ((isImage || isVideo || isAudio) && isValidMimeType) {
           cb(null, true);
         } else {
-          cb(new Error('Only image files are allowed (jpeg, jpg, png, gif, webp, svg)'));
+          cb(new Error('Only image, video, and audio files are allowed. Images: jpeg, jpg, png, gif, webp, svg. Videos: mp4, webm, ogg, mov, avi, wmv, flv, mkv. Audio: mp3, wav, ogg, aac, m4a, flac, wma'));
         }
       }
     });
@@ -57,19 +75,26 @@ class MediaController {
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          error: 'No image file provided'
+          error: 'No media file provided'
         });
       }
 
       // Create file URL (must match the route path - /api/media/uploads/...)
       const fileUrl = `/api/media/uploads/user_${userId}/${req.file.filename}`;
       
+      // Determine media type
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      const isImage = /\.(jpeg|jpg|png|gif|webp|svg)$/i.test(ext);
+      const isVideo = /\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)$/i.test(ext);
+      const isAudio = /\.(mp3|wav|ogg|aac|m4a|flac|wma)$/i.test(ext);
+      
       console.log('[MediaController] File uploaded:', {
         originalName: req.file.originalname,
         filename: req.file.filename,
         path: req.file.path,
         fileUrl: fileUrl,
-        userId: userId
+        userId: userId,
+        type: isImage ? 'image' : isVideo ? 'video' : isAudio ? 'audio' : 'unknown'
       });
       
       // Save to database
