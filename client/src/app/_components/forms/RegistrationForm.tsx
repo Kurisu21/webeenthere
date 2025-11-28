@@ -94,15 +94,12 @@ const RegistrationForm: React.FC = () => {
         router.push(`/verify-code?email=${encodeURIComponent(email)}`);
       }
     } catch (error: any) {
-      console.error('Registration error:', error);
-      
       // apiPost returns errors as { message, status, data } not { response: { status, data } }
       const status = error.status || error.response?.status;
       const errorData = error.data || error.response?.data;
       
       if (status === 400) {
-        console.log('Server validation errors:', errorData);
-        
+        // Validation errors are expected - handle silently without console.error
         // Handle validation errors from express-validator
         if (errorData?.errors && Array.isArray(errorData.errors)) {
           const fieldErrors: FormErrors = {};
@@ -135,8 +132,9 @@ const RegistrationForm: React.FC = () => {
           setErrors({ email: 'Registration failed. Please check your information and try again.' });
         }
       } else {
-        // Network or server errors
-        const errorMessage = error.message || 'Registration failed. Please check your connection and try again.';
+        // Only log actual unexpected errors (not validation errors)
+        const errorMessage = error.message || error.data?.error || 'Registration failed. Please check your connection and try again.';
+        console.error('Registration failed:', errorMessage);
         alert(errorMessage);
       }
     } finally {
