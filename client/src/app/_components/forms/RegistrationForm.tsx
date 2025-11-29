@@ -94,48 +94,27 @@ const RegistrationForm: React.FC = () => {
         router.push(`/verify-code?email=${encodeURIComponent(email)}`);
       }
     } catch (error: any) {
-      // apiPost returns errors as { message, status, data } not { response: { status, data } }
-      const status = error.status || error.response?.status;
-      const errorData = error.data || error.response?.data;
+      console.error('Registration error:', error);
       
-      if (status === 400) {
-        // Validation errors are expected - handle silently without console.error
-        // Handle validation errors from express-validator
-        if (errorData?.errors && Array.isArray(errorData.errors)) {
+      if (error.response?.status === 400) {
+        const errorData = error.response.data;
+        console.log('Server validation errors:', errorData);
+        
+        if (errorData.error === 'Email already in use') {
+          setErrors({ email: 'This email is already registered' });
+        } else if (errorData.errors) {
+          // Handle validation errors from server
           const fieldErrors: FormErrors = {};
           errorData.errors.forEach((err: any) => {
-            const field = err.path || err.param;
-            const message = err.msg || err.message;
-            if (field === 'username') fieldErrors.username = message;
-            else if (field === 'email') fieldErrors.email = message;
-            else if (field === 'password') fieldErrors.password = message;
-            else if (field === 'confirmPassword') fieldErrors.confirmPassword = message;
+            if (err.path === 'username') fieldErrors.username = err.msg;
+            else if (err.path === 'email') fieldErrors.email = err.msg;
+            else if (err.path === 'password') fieldErrors.password = err.msg;
+            else if (err.path === 'confirmPassword') fieldErrors.confirmPassword = err.msg;
           });
           setErrors(fieldErrors);
-        } else if (errorData?.error) {
-          // Handle single error message
-          if (errorData.error.toLowerCase().includes('email')) {
-            setErrors({ email: errorData.error });
-          } else if (errorData.error.toLowerCase().includes('username')) {
-            setErrors({ username: errorData.error });
-          } else {
-            setErrors({ email: errorData.error });
-          }
-        } else if (error.message) {
-          // Handle error message from apiPost
-          if (error.message.toLowerCase().includes('email')) {
-            setErrors({ email: error.message });
-          } else {
-            setErrors({ email: error.message });
-          }
-        } else {
-          setErrors({ email: 'Registration failed. Please check your information and try again.' });
         }
       } else {
-        // Only log actual unexpected errors (not validation errors)
-        const errorMessage = error.message || error.data?.error || 'Registration failed. Please check your connection and try again.';
-        console.error('Registration failed:', errorMessage);
-        alert(errorMessage);
+        alert('Registration failed. Please check your connection and try again.');
       }
     } finally {
       setIsSubmitting(false);

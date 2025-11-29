@@ -135,12 +135,46 @@ const getAuthToken = (): string | null => {
   if (typeof window === 'undefined') return null;
   
   // Try to get token from localStorage
-  const token = localStorage.getItem('token');
-  if (token) return token;
+  let token = localStorage.getItem('token');
+  if (token) {
+    // Clean token - handle case where it might be stored as stringified array
+    try {
+      const parsed = JSON.parse(token);
+      if (Array.isArray(parsed)) {
+        // If it's an array, join it (JWT tokens are sometimes split)
+        token = parsed.join('.');
+      } else if (typeof parsed === 'string') {
+        token = parsed;
+      }
+    } catch {
+      // Not JSON, use as-is
+    }
+    // Ensure it's a valid string and not empty
+    if (token && typeof token === 'string' && token.trim().length > 0) {
+      return token.trim();
+    }
+  }
   
   // Try to get token from sessionStorage
-  const sessionToken = sessionStorage.getItem('token');
-  if (sessionToken) return sessionToken;
+  let sessionToken = sessionStorage.getItem('token');
+  if (sessionToken) {
+    // Clean token - handle case where it might be stored as stringified array
+    try {
+      const parsed = JSON.parse(sessionToken);
+      if (Array.isArray(parsed)) {
+        // If it's an array, join it (JWT tokens are sometimes split)
+        sessionToken = parsed.join('.');
+      } else if (typeof parsed === 'string') {
+        sessionToken = parsed;
+      }
+    } catch {
+      // Not JSON, use as-is
+    }
+    // Ensure it's a valid string and not empty
+    if (sessionToken && typeof sessionToken === 'string' && sessionToken.trim().length > 0) {
+      return sessionToken.trim();
+    }
+  }
   
   return null;
 };
@@ -152,56 +186,105 @@ export const apiCall = async (
 ): Promise<Response> => {
   const token = getAuthToken();
   
-  // Build headers object - ensure Authorization is included if token exists
+  // Build headers object - merge custom headers with defaults, ensuring Authorization is always included if token exists
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string> || {}),
   };
   
   // Always include Authorization header if token exists (don't let custom headers override it)
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  } else {
+    // Debug: log when no token is found
+    if (endpoint.includes('/admin/')) {
+      console.warn('[API] Admin endpoint called without token:', endpoint);
+    }
   }
   
+  // Spread options first, then override with our headers to ensure Authorization is never lost
   const defaultOptions: RequestInit = {
-    headers,
     ...options,
+    headers,
   };
 
   try {
     const fullUrl = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+    
+    // Debug logging for admin endpoints
+    if (endpoint.includes('/admin/analytics/reports')) {
+      console.log('[API] Making request to:', fullUrl);
+      console.log('[API] Has token:', !!token);
+      console.log('[API] Token length:', token?.length || 0);
+      console.log('[API] Token preview:', token ? `${token.substring(0, 20)}...` : 'none');
+      console.log('[API] Request headers:', headers);
+      console.log('[API] Authorization header:', headers['Authorization'] ? 'Present' : 'Missing');
+    }
+    
     const response = await fetch(fullUrl, defaultOptions);
     
     if (!response.ok) {
       // Handle 401 specifically - but be more careful about when to log out
       if (response.status === 401) {
-        // Only log out if:
-        // 1. We have a token (meaning we tried to authenticate)
-        // 2. The endpoint is not a new/optional feature endpoint
-        const isOptionalEndpoint = endpoint.includes('/media/') || endpoint.includes('/ai/assistant');
+        // Try to read the actual error message from the server
+        let errorMessage = 'Authentication required';
+        let shouldLogout = false;
         
-        if (token && !isOptionalEndpoint) {
-          // Try to read response to see if it's a real auth error
+        try {
+          const responseData = await response.clone().json();
+          errorMessage = responseData.error || responseData.message || errorMessage;
+          
+          // Debug logging for admin endpoints
+          if (endpoint.includes('/admin/')) {
+            console.error('[API] 401 Error from server:', responseData);
+            console.error('[API] Error message:', errorMessage);
+            console.error('[API] Had token:', !!token);
+          }
+          
+          // Only log out if the server explicitly says the token is invalid/expired
+          // Don't log out for "No token provided" if we have a token (might be a different issue)
+          if (responseData.error && (
+            responseData.error.includes('Invalid token') || 
+            responseData.error.includes('token expired') ||
+            responseData.error.includes('Token expired') ||
+            responseData.error.includes('jwt expired')
+          )) {
+            shouldLogout = true;
+          }
+        } catch (e) {
+          // If JSON parsing fails, try text
           try {
             const responseText = await response.clone().text();
-            // Only log out on clear auth errors, not on missing endpoints
-            if (responseText.includes('Authentication') || responseText.includes('token') || responseText.includes('unauthorized') || responseText.includes('Not authenticated')) {
-              // Clear stored tokens and redirect to login
-              if (typeof window !== 'undefined') {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                sessionStorage.removeItem('token');
-                window.location.href = '/login';
-              }
-              throw new Error('Authentication required');
+            if (endpoint.includes('/admin/')) {
+              console.error('[API] 401 Response text:', responseText);
             }
-          } catch (e) {
-            // If we can't read response, don't log out - just throw error
+            if (responseText.includes('Invalid token') || responseText.includes('token expired') || responseText.includes('jwt expired')) {
+              shouldLogout = true;
+            }
+          } catch (textError) {
+            // Can't read response, don't log out
+            if (endpoint.includes('/admin/')) {
+              console.error('[API] Could not read 401 response');
+            }
           }
         }
         
-        // For optional endpoints or when no token, just throw error without logging out
-        throw new Error('Authentication required');
+        // Only log out if we're sure the token is invalid
+        // For admin endpoints, be extra careful - don't log out unless token is explicitly invalid
+        if (shouldLogout && token && !endpoint.includes('/admin/')) {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            sessionStorage.removeItem('token');
+            window.location.href = '/login';
+          }
+        } else if (shouldLogout && token && endpoint.includes('/admin/')) {
+          // For admin endpoints, only log out if token is definitely invalid
+          console.error('[API] Admin token appears invalid, but not logging out automatically. Please check your session.');
+        }
+        
+        // Throw error with the actual message from server
+        throw new Error(errorMessage);
       }
       
       // Handle 403 specifically (Access denied)

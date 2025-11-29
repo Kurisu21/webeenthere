@@ -3,11 +3,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   getAllTemplatesWithCreator, 
-  toggleTemplateActive, 
+  toggleTemplateActive,
+  toggleTemplateFeatured,
   deleteTemplate,
   Template,
   TEMPLATE_CATEGORIES 
 } from '../../../lib/templateApi';
+import { TemplateCard } from '../shared/TemplateCard';
+import { ConfirmDialog } from '../shared/ConfirmDialog';
 
 interface TemplateManagementProps {
   onEditTemplate?: (template: Template) => void;
@@ -22,6 +25,12 @@ export default function TemplateManagement({ onEditTemplate }: TemplateManagemen
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [sortBy, setSortBy] = useState<'name' | 'created_at' | 'creator'>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  
+  // Delete confirmation state
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    template: Template | null;
+  }>({ isOpen: false, template: null });
 
   useEffect(() => {
     loadTemplates();
@@ -49,14 +58,28 @@ export default function TemplateManagement({ onEditTemplate }: TemplateManagemen
     }
   };
 
-  const handleDeleteTemplate = async (template: Template) => {
-    if (window.confirm(`Are you sure you want to delete "${template.name}"? This action cannot be undone.`)) {
-      try {
-        await deleteTemplate(template.id);
-        await loadTemplates(); // Refresh the list
-      } catch (error: any) {
-        setError(error.message || 'Failed to delete template');
-      }
+  const handleToggleFeatured = async (template: Template) => {
+    try {
+      await toggleTemplateFeatured(template.id, !template.is_featured);
+      await loadTemplates(); // Refresh the list
+    } catch (error: any) {
+      setError(error.message || 'Failed to update template featured status');
+    }
+  };
+
+  const handleDeleteTemplate = (template: Template) => {
+    setDeleteConfirm({ isOpen: true, template });
+  };
+
+  const confirmDeleteTemplate = async () => {
+    if (!deleteConfirm.template) return;
+    
+    try {
+      await deleteTemplate(deleteConfirm.template.id);
+      await loadTemplates(); // Refresh the list
+      setDeleteConfirm({ isOpen: false, template: null });
+    } catch (error: any) {
+      setError(error.message || 'Failed to delete template');
     }
   };
 
@@ -348,132 +371,35 @@ export default function TemplateManagement({ onEditTemplate }: TemplateManagemen
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-app">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
             {filteredTemplates.map((template) => (
-              <TemplateRow
+              <TemplateCard
                 key={template.id}
                 template={template}
-                onToggleActive={handleToggleActive}
-                onDelete={handleDeleteTemplate}
-                onEdit={onEditTemplate}
+                viewMode="admin"
+                actions={{
+                  onEdit: onEditTemplate ? () => onEditTemplate(template) : undefined,
+                  onToggleActive: () => handleToggleActive(template),
+                  onToggleFeatured: () => handleToggleFeatured(template),
+                  onDelete: () => handleDeleteTemplate(template)
+                }}
               />
             ))}
           </div>
         )}
       </div>
-    </div>
-  );
-}
 
-interface TemplateRowProps {
-  template: Template;
-  onToggleActive: (template: Template) => void;
-  onDelete: (template: Template) => void;
-  onEdit?: (template: Template) => void;
-}
-
-function TemplateRow({ template, onToggleActive, onDelete, onEdit }: TemplateRowProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  return (
-    <div className="px-6 py-4 hover:bg-surface transition-colors">
-      <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-3">
-            {/* Template Preview */}
-            <div className="w-16 h-12 bg-surface border border-app rounded-lg flex items-center justify-center flex-shrink-0">
-              <svg className="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-
-            {/* Template Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-2 mb-1">
-                <h3 className="text-sm font-medium text-primary truncate">{template.name}</h3>
-                <div className="flex items-center space-x-1">
-                  {template.is_featured && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-                      Featured
-                    </span>
-                  )}
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                    template.is_community 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-purple-100 text-purple-800'
-                  }`}>
-                    {template.is_community ? 'Community' : 'Official'}
-                  </span>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                    template.is_active 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {template.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-              </div>
-              <p className="text-sm text-secondary truncate mb-1">{template.description}</p>
-              <div className="flex items-center space-x-4 text-xs text-secondary">
-                <span>Category: {TEMPLATE_CATEGORIES.find(c => c.id === template.category)?.name || template.category}</span>
-                {template.creator_username && (
-                  <span>Creator: {template.creator_username}</span>
-                )}
-                <span>Created: {formatDate(template.created_at)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center space-x-2 ml-4">
-          {onEdit && (
-            <button
-              onClick={() => onEdit(template)}
-              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title="Edit Template"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
-          )}
-          
-          <button
-            onClick={() => onToggleActive(template)}
-            className={`p-2 rounded-lg transition-colors ${
-              template.is_active 
-                ? 'text-orange-600 hover:bg-orange-50' 
-                : 'text-green-600 hover:bg-green-50'
-            }`}
-            title={template.is_active ? 'Deactivate Template' : 'Activate Template'}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {template.is_active ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              )}
-            </svg>
-          </button>
-
-          <button
-            onClick={() => onDelete(template)}
-            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            title="Delete Template"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Delete Template"
+        message={`Are you sure you want to delete "${deleteConfirm.template?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteTemplate}
+        onCancel={() => setDeleteConfirm({ isOpen: false, template: null })}
+        variant="danger"
+      />
     </div>
   );
 }

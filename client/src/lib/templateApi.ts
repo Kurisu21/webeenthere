@@ -136,6 +136,14 @@ export const toggleTemplateActive = async (id: number, isActive: boolean): Promi
   }
 };
 
+// Toggle template featured status (admin only)
+export const toggleTemplateFeatured = async (id: number, isFeatured: boolean): Promise<void> => {
+  const response = await apiPut(`${API_ENDPOINTS.TEMPLATES}/${id}/toggle-featured`, { isFeatured });
+  if (!response.success) {
+    throw new Error(response.message || 'Failed to update template featured status');
+  }
+};
+
 // Delete template (admin only)
 export const deleteTemplate = async (id: number): Promise<void> => {
   const response = await apiDelete(`${API_ENDPOINTS.TEMPLATES}/${id}`);

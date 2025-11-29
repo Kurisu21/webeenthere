@@ -2,6 +2,7 @@ const analyticsService = require('../services/AnalyticsService');
 const userAnalyticsService = require('../services/UserAnalyticsService');
 const systemAnalyticsService = require('../services/SystemAnalyticsService');
 const websiteAnalyticsService = require('../services/WebsiteAnalyticsService');
+const pdfReportService = require('../services/PDFReportService');
 
 class AnalyticsController {
   constructor() {
@@ -48,11 +49,12 @@ class AnalyticsController {
         });
       } else {
         // Get general user analytics
-        const [retention, growth, segments, comparison] = await Promise.all([
+        const [retention, growth, segments, comparison, evidence] = await Promise.all([
           this.userAnalyticsService.getUserRetention(),
           this.userAnalyticsService.getUserGrowth(),
           this.userAnalyticsService.getUserSegments(),
-          this.userAnalyticsService.getUserComparisonMetrics()
+          this.userAnalyticsService.getUserComparisonMetrics(),
+          this.userAnalyticsService.getAnalyticsEvidence()
         ]);
 
         res.json({ 
@@ -61,7 +63,8 @@ class AnalyticsController {
             retention, 
             growth, 
             segments, 
-            comparison 
+            comparison,
+            evidence
           } 
         });
       }
@@ -147,16 +150,36 @@ class AnalyticsController {
         });
       }
 
-      if (!['comprehensive', 'user', 'system', 'website', 'activity'].includes(type)) {
+      if (!['comprehensive', 'user', 'website', 'activity'].includes(type)) {
         return res.status(400).json({ 
           success: false, 
-          error: 'Invalid type. Supported: comprehensive, user, system, website, activity' 
+          error: 'Invalid type. Supported: comprehensive, user, website, activity' 
+        });
+      }
+
+      if (!['json', 'csv', 'pdf'].includes(format)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Invalid format. Supported: json, csv, pdf' 
         });
       }
 
       const report = await this.analyticsService.generateReports(period, type);
 
-      if (format === 'csv') {
+      if (format === 'pdf') {
+        // Convert period to days format for PDF service
+        const periodMap = {
+          'daily': '1d',
+          'weekly': '7d',
+          'monthly': '30d',
+          'yearly': '365d'
+        };
+        const periodDays = periodMap[period] || '30d';
+        const pdfBuffer = await pdfReportService.generatePDFReport(type, periodDays, {});
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="analytics-report-${period}-${type}.pdf"`);
+        res.send(pdfBuffer);
+      } else if (format === 'csv') {
         const csvData = this.convertReportToCSV(report);
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', `attachment; filename="analytics-report-${period}-${type}.csv"`);
@@ -287,9 +310,8 @@ class AnalyticsController {
     try {
       const { period = '30' } = req.query;
 
-      const [userMetrics, systemMetrics, websiteMetrics] = await Promise.all([
+      const [userMetrics, websiteMetrics] = await Promise.all([
         this.analyticsService.collectUserMetrics(),
-        this.analyticsService.collectSystemMetrics(),
         this.analyticsService.collectWebsiteMetrics()
       ]);
 
@@ -297,7 +319,6 @@ class AnalyticsController {
         success: true, 
         data: { 
           userMetrics, 
-          systemMetrics, 
           websiteMetrics,
           period: parseInt(period),
           generatedAt: new Date().toISOString()
@@ -322,11 +343,6 @@ class AnalyticsController {
     csvRows.push(`Total Users,${report.userMetrics.totalUsers},${report.period},${report.generatedAt}`);
     csvRows.push(`New Users This Month,${report.userMetrics.newUsersThisMonth},${report.period},${report.generatedAt}`);
     csvRows.push(`Active Users,${report.userMetrics.activeUsers},${report.period},${report.generatedAt}`);
-    
-    // Add system metrics
-    csvRows.push(`Total Activities,${report.systemMetrics.totalActivities},${report.period},${report.generatedAt}`);
-    csvRows.push(`Today Activities,${report.systemMetrics.todayActivities},${report.period},${report.generatedAt}`);
-    csvRows.push(`Week Activities,${report.systemMetrics.weekActivities},${report.period},${report.generatedAt}`);
     
     // Add website metrics
     csvRows.push(`Total Websites,${report.websiteMetrics.totalWebsites},${report.period},${report.generatedAt}`);

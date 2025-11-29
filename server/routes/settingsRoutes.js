@@ -172,4 +172,50 @@ router.put('/email', [
  */
 router.post('/email/test', (req, res) => settingsController.testEmailConfig(req, res));
 
+// AI Configuration Routes
+
+/**
+ * @route GET /api/admin/settings/ai
+ * @desc Get AI configuration
+ * @access Admin
+ */
+router.get('/ai', (req, res) => settingsController.getAiConfig(req, res));
+
+/**
+ * @route PUT /api/admin/settings/ai
+ * @desc Update AI configuration
+ * @access Admin
+ */
+router.put('/ai', [
+  body('model')
+    .optional()
+    .isString()
+    .withMessage('Model must be a string'),
+  body('maxTokens')
+    .optional()
+    .isInt({ min: 1, max: 16000 })
+    .withMessage('Max tokens must be between 1 and 16000'),
+  body('temperature')
+    .optional()
+    .isFloat({ min: 0, max: 2 })
+    .withMessage('Temperature must be between 0 and 2')
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Validation failed',
+      details: errors.array()
+    });
+  }
+  settingsController.updateAiConfig(req, res);
+});
+
+/**
+ * @route GET /api/admin/settings/ai/prompts
+ * @desc Get all AI prompts (user inputs and responses)
+ * @access Admin
+ */
+router.get('/ai/prompts', (req, res) => settingsController.getAiPrompts(req, res));
+
 module.exports = router;

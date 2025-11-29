@@ -5,12 +5,19 @@ class FeedbackController {
   async createFeedback(req, res) {
     try {
       const { type, message, priority, attachments } = req.body;
-      const userId = req.user?.id || 'user'; // Get from auth middleware
+      const userId = req.user?.id; // Get from optional auth middleware
 
       if (!type || !message) {
         return res.status(400).json({
           success: false,
           message: 'Type and message are required'
+        });
+      }
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required. Please log in to submit feedback.'
         });
       }
 
@@ -146,14 +153,18 @@ class FeedbackController {
     try {
       const { id } = req.params;
       const { response } = req.body;
+      const adminId = req.user?.id || 'admin';
+
+      // Store response as JSON string in database
+      const responseData = response ? JSON.stringify({
+        message: response,
+        createdAt: new Date().toISOString(),
+        adminId
+      }) : null;
 
       const feedback = await databaseFeedbackService.updateFeedback(id, {
         status: 'closed',
-        response: {
-          message: response,
-          createdAt: new Date().toISOString(),
-          adminId: req.user?.id || 'admin'
-        }
+        response: responseData
       });
 
       res.json({
@@ -185,12 +196,15 @@ class FeedbackController {
         });
       }
 
+      // Store response as JSON string in database
+      const responseData = JSON.stringify({
+        message: response,
+        createdAt: new Date().toISOString(),
+        adminId
+      });
+
       const feedback = await databaseFeedbackService.updateFeedback(id, {
-        response: {
-          message: response,
-          createdAt: new Date().toISOString(),
-          adminId
-        },
+        response: responseData,
         status: 'responded'
       });
 

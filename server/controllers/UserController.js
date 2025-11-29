@@ -71,24 +71,18 @@ class UserController {
       // Store verification code in database
       await this.userModel.storeVerificationCode(userId, verificationCode, expiresAt);
       
-      // Send emails asynchronously (don't block response)
-      // Use Promise.allSettled to ensure both emails are attempted but don't fail registration if they fail
-      Promise.allSettled([
-        this.emailService.sendVerificationCodeEmail(email, username, verificationCode),
-        this.emailService.sendWelcomeEmail(email, username)
-      ]).then((results) => {
-        const [codeResult, welcomeResult] = results;
-        if (codeResult.status === 'rejected' || (codeResult.status === 'fulfilled' && !codeResult.value)) {
-          console.error('Failed to send verification code email to:', email, codeResult.status === 'rejected' ? codeResult.reason : '');
-        }
-        if (welcomeResult.status === 'rejected' || (welcomeResult.status === 'fulfilled' && !welcomeResult.value)) {
-          console.error('Failed to send welcome email to:', email, welcomeResult.status === 'rejected' ? welcomeResult.reason : '');
-        }
-      }).catch((err) => {
-        console.error('Error in email sending promise:', err);
-      });
+      // Send verification code email
+      const codeEmailSent = await this.emailService.sendVerificationCodeEmail(email, username, verificationCode);
+      if (!codeEmailSent) {
+        console.error('Failed to send verification code email to:', email);
+      }
       
-      // Return success immediately (emails sent asynchronously)
+      // Send welcome email
+      const welcomeEmailSent = await this.emailService.sendWelcomeEmail(email, username);
+      if (!welcomeEmailSent) {
+        console.error('Failed to send welcome email to:', email);
+      }
+      
       res.status(201).json({ 
         message: 'User registered successfully. Please check your email for the verification code.', 
         userId,
@@ -96,31 +90,7 @@ class UserController {
       });
     } catch (err) {
       console.error('Registration error:', err);
-      
-      // Handle specific database errors
-      if (err.code === 'ER_DUP_ENTRY') {
-        if (err.sqlMessage && err.sqlMessage.includes('email')) {
-          return res.status(400).json({ 
-            error: 'Email is already registered',
-            errors: [{ path: 'email', msg: 'Email is already registered' }]
-          });
-        } else if (err.sqlMessage && err.sqlMessage.includes('username')) {
-          return res.status(400).json({ 
-            error: 'Username is already taken',
-            errors: [{ path: 'username', msg: 'Username is already taken' }]
-          });
-        }
-      }
-      
-      // Handle other specific errors
-      if (err.message && err.message.includes('already')) {
-        return res.status(400).json({ 
-          error: err.message,
-          errors: [{ path: 'email', msg: err.message }]
-        });
-      }
-      
-      res.status(500).json({ error: 'Server error during registration. Please try again.' });
+      res.status(500).json({ error: 'Server error' });
     }
   }
 

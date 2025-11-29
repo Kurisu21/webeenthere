@@ -81,27 +81,6 @@ export const settingsApi = {
     throw new Error(data.error || 'Failed to fetch all settings');
   },
 
-  // System Settings
-  getSystemSettings: async (): Promise<SystemSettings> => {
-    const response = await apiCall('/api/admin/settings/system');
-    const data = await response.json();
-    if (data.success && data.settings) {
-      return data.settings;
-    }
-    throw new Error(data.error || 'Failed to fetch system settings');
-  },
-
-  updateSystemSettings: async (settings: Partial<SystemSettings>): Promise<SystemSettings> => {
-    const response = await apiCall('/api/admin/settings/system', {
-      method: 'PUT',
-      body: JSON.stringify(settings)
-    });
-    const data = await response.json();
-    if (data.success && data.settings) {
-      return data.settings;
-    }
-    throw new Error(data.error || 'Failed to update system settings');
-  },
 
   // Feature Flags
   getFeatureFlags: async (): Promise<FeatureFlags> => {

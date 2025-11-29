@@ -1,4 +1,4 @@
-﻿import { API_BASE_URL, apiCall, apiPost, apiGet, apiPut } from './apiConfig';
+import { API_BASE_URL, apiCall, apiPost, apiGet, apiPut } from './apiConfig';
 
 // Types
 export interface SupportTicket {
@@ -25,6 +25,7 @@ export interface SupportMessage {
   message: string;
   senderId: string;
   senderType: 'user' | 'admin';
+  senderName?: string;
   attachments: string[];
   isInternal: boolean;
   createdAt: string;

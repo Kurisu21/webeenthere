@@ -284,6 +284,25 @@ class DatabaseSettingsService {
     }
   }
 
+  // AI Configuration
+  async getAiConfig() {
+    return this.getSetting('ai_config') || {
+      model: 'x-ai/grok-4.1-fast:free',
+      maxTokens: 4000,
+      temperature: 0.7,
+      updatedAt: new Date().toISOString(),
+      updatedBy: 'system'
+    };
+  }
+
+  async setAiConfig(config, updatedBy = null) {
+    return this.setSetting('ai_config', config, updatedBy);
+  }
+
+  async updateAiConfig(config, updatedBy = null) {
+    return this.setSetting('ai_config', config, updatedBy);
+  }
+
   // Reset settings to defaults
   async resetToDefaults(updatedBy = null) {
     const defaultSettings = {
@@ -294,7 +313,8 @@ class DatabaseSettingsService {
       analytics_settings: await this.getAnalyticsSettings(),
       security_settings: await this.getSecuritySettings(),
       backup_settings: await this.getBackupSettings(),
-      theme_settings: await this.getThemeSettings()
+      theme_settings: await this.getThemeSettings(),
+      ai_config: await this.getAiConfig()
     };
     
     return this.updateMultipleSettings(defaultSettings, updatedBy);

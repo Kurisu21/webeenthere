@@ -5,14 +5,12 @@ import DashboardHeader from '../../_components/layout/DashboardHeader';
 import AdminSidebar from '../../_components/layout/AdminSidebar';
 import MainContentWrapper from '../../_components/layout/MainContentWrapper';
 import FeedbackList from '../../_components/admin/FeedbackList';
-import FeedbackStats from '../../_components/admin/FeedbackStats';
 import { feedbackApi, FeedbackStats as FeedbackStatsType } from '../../../lib/feedbackApi';
 
 export default function AdminFeedbackPage() {
   const [stats, setStats] = useState<FeedbackStatsType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'feedback'>('overview');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
@@ -38,10 +36,6 @@ export default function AdminFeedbackPage() {
     fetchStats();
   };
 
-  const handleRespond = (feedbackId: string, response: string) => {
-    setRefreshTrigger(prev => prev + 1);
-    fetchStats();
-  };
 
   const handleClose = (feedbackId: string, response?: string) => {
     setRefreshTrigger(prev => prev + 1);
@@ -145,45 +139,13 @@ export default function AdminFeedbackPage() {
               </div>
             </div>
 
-            {/* Tabs */}
-            <div className="mb-6">
-              <div className="border-b border-app">
-                <nav className="-mb-px flex space-x-8">
-                  <button
-                    onClick={() => setActiveTab('overview')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                      activeTab === 'overview'
-                        ? 'border-purple-500 text-purple-400'
-                        : 'border-transparent text-secondary hover:text-primary hover:border-app'
-                    }`}
-                  >
-                    Overview
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('feedback')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                      activeTab === 'feedback'
-                        ? 'border-purple-500 text-purple-400'
-                        : 'border-transparent text-secondary hover:text-primary hover:border-app'
-                    }`}
-                  >
-                    Feedback List
-                  </button>
-                </nav>
-              </div>
-            </div>
-
-            {/* Content */}
-            {activeTab === 'overview' && <FeedbackStats />}
-
-            {activeTab === 'feedback' && (
-              <FeedbackList
-                onAssign={handleAssign}
-                onRespond={handleRespond}
-                onClose={handleClose}
-                refreshTrigger={refreshTrigger}
-              />
-            )}
+            {/* Feedback List */}
+            <FeedbackList
+              onAssign={handleAssign}
+              onRespond={() => {}}
+              onClose={handleClose}
+              refreshTrigger={refreshTrigger}
+            />
 
             {/* Quick Actions */}
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">

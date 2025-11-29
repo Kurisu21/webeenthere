@@ -64,6 +64,7 @@ export interface UserAnalytics {
     secondMonthRetention: string;
   }>;
   growth?: {
+    totalUsers?: number;
     monthly: Array<{
       month: string;
       new_users: number;
@@ -127,6 +128,42 @@ export interface UserAnalytics {
     engagementDistribution: Array<{
       engagement_level: string;
       user_count: number;
+    }>;
+  };
+  evidence?: {
+    activityLogs: {
+      total: number;
+      period: string;
+      description: string;
+    };
+    registrations: {
+      total: number;
+      period: string;
+      description: string;
+    };
+    websiteCreations: {
+      total: number;
+      period: string;
+      description: string;
+    };
+    publications: {
+      total: number;
+      period: string;
+      description: string;
+    };
+    recentActivities: Array<{
+      action: string;
+      count: number;
+      unique_users: number;
+    }>;
+    verificationStats: {
+      total: number;
+      verified: number;
+      unverified: number;
+    };
+    authProviderStats: Array<{
+      auth_provider: string;
+      count: number;
     }>;
   };
 }
@@ -304,6 +341,19 @@ export interface WebsiteAnalytics {
       return_visitors: number;
       return_rate: number;
     };
+    topWebsites?: Array<{
+      id: number;
+      title: string;
+      slug: string;
+      is_published: boolean;
+      owner: string;
+      owner_email: string;
+      total_views: number;
+      unique_visitors: number;
+      active_days: number;
+      last_visit: string | null;
+      first_visit: string | null;
+    }>;
   };
   geoDistribution: Array<{
     location_type: string;
@@ -411,22 +461,49 @@ export const analyticsApi = {
 
   // Generate custom report
   generateReport: async (period: string = 'monthly', type: string = 'comprehensive', format: string = 'json'): Promise<AnalyticsReport | Blob> => {
-    const response = await apiCall('/api/admin/analytics/reports', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ period, type, format })
-    });
+    try {
+      const response = await apiCall('/api/admin/analytics/reports', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ period, type, format })
+      });
 
-    if (format === 'csv') {
-      return await response.blob();
-    } else {
-      const data = await response.json();
-      if (data.success && data.data) {
-        return data.data;
+      if (format === 'csv' || format === 'pdf') {
+        // For blob responses, we need to check content type
+        const contentType = response.headers.get('content-type');
+        if (contentType && (contentType.includes('pdf') || contentType.includes('csv') || contentType.includes('text/csv'))) {
+          const blob = await response.blob();
+          // Create download link for PDF/CSV
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `analytics-report-${period}-${type}.${format}`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          return blob;
+        } else {
+          // If not a blob, try to parse as JSON to get error
+          const errorData = await response.json();
+          throw new Error(errorData.error || errorData.message || 'Failed to generate report');
+        }
+      } else {
+        const data = await response.json();
+        if (data.success && data.data) {
+          return data.data;
+        }
+        throw new Error(data.error || data.message || 'Failed to generate report');
       }
-      throw new Error(data.error || 'Failed to generate report');
+    } catch (error: any) {
+      console.error('Error generating report:', error);
+      // Check if it's an authentication error
+      if (error.message && error.message.includes('Authentication')) {
+        throw new Error('Please log in as an admin to generate reports. Make sure you are logged in with admin privileges.');
+      }
+      throw new Error(error.message || 'Failed to generate report');
     }
   },
 

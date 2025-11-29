@@ -316,6 +316,168 @@ class SettingsController {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
+
+  /**
+   * Get AI configuration
+   */
+  async getAiConfig(req, res) {
+    try {
+      const config = await this.settingsService.getAiConfig();
+      res.json({ success: true, config });
+    } catch (error) {
+      console.error('Get AI config error:', error);
+      res.status(500).json({ success: false, error: 'Failed to retrieve AI configuration' });
+    }
+  }
+
+  /**
+   * Update AI configuration
+   */
+  async updateAiConfig(req, res) {
+    try {
+      const {
+        model,
+        maxTokens,
+        temperature
+      } = req.body;
+
+      // Validation
+      if (model && typeof model !== 'string') {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Model must be a string' 
+        });
+      }
+
+      if (maxTokens && (typeof maxTokens !== 'number' || maxTokens < 1 || maxTokens > 16000)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Max tokens must be between 1 and 16000' 
+        });
+      }
+
+      if (temperature !== undefined && (typeof temperature !== 'number' || temperature < 0 || temperature > 2)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Temperature must be between 0 and 2' 
+        });
+      }
+
+      const currentConfig = await this.settingsService.getAiConfig();
+      
+      // Update only provided fields
+      const updatedConfig = {
+        ...currentConfig,
+        model: model !== undefined ? model : currentConfig.model,
+        maxTokens: maxTokens !== undefined ? Number(maxTokens) : currentConfig.maxTokens,
+        temperature: temperature !== undefined ? Number(temperature) : currentConfig.temperature,
+        updatedAt: new Date().toISOString(),
+        updatedBy: req.user.username || 'admin'
+      };
+
+      await this.settingsService.updateAiConfig(updatedConfig, req.user.id || null);
+
+      res.json({ 
+        success: true, 
+        message: 'AI configuration updated successfully',
+        config: updatedConfig
+      });
+    } catch (error) {
+      console.error('Update AI config error:', error);
+      res.status(500).json({ success: false, error: 'Failed to update AI configuration' });
+    }
+  }
+
+  /**
+   * Get all AI prompts (for viewing user inputs and responses)
+   */
+  async getAiPrompts(req, res) {
+    try {
+      const { getDatabaseConnection } = require('../database/database');
+      const connection = await getDatabaseConnection();
+      
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 50;
+      const offset = (page - 1) * limit;
+      
+      // Build query with optional filters
+      let query = `
+        SELECT 
+          ap.*,
+          u.username,
+          u.email,
+          w.title as website_title,
+          w.slug as website_slug
+        FROM ai_prompts ap
+        LEFT JOIN users u ON ap.user_id = u.id
+        LEFT JOIN websites w ON ap.website_id = w.id
+        WHERE 1=1
+      `;
+      const params = [];
+      
+      if (req.query.userId) {
+        query += ' AND ap.user_id = ?';
+        params.push(req.query.userId);
+      }
+      
+      if (req.query.promptType) {
+        query += ' AND ap.prompt_type = ?';
+        params.push(req.query.promptType);
+      }
+      
+      if (req.query.search) {
+        query += ' AND (ap.prompt_text LIKE ? OR ap.response_html LIKE ?)';
+        const searchTerm = `%${req.query.search}%`;
+        params.push(searchTerm, searchTerm);
+      }
+      
+      query += ' ORDER BY ap.created_at DESC LIMIT ? OFFSET ?';
+      params.push(limit, offset);
+      
+      const [prompts] = await connection.execute(query, params);
+      
+      // Get total count
+      let countQuery = `
+        SELECT COUNT(*) as total
+        FROM ai_prompts ap
+        WHERE 1=1
+      `;
+      const countParams = [];
+      
+      if (req.query.userId) {
+        countQuery += ' AND ap.user_id = ?';
+        countParams.push(req.query.userId);
+      }
+      
+      if (req.query.promptType) {
+        countQuery += ' AND ap.prompt_type = ?';
+        countParams.push(req.query.promptType);
+      }
+      
+      if (req.query.search) {
+        countQuery += ' AND (ap.prompt_text LIKE ? OR ap.response_html LIKE ?)';
+        const searchTerm = `%${req.query.search}%`;
+        countParams.push(searchTerm, searchTerm);
+      }
+      
+      const [countResult] = await connection.execute(countQuery, countParams);
+      const total = countResult[0].total;
+      
+      res.json({
+        success: true,
+        prompts,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit)
+        }
+      });
+    } catch (error) {
+      console.error('Get AI prompts error:', error);
+      res.status(500).json({ success: false, error: 'Failed to retrieve AI prompts' });
+    }
+  }
 }
 
 module.exports = SettingsController;

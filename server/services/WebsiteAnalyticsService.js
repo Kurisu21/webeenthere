@@ -197,47 +197,53 @@ class WebsiteAnalyticsService {
     const connection = await this.getConnection();
     
     try {
-      // Website creation vs publication rate
+      // Website creation vs publication rate - ALL websites, not just recent ones
       const [creationStats] = await connection.execute(
         `SELECT 
            COUNT(*) as total_created,
            SUM(CASE WHEN is_published = true THEN 1 ELSE 0 END) as published,
-           SUM(CASE WHEN is_published = true THEN 1 ELSE 0 END) / COUNT(*) * 100 as publication_rate
+           CASE 
+             WHEN COUNT(*) > 0 THEN SUM(CASE WHEN is_published = true THEN 1 ELSE 0 END) / COUNT(*) * 100 
+             ELSE 0 
+           END as publication_rate
          FROM websites 
-         WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-         AND is_active = true`,
-        [period]
+         WHERE is_active = true`,
+        []
       );
 
-      // User engagement rate (users who created websites vs total users)
+      // User engagement rate - ALL users who created websites vs total users
       const [engagementStats] = await connection.execute(
         `SELECT 
            COUNT(DISTINCT u.id) as total_users,
            COUNT(DISTINCT w.user_id) as users_with_websites,
-           COUNT(DISTINCT w.user_id) / COUNT(DISTINCT u.id) * 100 as engagement_rate
+           CASE 
+             WHEN COUNT(DISTINCT u.id) > 0 THEN COUNT(DISTINCT w.user_id) / COUNT(DISTINCT u.id) * 100 
+             ELSE 0 
+           END as engagement_rate
          FROM users u
-         LEFT JOIN websites w ON u.id = w.user_id AND w.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-         WHERE u.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-         AND u.is_active = true`,
-        [period, period]
+         LEFT JOIN websites w ON u.id = w.user_id AND w.is_active = true
+         WHERE u.is_active = true`,
+        []
       );
 
-      // Template usage rate
+      // Template usage rate - ALL websites
       const [templateStats] = await connection.execute(
         `SELECT 
            COUNT(*) as total_websites,
            SUM(CASE WHEN template_id IS NOT NULL THEN 1 ELSE 0 END) as websites_with_templates,
-           SUM(CASE WHEN template_id IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*) * 100 as template_usage_rate
+           CASE 
+             WHEN COUNT(*) > 0 THEN SUM(CASE WHEN template_id IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*) * 100 
+             ELSE 0 
+           END as template_usage_rate
          FROM websites 
-         WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-         AND is_active = true`,
-        [period]
+         WHERE is_active = true`,
+        []
       );
 
       return {
-        publicationRate: creationStats[0],
-        engagementRate: engagementStats[0],
-        templateUsageRate: templateStats[0]
+        publicationRate: creationStats[0] || { total_created: 0, published: 0, publication_rate: 0 },
+        engagementRate: engagementStats[0] || { total_users: 0, users_with_websites: 0, engagement_rate: 0 },
+        templateUsageRate: templateStats[0] || { total_websites: 0, websites_with_templates: 0, template_usage_rate: 0 }
       };
     } catch (error) {
       console.error('Error calculating conversion rates:', error);
@@ -320,8 +326,10 @@ class WebsiteAnalyticsService {
       let params = [];
       
       if (websiteId) {
-        whereClause = 'WHERE wa.website_id = ?';
+        whereClause = 'WHERE wa.website_id = ? AND visit_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)';
         params = [websiteId];
+      } else {
+        whereClause = 'WHERE visit_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)';
       }
 
       // Average visits per day
@@ -334,7 +342,6 @@ class WebsiteAnalyticsService {
            SELECT DATE(visit_time) as date, COUNT(*) as daily_visits
            FROM website_analytics wa
            ${whereClause}
-           AND visit_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
            GROUP BY DATE(visit_time)
          ) daily_stats`,
         params
@@ -345,12 +352,14 @@ class WebsiteAnalyticsService {
         `SELECT 
            COUNT(*) as total_visitors,
            SUM(CASE WHEN page_views = 1 THEN 1 ELSE 0 END) as bounced_visitors,
-           SUM(CASE WHEN page_views = 1 THEN 1 ELSE 0 END) / COUNT(*) * 100 as bounce_rate
+           CASE 
+             WHEN COUNT(*) > 0 THEN SUM(CASE WHEN page_views = 1 THEN 1 ELSE 0 END) / COUNT(*) * 100 
+             ELSE 0 
+           END as bounce_rate
          FROM (
            SELECT visitor_ip, COUNT(*) as page_views
            FROM website_analytics wa
            ${whereClause}
-           AND visit_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
            GROUP BY visitor_ip
          ) visitor_stats`,
         params
@@ -361,21 +370,54 @@ class WebsiteAnalyticsService {
         `SELECT 
            COUNT(DISTINCT visitor_ip) as total_unique_visitors,
            SUM(CASE WHEN visit_count > 1 THEN 1 ELSE 0 END) as return_visitors,
-           SUM(CASE WHEN visit_count > 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT visitor_ip) * 100 as return_rate
+           CASE 
+             WHEN COUNT(DISTINCT visitor_ip) > 0 THEN SUM(CASE WHEN visit_count > 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT visitor_ip) * 100 
+             ELSE 0 
+           END as return_rate
          FROM (
            SELECT visitor_ip, COUNT(DISTINCT DATE(visit_time)) as visit_count
            FROM website_analytics wa
            ${whereClause}
-           AND visit_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
            GROUP BY visitor_ip
          ) visitor_stats`,
         params
       );
 
+      // Get top performing websites with owner details (only if not filtering by specific website)
+      let topWebsites = [];
+      if (!websiteId) {
+        const [topWebsitesResult] = await connection.execute(
+          `SELECT 
+             w.id,
+             w.title,
+             w.slug,
+             w.is_published,
+             u.username as owner,
+             u.email as owner_email,
+             COUNT(wa.id) as total_views,
+             COUNT(DISTINCT wa.visitor_id) as unique_visitors,
+             COUNT(DISTINCT DATE(wa.visit_time)) as active_days,
+             MAX(wa.visit_time) as last_visit,
+             MIN(wa.visit_time) as first_visit
+           FROM websites w
+           LEFT JOIN website_analytics wa ON w.id = wa.website_id 
+             AND wa.visit_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+           LEFT JOIN users u ON w.user_id = u.id
+           WHERE w.is_active = true
+           GROUP BY w.id, w.title, w.slug, w.is_published, u.username, u.email
+           HAVING total_views > 0
+           ORDER BY total_views DESC
+           LIMIT 20`,
+          []
+        );
+        topWebsites = topWebsitesResult;
+      }
+
       return {
-        avgVisitsPerDay: avgVisitsPerDay[0],
-        bounceRate: bounceRate[0],
-        returnVisitorRate: returnVisitorRate[0]
+        avgVisitsPerDay: avgVisitsPerDay[0] || { avg_visits_per_day: 0, max_daily_visits: 0, min_daily_visits: 0 },
+        bounceRate: bounceRate[0] || { total_visitors: 0, bounced_visitors: 0, bounce_rate: 0 },
+        returnVisitorRate: returnVisitorRate[0] || { total_unique_visitors: 0, return_visitors: 0, return_rate: 0 },
+        topWebsites: topWebsites
       };
     } catch (error) {
       console.error('Error getting website performance metrics:', error);

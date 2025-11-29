@@ -50,8 +50,10 @@ export default function FeedbackPage() {
       setSuccess('Feedback submitted successfully! We will review it and get back to you soon.');
       setFormData({ type: '', message: '', priority: 'medium' });
       fetchMyFeedback();
-    } catch (error) {
-      setError('Failed to submit feedback. Please try again.');
+    } catch (error: any) {
+      // Extract error message from API response
+      const errorMessage = error?.message || error?.data?.message || 'Failed to submit feedback. Please try again.';
+      setError(errorMessage);
       console.error('Error submitting feedback:', error);
     } finally {
       setIsSubmitting(false);
@@ -170,7 +172,7 @@ export default function FeedbackPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-3 bg-surface-elevated dark:bg-surface hover:bg-surface text-primary dark:text-primary border border-app hover:border-primary/30 dark:hover:border-primary/30 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
               </button>
@@ -262,7 +264,7 @@ export default function FeedbackPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="/user/support"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-primary rounded-lg transition-all duration-200"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-surface-elevated dark:bg-surface hover:bg-surface text-primary dark:text-primary border border-app hover:border-primary/30 dark:hover:border-primary/30 rounded-lg transition-all duration-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -271,7 +273,7 @@ export default function FeedbackPage() {
               </a>
               <a
                 href="/user/help"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-surface-elevated hover:bg-surface text-primary rounded-lg transition-all duration-200"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-surface-elevated dark:bg-surface hover:bg-surface text-primary dark:text-primary border border-app hover:border-primary/30 dark:hover:border-primary/30 rounded-lg transition-all duration-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

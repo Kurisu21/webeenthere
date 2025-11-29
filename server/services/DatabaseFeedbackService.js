@@ -4,7 +4,14 @@ const { getDatabaseConnection } = require('../database/database');
 class DatabaseFeedbackService {
   async getAllFeedback(filters = {}) {
     const connection = await getDatabaseConnection();
-    let query = 'SELECT f.*, u.username as user_name FROM feedback f LEFT JOIN users u ON f.user_id = u.id WHERE 1=1';
+    let query = `SELECT f.*, 
+      u.username as user_name,
+      a.username as assigned_to_name,
+      a.email as assigned_to_email
+      FROM feedback f 
+      LEFT JOIN users u ON f.user_id = u.id 
+      LEFT JOIN users a ON f.assigned_to = a.id 
+      WHERE 1=1`;
     const params = [];
     
     if (filters.status) {
@@ -26,17 +33,79 @@ class DatabaseFeedbackService {
     
     query += ' ORDER BY f.created_at DESC';
     const [rows] = await connection.execute(query, params);
-    return rows;
+    // Parse response JSON and map snake_case to camelCase for each feedback item
+    return rows.map(feedback => {
+      // Map snake_case to camelCase
+      const mapped = {
+        id: feedback.id,
+        userId: feedback.user_id,
+        type: feedback.type,
+        message: feedback.message,
+        priority: feedback.priority,
+        status: feedback.status,
+        assignedTo: feedback.assigned_to,
+        assigned_to_name: feedback.assigned_to_name,
+        assigned_to_email: feedback.assigned_to_email,
+        user_name: feedback.user_name,
+        response: feedback.response,
+        createdAt: feedback.created_at,
+        updatedAt: feedback.updated_at
+      };
+      
+      // Parse response JSON if it exists
+      if (mapped.response && typeof mapped.response === 'string') {
+        try {
+          mapped.response = JSON.parse(mapped.response);
+        } catch (e) {
+          // If parsing fails, keep as string
+        }
+      }
+      return mapped;
+    });
   }
 
   async getFeedbackById(id) {
     const connection = await getDatabaseConnection();
     const [rows] = await connection.execute(
-      'SELECT f.*, u.username as user_name FROM feedback f LEFT JOIN users u ON f.user_id = u.id WHERE f.id = ?',
+      `SELECT f.*, 
+      u.username as user_name,
+      a.username as assigned_to_name,
+      a.email as assigned_to_email
+      FROM feedback f 
+      LEFT JOIN users u ON f.user_id = u.id 
+      LEFT JOIN users a ON f.assigned_to = a.id 
+      WHERE f.id = ?`,
       [id]
     );
     if (rows.length === 0) throw new Error('Feedback not found');
-    return rows[0];
+    const feedback = rows[0];
+    
+    // Map snake_case to camelCase
+    const mapped = {
+      id: feedback.id,
+      userId: feedback.user_id,
+      type: feedback.type,
+      message: feedback.message,
+      priority: feedback.priority,
+      status: feedback.status,
+      assignedTo: feedback.assigned_to,
+      assigned_to_name: feedback.assigned_to_name,
+      assigned_to_email: feedback.assigned_to_email,
+      user_name: feedback.user_name,
+      response: feedback.response,
+      createdAt: feedback.created_at,
+      updatedAt: feedback.updated_at
+    };
+    
+    // Parse response JSON if it exists
+    if (mapped.response && typeof mapped.response === 'string') {
+      try {
+        mapped.response = JSON.parse(mapped.response);
+      } catch (e) {
+        // If parsing fails, keep as string
+      }
+    }
+    return mapped;
   }
 
   async createFeedback(data) {
@@ -53,9 +122,18 @@ class DatabaseFeedbackService {
     const updates = [];
     const params = [];
     
-    if (data.status) { updates.push('status = ?'); params.push(data.status); }
-    if (data.assignedTo !== undefined) { updates.push('assigned_to = ?'); params.push(data.assignedTo); }
-    if (data.response !== undefined) { updates.push('response = ?'); params.push(data.response); }
+    if (data.status) { 
+      updates.push('status = ?'); 
+      params.push(data.status); 
+    }
+    if (data.assignedTo !== undefined) { 
+      updates.push('assigned_to = ?'); 
+      params.push(data.assignedTo === null ? null : data.assignedTo); 
+    }
+    if (data.response !== undefined) { 
+      updates.push('response = ?'); 
+      params.push(data.response === null ? null : data.response); 
+    }
     
     if (updates.length === 0) return this.getFeedbackById(id);
     

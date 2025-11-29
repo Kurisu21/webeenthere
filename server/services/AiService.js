@@ -1,11 +1,42 @@
 // services/AiService.js
+const databaseSettingsService = require('./DatabaseSettingsService');
+
 class AiService {
   constructor() {
     this.apiKey = process.env.OPENROUTER_API_KEY;
-    // Use Grok 4.1 Fast (free) model
-    this.model = 'x-ai/grok-4.1-fast:free';
-    // Previous model (commented out):
-    // this.model = 'deepseek/deepseek-chat-v3.1:free';
+    // Model will be loaded from settings, with fallback to default
+    this.model = null;
+    this.maxTokens = 4000;
+    this.temperature = 0.7;
+  }
+
+  // Get AI configuration from settings (with caching)
+  async getAiConfig() {
+    try {
+      const config = await databaseSettingsService.getAiConfig();
+      this.model = config.model || 'x-ai/grok-4.1-fast:free';
+      this.maxTokens = config.maxTokens || 4000;
+      this.temperature = config.temperature || 0.7;
+      return config;
+    } catch (error) {
+      console.error('Failed to load AI config from settings, using defaults:', error);
+      // Fallback to defaults
+      this.model = 'x-ai/grok-4.1-fast:free';
+      this.maxTokens = 4000;
+      this.temperature = 0.7;
+      return {
+        model: this.model,
+        maxTokens: this.maxTokens,
+        temperature: this.temperature
+      };
+    }
+  }
+
+  // Ensure config is loaded before making API calls
+  async ensureConfigLoaded() {
+    if (!this.model) {
+      await this.getAiConfig();
+    }
   }
 
   // Generate complete website template using OpenRoute API
@@ -607,6 +638,9 @@ All replaceable content must have data-slot attributes:
   // Call OpenRoute API
   async callOpenRouteAPI(prompt) {
     try {
+      // Ensure config is loaded from settings
+      await this.ensureConfigLoaded();
+      
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -623,8 +657,8 @@ All replaceable content must have data-slot attributes:
               content: prompt
             }
           ],
-          max_tokens: 4000,
-          temperature: 0.7
+          max_tokens: this.maxTokens,
+          temperature: this.temperature
         })
       });
 

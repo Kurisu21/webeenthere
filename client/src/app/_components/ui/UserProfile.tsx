@@ -3,6 +3,7 @@
 import React, { useState, useCallback, memo, useEffect, useRef } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { API_ENDPOINTS, apiPut, apiPost, API_BASE_URL, getImageUrl, getProfileImageUrl } from '../../../lib/apiConfig';
+import ImageCropper from './ImageCropper';
 
 const UserProfile = memo(() => {
   const { user, token, updateUser } = useAuth();
@@ -19,6 +20,7 @@ const UserProfile = memo(() => {
   const [success, setSuccess] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageCacheBust, setImageCacheBust] = useState<number | undefined>(undefined);
+  const [showImageCropper, setShowImageCropper] = useState(false);
   const [emailVerificationCode, setEmailVerificationCode] = useState('');
   const [isRequestingEmailCode, setIsRequestingEmailCode] = useState(false);
   const [emailCodeSent, setEmailCodeSent] = useState(false);
@@ -56,14 +58,14 @@ const UserProfile = memo(() => {
     }
   }, []);
 
-  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      setError('Please select a valid image file (JPEG, PNG, GIF, WebP, or SVG)');
+      setError('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
       return;
     }
 
@@ -73,22 +75,26 @@ const UserProfile = memo(() => {
       return;
     }
 
-    // Show preview
+    // Show preview and open cropper
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result as string);
+      setShowImageCropper(true);
     };
     reader.readAsDataURL(file);
+  }, []);
 
-    // Upload file
-    setIsUploading(true);
-    setError(null);
+  const handleCropComplete = useCallback(async (croppedImageBlob: Blob) => {
+    if (!user || !token) return;
 
     try {
-      const formData = new FormData();
-      formData.append('image', file);
+      setIsUploading(true);
+      setError(null);
+      setSuccess(null);
 
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('image', croppedImageBlob, 'profile.jpg');
+
       const response = await fetch(API_ENDPOINTS.PROFILE_IMAGE_UPLOAD, {
         method: 'POST',
         headers: {
@@ -100,17 +106,14 @@ const UserProfile = memo(() => {
       const data = await response.json();
 
       if (data.success) {
-        // Profile image is now stored as blob, no URL needed
         setSuccess('Profile image uploaded successfully!');
         setImagePreview(null);
+        setShowImageCropper(false);
         
-        // Force image refresh by updating cache-bust timestamp
-        // Use a unique timestamp to force browser to fetch new image
+        // Force image refresh
         const newCacheBust = Date.now();
         setImageCacheBust(newCacheBust);
         
-        // Force React to re-render the image component by updating cache bust multiple times
-        // This ensures the browser fetches the new image from the server
         setTimeout(() => {
           setImageCacheBust(Date.now() + 1);
         }, 100);
@@ -118,11 +121,8 @@ const UserProfile = memo(() => {
           setImageCacheBust(Date.now() + 2);
         }, 300);
         
-        // Also clear any potential browser cache by reloading the image
-        // Force a re-fetch by updating the key
         setTimeout(() => {
           if (user?.id) {
-            // Trigger a state update to force re-render
             setFormData(prev => ({ ...prev }));
           }
         }, 500);
@@ -139,7 +139,7 @@ const UserProfile = memo(() => {
         fileInputRef.current.value = '';
       }
     }
-  }, []);
+  }, [user, token]);
 
   // Check if email is changing
   const isEmailChanging = user && formData.email.toLowerCase() !== user.email.toLowerCase();
@@ -822,6 +822,22 @@ const UserProfile = memo(() => {
         <p className="text-secondary">{user.email}</p>
         <p className="text-sm text-secondary">Member since {new Date().toLocaleDateString()}</p>
       </div>
+
+      {/* Image Cropper Modal */}
+      {showImageCropper && imagePreview && (
+        <ImageCropper
+          imageSrc={imagePreview}
+          onCropComplete={handleCropComplete}
+          onCancel={() => {
+            setShowImageCropper(false);
+            setImagePreview(null);
+            if (fileInputRef.current) {
+              fileInputRef.current.value = '';
+            }
+          }}
+          aspectRatio={1}
+        />
+      )}
     </div>
   );
 });

@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { feedbackApi, Feedback } from '../../../lib/feedbackApi';
+import { adminApi, User } from '../../../lib/adminApi';
 
 interface FeedbackListProps {
   onAssign: (feedbackId: string, adminId: string) => void;
-  onRespond: (feedbackId: string, response: string) => void;
+  onRespond?: (feedbackId: string, response: string) => void;
   onClose: (feedbackId: string, response?: string) => void;
   refreshTrigger?: number;
 }
@@ -20,8 +21,11 @@ export default function FeedbackList({ onAssign, onRespond, onClose, refreshTrig
     priority: ''
   });
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
-  const [isResponding, setIsResponding] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [isAssigning, setIsAssigning] = useState(false);
   const [responseText, setResponseText] = useState('');
+  const [admins, setAdmins] = useState<User[]>([]);
+  const [selectedAdminId, setSelectedAdminId] = useState<string>('');
 
   const fetchFeedback = async () => {
     try {
@@ -39,21 +43,31 @@ export default function FeedbackList({ onAssign, onRespond, onClose, refreshTrig
 
   useEffect(() => {
     fetchFeedback();
+    fetchAdmins();
   }, [filters, refreshTrigger]);
 
-  const handleRespond = async () => {
-    if (!selectedFeedback || !responseText.trim()) return;
+  const fetchAdmins = async () => {
+    try {
+      const response = await adminApi.getUsersByRole('admin', 1, 100);
+      setAdmins(response.users || []);
+    } catch (error) {
+      console.error('Failed to fetch admins:', error);
+    }
+  };
+
+  const handleAssign = async () => {
+    if (!selectedFeedback || !selectedAdminId) return;
 
     try {
-      await feedbackApi.addResponse(selectedFeedback.id, responseText);
-      onRespond(selectedFeedback.id, responseText);
-      setResponseText('');
-      setIsResponding(false);
+      await feedbackApi.assignFeedback(selectedFeedback.id, selectedAdminId);
+      onAssign(selectedFeedback.id, selectedAdminId);
+      setSelectedAdminId('');
+      setIsAssigning(false);
       setSelectedFeedback(null);
       fetchFeedback();
     } catch (error) {
-      setError('Failed to add response');
-      console.error('Error adding response:', error);
+      setError('Failed to assign feedback');
+      console.error('Error assigning feedback:', error);
     }
   };
 
@@ -64,12 +78,22 @@ export default function FeedbackList({ onAssign, onRespond, onClose, refreshTrig
       await feedbackApi.closeFeedback(selectedFeedback.id, responseText || undefined);
       onClose(selectedFeedback.id, responseText || undefined);
       setResponseText('');
-      setIsResponding(false);
+      setIsClosing(false);
       setSelectedFeedback(null);
       fetchFeedback();
     } catch (error) {
       setError('Failed to close feedback');
       console.error('Error closing feedback:', error);
+    }
+  };
+
+  const handleReopen = async (feedback: Feedback) => {
+    try {
+      await feedbackApi.updateFeedback(feedback.id, { status: 'open' });
+      fetchFeedback();
+    } catch (error) {
+      setError('Failed to reopen feedback');
+      console.error('Error reopening feedback:', error);
     }
   };
 
@@ -92,8 +116,11 @@ export default function FeedbackList({ onAssign, onRespond, onClose, refreshTrig
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -192,6 +219,9 @@ export default function FeedbackList({ onAssign, onRespond, onClose, refreshTrig
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+                  Assigned To
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Created
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
@@ -226,6 +256,9 @@ export default function FeedbackList({ onAssign, onRespond, onClose, refreshTrig
                     </span>
                   </td>
                   <td className="px-6 py-4 text-secondary text-sm">
+                    {item.assigned_to_name || item.assigned_to_email || (item.assignedTo ? `Admin ${item.assignedTo}` : 'Unassigned')}
+                  </td>
+                  <td className="px-6 py-4 text-secondary text-sm">
                     {formatDate(item.createdAt)}
                   </td>
                   <td className="px-6 py-4">
@@ -233,27 +266,35 @@ export default function FeedbackList({ onAssign, onRespond, onClose, refreshTrig
                       <button
                         onClick={() => {
                           setSelectedFeedback(item);
-                          setIsResponding(true);
+                          setIsAssigning(true);
                         }}
-                        className="text-blue-400 hover:text-blue-300 transition-colors"
-                        title="Respond"
+                        className="px-3 py-1.5 bg-surface-elevated dark:bg-surface hover:bg-surface text-primary dark:text-primary border border-app hover:border-primary/30 dark:hover:border-primary/30 rounded-lg transition-all duration-200 text-sm"
+                        title="Assign"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                        </svg>
+                        Assign
                       </button>
-                      <button
-                        onClick={() => {
-                          setSelectedFeedback(item);
-                          setIsResponding(true);
-                        }}
-                        className="text-green-400 hover:text-green-300 transition-colors"
-                        title="Close"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </button>
+                      {item.status === 'closed' ? (
+                        <button
+                          onClick={() => handleReopen(item)}
+                          className="px-3 py-1.5 bg-surface-elevated dark:bg-surface hover:bg-surface text-primary dark:text-primary border border-app hover:border-primary/30 dark:hover:border-primary/30 rounded-lg transition-all duration-200 text-sm"
+                          title="Reopen"
+                        >
+                          Reopen
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              setSelectedFeedback(item);
+                              setIsClosing(true);
+                            }}
+                            className="px-3 py-1.5 bg-surface-elevated dark:bg-surface hover:bg-surface text-primary dark:text-primary border border-app hover:border-primary/30 dark:hover:border-primary/30 rounded-lg transition-all duration-200 text-sm"
+                            title="Close / Mark as Fixed"
+                          >
+                            Close
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -274,16 +315,89 @@ export default function FeedbackList({ onAssign, onRespond, onClose, refreshTrig
         )}
       </div>
 
-      {/* Response Modal */}
-      {isResponding && selectedFeedback && (
+      {/* Assign Modal */}
+      {isAssigning && selectedFeedback && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface-elevated rounded-xl border border-app w-full max-w-2xl">
             <div className="p-6 border-b border-app">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-primary">Respond to Feedback</h3>
+                <h3 className="text-xl font-bold text-primary">Assign Feedback</h3>
                 <button
                   onClick={() => {
-                    setIsResponding(false);
+                    setIsAssigning(false);
+                    setSelectedFeedback(null);
+                    setSelectedAdminId('');
+                  }}
+                  className="text-secondary hover:text-primary transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-4">
+                <h4 className="text-primary font-medium mb-2">Feedback:</h4>
+                <div className="bg-surface rounded-lg p-4">
+                  <p className="text-secondary">{selectedFeedback.message.substring(0, 200)}...</p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-secondary mb-2">
+                  Assign To Admin
+                </label>
+                <select
+                  value={selectedAdminId}
+                  onChange={(e) => setSelectedAdminId(e.target.value)}
+                  className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Select an admin</option>
+                  {admins.map(admin => (
+                    <option key={admin.id} value={String(admin.id)}>
+                      {admin.username || admin.email} {admin.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={handleAssign}
+                  disabled={!selectedAdminId}
+                  className="px-6 py-2 bg-surface-elevated dark:bg-surface hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed text-primary dark:text-primary border border-app hover:border-primary/30 dark:hover:border-primary/30 rounded-lg transition-all duration-200"
+                >
+                  Assign Feedback
+                </button>
+                <button
+                  onClick={() => {
+                    setIsAssigning(false);
+                    setSelectedFeedback(null);
+                    setSelectedAdminId('');
+                  }}
+                  className="px-6 py-2 bg-surface-elevated dark:bg-surface hover:bg-surface text-primary dark:text-primary border border-app hover:border-primary/30 dark:hover:border-primary/30 rounded-lg transition-all duration-200"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Close / Mark as Fixed Modal */}
+      {isClosing && selectedFeedback && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface-elevated rounded-xl border border-app w-full max-w-2xl">
+            <div className="p-6 border-b border-app">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-primary">Close Feedback / Mark as Fixed</h3>
+                <button
+                  onClick={() => {
+                    setIsClosing(false);
                     setSelectedFeedback(null);
                     setResponseText('');
                   }}
@@ -306,38 +420,31 @@ export default function FeedbackList({ onAssign, onRespond, onClose, refreshTrig
 
               <div className="mb-6">
                 <label className="block text-sm font-medium text-secondary mb-2">
-                  Your Response
+                  Resolution Message (Optional)
                 </label>
                 <textarea
                   value={responseText}
                   onChange={(e) => setResponseText(e.target.value)}
                   rows={6}
                   className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
-                  placeholder="Write your response..."
-                  required
+                  placeholder="Describe how this was fixed or resolved (optional)..."
                 />
               </div>
 
               <div className="flex gap-4">
                 <button
-                  onClick={handleRespond}
-                  className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200"
-                >
-                  Send Response
-                </button>
-                <button
                   onClick={handleClose}
-                  className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                  className="px-6 py-2 bg-surface-elevated dark:bg-surface hover:bg-surface text-primary dark:text-primary border border-app hover:border-primary/30 dark:hover:border-primary/30 rounded-lg transition-all duration-200"
                 >
                   Close Feedback
                 </button>
                 <button
                   onClick={() => {
-                    setIsResponding(false);
+                    setIsClosing(false);
                     setSelectedFeedback(null);
                     setResponseText('');
                   }}
-                  className="px-6 py-2 text-secondary hover:text-primary transition-colors"
+                  className="px-6 py-2 bg-surface-elevated dark:bg-surface hover:bg-surface text-primary dark:text-primary border border-app hover:border-primary/30 dark:hover:border-primary/30 rounded-lg transition-all duration-200"
                 >
                   Cancel
                 </button>

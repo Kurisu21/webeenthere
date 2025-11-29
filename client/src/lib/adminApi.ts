@@ -130,6 +130,27 @@ export const adminApi = {
     });
   },
 
+  uploadUserProfileImage: async (id: number, imageBlob: Blob) => {
+    const formData = new FormData();
+    formData.append('image', imageBlob, 'profile.jpg');
+    
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/api/users/profile/upload-image`, {
+      method: 'POST',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to upload profile image');
+    }
+
+    return response.json();
+  },
+
   createUser: async (userData: {
     username: string;
     email: string;

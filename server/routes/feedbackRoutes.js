@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const FeedbackController = require('../controllers/FeedbackController');
-const { authMiddleware, adminAuthMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminAuthMiddleware, optionalAuthMiddleware } = require('../middleware/auth');
 
-// Public routes (no authentication required)
-router.post('/', FeedbackController.createFeedback);
+// Public routes (optional authentication - will use user ID if logged in)
+router.post('/', optionalAuthMiddleware, FeedbackController.createFeedback);
 
 // Authenticated routes (require login)
 router.get('/my', authMiddleware, FeedbackController.getFeedback);

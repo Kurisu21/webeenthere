@@ -216,7 +216,6 @@ class AnalyticsService {
         type,
         generatedAt: new Date().toISOString(),
         userMetrics: await this.collectUserMetrics(),
-        systemMetrics: await this.collectSystemMetrics(),
         websiteMetrics: await this.collectWebsiteMetrics()
       };
 

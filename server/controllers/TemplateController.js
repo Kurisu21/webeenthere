@@ -247,6 +247,27 @@ class TemplateController {
     }
   }
 
+  // Toggle template featured status (admin only)
+  async toggleTemplateFeatured(req, res) {
+    try {
+      const { id } = req.params;
+      const { isFeatured } = req.body;
+
+      await this.templateModel.update(id, { is_featured: isFeatured });
+      
+      res.json({
+        success: true,
+        message: `Template ${isFeatured ? 'featured' : 'unfeatured'} successfully`
+      });
+    } catch (error) {
+      console.error('Error toggling template featured status:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error updating template featured status'
+      });
+    }
+  }
+
   // Get templates by creator (admin only)
   async getTemplatesByCreator(req, res) {
     try {

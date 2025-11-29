@@ -169,17 +169,35 @@ class UserAnalyticsService {
     const connection = await this.getConnection();
     
     try {
-      // Monthly user growth
+      // Get total users count (all time)
+      const [totalUsersResult] = await connection.execute(
+        'SELECT COUNT(*) as total FROM users WHERE is_active = true'
+      );
+      const totalUsers = totalUsersResult[0]?.total || 0;
+
+      // Monthly user growth - include all months with cumulative count
       const [monthlyGrowth] = await connection.execute(
         `SELECT 
            DATE_FORMAT(created_at, '%Y-%m') as month,
            COUNT(*) as new_users,
-           SUM(COUNT(*)) OVER (ORDER BY DATE_FORMAT(created_at, '%Y-%m')) as cumulative_users
+           (SELECT COUNT(*) FROM users u2 
+            WHERE DATE_FORMAT(u2.created_at, '%Y-%m') <= DATE_FORMAT(users.created_at, '%Y-%m')
+            AND u2.is_active = true) as cumulative_users
          FROM users 
-         WHERE created_at >= DATE_SUB(NOW(), INTERVAL 24 MONTH)
+         WHERE is_active = true
          GROUP BY DATE_FORMAT(created_at, '%Y-%m')
          ORDER BY month ASC`
       );
+
+      // If no monthly data, add current month with total users
+      if (monthlyGrowth.length === 0 && totalUsers > 0) {
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        monthlyGrowth.push({
+          month: currentMonth,
+          new_users: totalUsers,
+          cumulative_users: totalUsers
+        });
+      }
 
       // Weekly user growth (last 12 weeks)
       const [weeklyGrowth] = await connection.execute(
@@ -188,6 +206,7 @@ class UserAnalyticsService {
            COUNT(*) as new_users
          FROM users 
          WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 WEEK)
+         AND is_active = true
          GROUP BY DATE_FORMAT(created_at, '%Y-%u')
          ORDER BY week ASC`
       );
@@ -199,11 +218,13 @@ class UserAnalyticsService {
            COUNT(*) as new_users
          FROM users 
          WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+         AND is_active = true
          GROUP BY DATE(created_at)
          ORDER BY date ASC`
       );
 
       return {
+        totalUsers: totalUsers,
         monthly: monthlyGrowth,
         weekly: weeklyGrowth,
         daily: dailyGrowth
@@ -396,6 +417,106 @@ class UserAnalyticsService {
     } catch (error) {
       console.error('Error getting user comparison metrics:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Get analytics evidence/data sources
+   */
+  async getAnalyticsEvidence() {
+    const connection = await this.getConnection();
+    
+    try {
+      // Data source: Activity logs
+      const [activityLogsCount] = await connection.execute(
+        'SELECT COUNT(*) as count FROM activity_logs WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)'
+      );
+
+      // Data source: User registrations
+      const [registrationsCount] = await connection.execute(
+        'SELECT COUNT(*) as count FROM users WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) AND is_active = true'
+      );
+
+      // Data source: Website creations
+      const [websiteCreationsCount] = await connection.execute(
+        'SELECT COUNT(*) as count FROM websites WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) AND is_active = true'
+      );
+
+      // Data source: Website publications
+      const [publicationsCount] = await connection.execute(
+        'SELECT COUNT(*) as count FROM websites WHERE is_published = true AND is_active = true'
+      );
+
+      // Data source: Recent activities breakdown
+      const [recentActivities] = await connection.execute(
+        `SELECT 
+           action,
+           COUNT(*) as count,
+           COUNT(DISTINCT user_id) as unique_users
+         FROM activity_logs 
+         WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+         AND user_id IS NOT NULL
+         GROUP BY action
+         ORDER BY count DESC
+         LIMIT 10`
+      );
+
+      // Data source: User verification status
+      const [verificationStats] = await connection.execute(
+        `SELECT 
+           COUNT(*) as total,
+           SUM(CASE WHEN is_verified = true THEN 1 ELSE 0 END) as verified,
+           SUM(CASE WHEN is_verified = false THEN 1 ELSE 0 END) as unverified
+         FROM users 
+         WHERE is_active = true`
+      );
+
+      // Data source: Auth provider distribution
+      const [authProviderStats] = await connection.execute(
+        `SELECT 
+           auth_provider,
+           COUNT(*) as count
+         FROM users 
+         WHERE is_active = true
+         GROUP BY auth_provider`
+      );
+
+      return {
+        activityLogs: {
+          total: activityLogsCount[0]?.count || 0,
+          period: '30 days',
+          description: 'Total activity logs recorded'
+        },
+        registrations: {
+          total: registrationsCount[0]?.count || 0,
+          period: '30 days',
+          description: 'New user registrations'
+        },
+        websiteCreations: {
+          total: websiteCreationsCount[0]?.count || 0,
+          period: '30 days',
+          description: 'New websites created'
+        },
+        publications: {
+          total: publicationsCount[0]?.count || 0,
+          period: 'all time',
+          description: 'Total published websites'
+        },
+        recentActivities: recentActivities || [],
+        verificationStats: verificationStats[0] || { total: 0, verified: 0, unverified: 0 },
+        authProviderStats: authProviderStats || []
+      };
+    } catch (error) {
+      console.error('Error getting analytics evidence:', error);
+      return {
+        activityLogs: { total: 0, period: '30 days', description: 'Total activity logs recorded' },
+        registrations: { total: 0, period: '30 days', description: 'New user registrations' },
+        websiteCreations: { total: 0, period: '30 days', description: 'New websites created' },
+        publications: { total: 0, period: 'all time', description: 'Total published websites' },
+        recentActivities: [],
+        verificationStats: { total: 0, verified: 0, unverified: 0 },
+        authProviderStats: []
+      };
     }
   }
 }

@@ -96,7 +96,7 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-primary">Loading tickets...</p>
         </div>
       </div>
@@ -127,7 +127,7 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
           <select
             value={filters.status}
             onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-            className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">All Status</option>
             <option value="open">Open</option>
@@ -140,7 +140,7 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
           <select
             value={filters.priority}
             onChange={(e) => setFilters(prev => ({ ...prev, priority: e.target.value }))}
-            className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full px-4 py-2 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">All Priorities</option>
             <option value="high">High</option>
@@ -218,7 +218,7 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => onSelectTicket(ticket)}
-                        className="text-blue-400 hover:text-blue-300 transition-colors"
+                        className="text-primary dark:text-primary hover:text-primary/80 dark:hover:text-primary/80 transition-colors"
                         title="View ticket"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -231,7 +231,7 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
                           setSelectedTicket(ticket);
                           setIsClosing(true);
                         }}
-                        className="text-green-400 hover:text-green-300 transition-colors"
+                        className="text-primary dark:text-primary hover:text-primary/80 dark:hover:text-primary/80 transition-colors"
                         title="Close ticket"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -289,14 +289,14 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-secondary mb-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-300 mb-2">
                   Resolution (Optional)
                 </label>
                 <textarea
                   value={resolution}
                   onChange={(e) => setResolution(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
+                  className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical"
                   placeholder="Describe how the issue was resolved..."
                 />
               </div>
@@ -304,7 +304,7 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
               <div className="flex gap-4">
                 <button
                   onClick={handleClose}
-                  className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                  className="px-6 py-2 bg-black hover:bg-black/90 dark:bg-white dark:hover:bg-white/90 text-white dark:text-black rounded-lg transition-all duration-200 font-medium"
                 >
                   Close Ticket
                 </button>
@@ -314,7 +314,7 @@ export default function TicketList({ onAssign, onClose, onSelectTicket, refreshT
                     setSelectedTicket(null);
                     setResolution('');
                   }}
-                  className="px-6 py-2 text-secondary hover:text-primary transition-colors"
+                  className="px-6 py-2 bg-surface-elevated dark:bg-surface hover:bg-surface text-primary dark:text-primary border border-app hover:border-primary/30 dark:hover:border-primary/30 rounded-lg transition-all duration-200"
                 >
                   Cancel
                 </button>

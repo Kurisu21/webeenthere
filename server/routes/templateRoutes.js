@@ -23,6 +23,7 @@ router.post('/from-website/:websiteId', authMiddleware, templateController.creat
 router.post('/', authMiddleware, templateController.createTemplate.bind(templateController));
 router.put('/:id', authMiddleware, templateController.updateTemplate.bind(templateController));
 router.put('/:id/toggle-active', authMiddleware, templateController.toggleTemplateActive.bind(templateController));
+router.put('/:id/toggle-featured', authMiddleware, templateController.toggleTemplateFeatured.bind(templateController));
 router.delete('/:id', authMiddleware, templateController.deleteTemplate.bind(templateController));
 router.get('/admin/all-with-creator', authMiddleware, templateController.getAllTemplatesWithCreator.bind(templateController));
 router.get('/admin/user/:userId', authMiddleware, templateController.getTemplatesByCreator.bind(templateController));

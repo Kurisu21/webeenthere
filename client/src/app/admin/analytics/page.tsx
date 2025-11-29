@@ -6,16 +6,14 @@ import AdminSidebar from '../../_components/layout/AdminSidebar';
 import MainContentWrapper from '../../_components/layout/MainContentWrapper';
 import AnalyticsDashboard from '../../_components/admin/AnalyticsDashboard';
 import UserAnalytics from '../../_components/admin/UserAnalytics';
-import SystemAnalytics from '../../_components/admin/SystemAnalytics';
 import WebsiteAnalytics from '../../_components/admin/WebsiteAnalytics';
 
 export default function AnalyticsPage() {
-  const [selectedTab, setSelectedTab] = useState<'dashboard' | 'users' | 'system' | 'websites'>('dashboard');
+  const [selectedTab, setSelectedTab] = useState<'dashboard' | 'users' | 'websites'>('dashboard');
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'users', label: 'Users', icon: '👥' },
-    { id: 'system', label: 'System', icon: '⚙️' },
     { id: 'websites', label: 'Websites', icon: '🌐' }
   ] as const;
 
@@ -25,8 +23,6 @@ export default function AnalyticsPage() {
         return <AnalyticsDashboard />;
       case 'users':
         return <UserAnalytics />;
-      case 'system':
-        return <SystemAnalytics />;
       case 'websites':
         return <WebsiteAnalytics />;
       default:
@@ -40,34 +36,32 @@ export default function AnalyticsPage() {
       <div className="flex flex-col md:flex-row">
         <AdminSidebar />
         <MainContentWrapper>
-          <div className="p-6">
+          <div className="container mx-auto px-4 py-8">
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-primary mb-2">Analytics</h1>
-              <p className="text-secondary">
-                Comprehensive analytics and insights for your platform
+              <h1 className="text-4xl font-bold text-primary mb-4">Analytics</h1>
+              <p className="text-secondary text-lg">
+                Comprehensive analytics and insights for users and websites
               </p>
             </div>
 
             {/* Tab Navigation */}
             <div className="mb-8">
-              <div className="border-b border-app">
-                <nav className="-mb-px flex space-x-8">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setSelectedTab(tab.id)}
-                      className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                        selectedTab === tab.id
-                          ? 'border-purple-500 text-purple-400'
-                          : 'border-transparent text-secondary hover:text-primary hover:border-app'
-                      }`}
-                    >
-                      <span className="mr-2">{tab.icon}</span>
-                      {tab.label}
-                    </button>
-                  ))}
-                </nav>
+              <div className="flex space-x-1 bg-surface-elevated rounded-lg p-1 border border-app">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setSelectedTab(tab.id)}
+                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      selectedTab === tab.id
+                        ? 'bg-surface text-primary border border-app'
+                        : 'text-secondary hover:text-primary'
+                    }`}
+                  >
+                    <span className="mr-2">{tab.icon}</span>
+                    {tab.label}
+                  </button>
+                ))}
               </div>
             </div>
 

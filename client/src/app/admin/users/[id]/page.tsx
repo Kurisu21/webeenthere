@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect, use, useRef } from 'react';
 import DashboardHeader from '../../../_components/layout/DashboardHeader';
 import AdminSidebar from '../../../_components/layout/AdminSidebar';
 import MainContentWrapper from '../../../_components/layout/MainContentWrapper';
@@ -9,6 +9,7 @@ import StatusBadge from '../../../_components/admin/StatusBadge';
 import { adminApi, User } from '../../../../lib/adminApi';
 import { useRouter } from 'next/navigation';
 import { getImageUrl, API_BASE_URL, getProfileImageUrl } from '../../../../lib/apiConfig';
+import ImageCropper from '../../../_components/ui/ImageCropper';
 
 interface UserDetailsPageProps {
   params: Promise<{
@@ -23,6 +24,11 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [showImageCropper, setShowImageCropper] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageCacheBust, setImageCacheBust] = useState<number | undefined>(undefined);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -128,6 +134,66 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Image file size must be less than 10MB');
+      return;
+    }
+
+    // Show preview and open cropper
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+      setShowImageCropper(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedImageBlob: Blob) => {
+    if (!user) return;
+
+    try {
+      setIsUploadingImage(true);
+      setError(null);
+
+      // Note: Server-side modification needed to support admin uploading for other users
+      // For now, this uses the current endpoint which only supports own profile
+      // TODO: Create admin endpoint: /api/admin/users/:id/profile/upload-image
+      const targetUserId = parseInt(resolvedParams.id);
+      await adminApi.uploadUserProfileImage(targetUserId, croppedImageBlob);
+      
+      // Force image refresh
+      setImageCacheBust(Date.now());
+      setShowImageCropper(false);
+      setImagePreview(null);
+      
+      // Refresh user data
+      const response = await adminApi.getUserById(parseInt(resolvedParams.id));
+      setUser(response.user);
+      
+      alert('Profile image uploaded successfully!');
+    } catch (err: any) {
+      console.error('Failed to upload profile image:', err);
+      setError(err.message || 'Failed to upload profile image');
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   if (isLoading) {
@@ -299,32 +365,59 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
                     </label>
                     {isEditing ? (
                       <div className="space-y-3">
-                        <p className="text-sm text-gray-400">
-                          Profile images are managed through the user's profile page. Admins cannot directly edit profile images.
-                        </p>
-                        {user?.id && getProfileImageUrl(user.id) && (
+                        {user?.id && (
                           <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
                             <img
-                              src={getProfileImageUrl(user.id) || ''}
+                              src={getProfileImageUrl(user.id, imageCacheBust) || ''}
                               alt="Profile"
                               className="w-full h-full object-cover"
                               onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  const initials = (user.username || 'U').substring(0, 2).toUpperCase();
+                                  parent.innerHTML = `<div class="w-full h-full bg-gray-700 flex items-center justify-center"><span class="text-white text-xs font-medium">${initials}</span></div>`;
+                                }
                               }}
                             />
                           </div>
                         )}
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                          onChange={handleImageSelect}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploadingImage}
+                          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                        >
+                          {isUploadingImage ? 'Uploading...' : 'Upload/Edit Profile Picture'}
+                        </button>
+                        {error && (
+                          <p className="text-red-400 text-sm">{error}</p>
+                        )}
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        {user?.id && getProfileImageUrl(user.id) ? (
+                        {user?.id && getProfileImageUrl(user.id, imageCacheBust) ? (
                           <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
                             <img
-                              src={getProfileImageUrl(user.id) || ''}
+                              src={getProfileImageUrl(user.id, imageCacheBust) || ''}
                               alt="Profile"
                               className="w-full h-full object-cover"
                               onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  const initials = (user.username || 'U').substring(0, 2).toUpperCase();
+                                  parent.innerHTML = `<div class="w-full h-full bg-gray-700 flex items-center justify-center"><span class="text-white text-xs font-medium">${initials}</span></div>`;
+                                }
                               }}
                             />
                           </div>
@@ -434,6 +527,22 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
           </div>
         </MainContentWrapper>
       </div>
+
+      {/* Image Cropper Modal */}
+      {showImageCropper && imagePreview && (
+        <ImageCropper
+          imageSrc={imagePreview}
+          onCropComplete={handleCropComplete}
+          onCancel={() => {
+            setShowImageCropper(false);
+            setImagePreview(null);
+            if (fileInputRef.current) {
+              fileInputRef.current.value = '';
+            }
+          }}
+          aspectRatio={1}
+        />
+      )}
     </div>
   );
 }
