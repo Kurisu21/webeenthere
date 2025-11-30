@@ -4,234 +4,79 @@ import React, { useState, useEffect } from 'react';
 import DashboardHeader from '../../_components/layout/DashboardHeader';
 import AdminSidebar from '../../_components/layout/AdminSidebar';
 import MainContentWrapper from '../../_components/layout/MainContentWrapper';
-import BackupStats from '../../_components/admin/BackupStats';
-import BackupList from '../../_components/admin/BackupList';
-import BackupSchedule from '../../_components/admin/BackupSchedule';
-import BackupRestore from '../../_components/admin/BackupRestore';
-import { 
-  backupApi, 
-  Backup, 
-  BackupStats as BackupStatsType, 
-  ScheduleConfig,
-  BackupCreateRequest,
-  downloadBlob 
-} from '../../../lib/backupApi';
+import { useAuth } from '../../_components/auth/AuthContext';
+import { backupApi, downloadBlob } from '../../../lib/backupApi';
 
 export default function BackupRecoveryPage() {
-  const [backups, setBackups] = useState<Backup[]>([]);
-  const [stats, setStats] = useState<BackupStatsType>({
-    totalBackups: 0,
-    totalSize: 0,
-    lastBackupDate: null,
-    backupsByType: {},
-    successRate: 0
-  });
-  const [schedule, setSchedule] = useState<ScheduleConfig>({
-    enabled: false,
-    frequency: 'daily',
-    time: '02:00',
-    dayOfWeek: 0,
-    dayOfMonth: 1,
-    retentionDays: 30,
-    autoDelete: true
-  });
-  
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
-  const [isRestoring, setIsRestoring] = useState(false);
+  const { token, isAdmin, isLoading: authLoading } = useAuth();
+  const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  
-  // Backup creation form state
-  const [backupForm, setBackupForm] = useState<BackupCreateRequest>({
-    type: 'full',
-    description: '',
-    encrypt: false,
-    password: ''
-  });
-  
-  // Restore dialog state
-  const [restoreDialog, setRestoreDialog] = useState<{
-    isOpen: boolean;
-    backup: Backup | null;
-  }>({
-    isOpen: false,
-    backup: null
-  });
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const [backupsResult, statsResult, scheduleResult] = await Promise.all([
-        backupApi.listBackups({ limit: 50 }),
-        backupApi.getStats(),
-        backupApi.getSchedule()
-      ]);
-      
-      if (backupsResult.success) {
-        setBackups(backupsResult.backups);
+    // Check if user is authenticated and is admin
+    if (!authLoading) {
+      if (!token) {
+        setError('Authentication required. Please log in.');
+        setIsReady(false);
+      } else if (!isAdmin) {
+        setError('Admin privileges required to access this page.');
+        setIsReady(false);
+      } else {
+        setIsReady(true);
+        setError(null);
       }
-      
-      if (statsResult.success) {
-        setStats(statsResult.stats);
-      }
-      
-      if (scheduleResult.success) {
-        setSchedule(scheduleResult.schedule);
-      }
-      
-    } catch (err) {
-      console.error('Failed to fetch backup data:', err);
-      setError('Failed to load backup data');
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [token, isAdmin, authLoading]);
 
-  const handleCreateBackup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (backupForm.encrypt && !backupForm.password) {
-      setError('Password is required when encryption is enabled');
+  const handleExport = async () => {
+    if (!token || !isAdmin) {
+      setError('Authentication required. Please log in as admin.');
       return;
     }
-    
+
     try {
-      setIsCreating(true);
+      setIsExporting(true);
       setError(null);
       setSuccess(null);
+
+      console.log('[Backup] Starting database export...');
+      console.log('[Backup] Token available:', !!token);
+      console.log('[Backup] Is admin:', isAdmin);
+
+      const blob = await backupApi.exportDatabase();
       
-      const result = await backupApi.createBackup(backupForm);
-      
-      if (result.success) {
-        setSuccess(`${backupForm.type} backup created successfully`);
-        setBackupForm({
-          type: 'full',
-          description: '',
-          encrypt: false,
-          password: ''
-        });
-        // Refresh data
-        await fetchData();
-      } else {
-        setError(result.error || 'Failed to create backup');
+      if (!blob || blob.size === 0) {
+        throw new Error('Received empty backup file');
       }
+
+      const fileName = `database-export-${new Date().toISOString().split('T')[0]}.sql`;
       
-    } catch (err) {
-      console.error('Failed to create backup:', err);
-      setError('Failed to create backup');
+      downloadBlob(blob, fileName);
+      setSuccess(`Database exported successfully (${(blob.size / 1024).toFixed(2)} KB)`);
+      
+      console.log('[Backup] Export completed successfully');
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 5000);
+      
+    } catch (err: any) {
+      console.error('[Backup] Failed to export database:', err);
+      const errorMessage = err.message || err.error || 'Failed to export database. Please check your connection and try again.';
+      setError(errorMessage);
+      
+      // Clear error message after 10 seconds
+      setTimeout(() => {
+        setError(null);
+      }, 10000);
     } finally {
-      setIsCreating(false);
+      setIsExporting(false);
     }
   };
 
-  const handleDownloadBackup = async (backupId: string) => {
-    try {
-      setError(null);
-      
-      const blob = await backupApi.downloadBackup(backupId);
-      const backup = backups.find(b => b.id === backupId);
-      const filename = backup?.fileName || `backup-${backupId}`;
-      
-      downloadBlob(blob, filename);
-      setSuccess('Backup download started');
-      
-    } catch (err) {
-      console.error('Failed to download backup:', err);
-      setError('Failed to download backup');
-    }
-  };
-
-  const handleRestoreBackup = (backupId: string) => {
-    const backup = backups.find(b => b.id === backupId);
-    if (backup) {
-      setRestoreDialog({
-        isOpen: true,
-        backup
-      });
-    }
-  };
-
-  const handleConfirmRestore = async (password?: string) => {
-    if (!restoreDialog.backup) return;
-    
-    try {
-      setIsRestoring(true);
-      setError(null);
-      setSuccess(null);
-      
-      const result = await backupApi.restoreBackup(restoreDialog.backup.id, {
-        confirm: true,
-        password
-      });
-      
-      if (result.success) {
-        setSuccess('Backup restored successfully');
-        setRestoreDialog({ isOpen: false, backup: null });
-        // Refresh data
-        await fetchData();
-      } else {
-        setError(result.error || 'Failed to restore backup');
-      }
-      
-    } catch (err) {
-      console.error('Failed to restore backup:', err);
-      setError('Failed to restore backup');
-    } finally {
-      setIsRestoring(false);
-    }
-  };
-
-  const handleDeleteBackup = async (backupId: string) => {
-    if (!confirm('Are you sure you want to delete this backup? This action cannot be undone.')) {
-      return;
-    }
-    
-    try {
-      setError(null);
-      setSuccess(null);
-      
-      const result = await backupApi.deleteBackup(backupId);
-      
-      if (result.success) {
-        setSuccess('Backup deleted successfully');
-        // Refresh data
-        await fetchData();
-      } else {
-        setError(result.error || 'Failed to delete backup');
-      }
-      
-    } catch (err) {
-      console.error('Failed to delete backup:', err);
-      setError('Failed to delete backup');
-    }
-  };
-
-  const handleUpdateSchedule = async (newSchedule: ScheduleConfig) => {
-    try {
-      setError(null);
-      setSuccess(null);
-      
-      const result = await backupApi.updateSchedule(newSchedule);
-      
-      if (result.success) {
-        setSchedule(newSchedule);
-        setSuccess('Backup schedule updated successfully');
-      } else {
-        setError(result.error || 'Failed to update schedule');
-      }
-      
-    } catch (err) {
-      console.error('Failed to update schedule:', err);
-      setError('Failed to update schedule');
-    }
-  };
 
   return (
     <div className="min-h-screen bg-surface">
@@ -239,155 +84,110 @@ export default function BackupRecoveryPage() {
       <div className="flex flex-col md:flex-row">
         <AdminSidebar />
         <MainContentWrapper>
-          <div className="p-6">
+          <div className="container mx-auto px-4 py-8">
             {/* Header */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-primary mb-2">Backup & Recovery</h1>
-              <p className="text-secondary">Manage system backups and recovery procedures</p>
+            <div className="text-center mb-12">
+              <h1 className="text-4xl font-bold text-primary mb-4">Backup</h1>
+              <p className="text-secondary text-lg max-w-2xl mx-auto">
+                Export your entire database as a SQL file for backup purposes.
+              </p>
             </div>
 
             {/* Success/Error Messages */}
             {success && (
-              <div className="mb-6 p-4 bg-green-900/50 border border-green-500/30 rounded-lg">
+              <div className="max-w-2xl mx-auto mb-8 p-4 bg-surface-elevated border border-app rounded-lg">
                 <div className="flex items-center">
-                  <svg className="w-5 h-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="text-green-300">{success}</span>
+                  <span className="text-primary">{success}</span>
                 </div>
               </div>
             )}
 
             {error && (
-              <div className="mb-6 p-4 bg-red-900/50 border border-red-500/30 rounded-lg">
+              <div className="max-w-2xl mx-auto mb-8 p-4 bg-surface-elevated border border-app rounded-lg">
                 <div className="flex items-center">
-                  <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
-                  <span className="text-red-300">{error}</span>
+                  <span className="text-primary">{error}</span>
                 </div>
               </div>
             )}
 
-            {/* Backup Statistics */}
-            <BackupStats stats={stats} className="mb-8" />
-
-            {/* Create Backup Form */}
-            <div className="bg-surface-elevated rounded-lg border border-app p-6 mb-8">
-              <h2 className="text-xl font-semibold text-primary mb-6">Create New Backup</h2>
-              
-              <form onSubmit={handleCreateBackup} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Backup Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-secondary mb-2">
-                      Backup Type
-                    </label>
-                    <select
-                      value={backupForm.type}
-                      onChange={(e) => setBackupForm(prev => ({ ...prev, type: e.target.value as any }))}
-                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    >
-                      <option value="full">Full Backup (Database + Files)</option>
-                      <option value="database">Database Only</option>
-                      <option value="files">Files Only</option>
-                      <option value="incremental">Incremental Backup</option>
-                    </select>
+            {/* Export Section */}
+            <div className="max-w-2xl mx-auto mb-8">
+              <div className="bg-surface rounded-lg border border-app p-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-primary dark:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
                   </div>
-
-                  {/* Description */}
                   <div>
-                    <label className="block text-sm font-medium text-secondary mb-2">
-                      Description (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={backupForm.description}
-                      onChange={(e) => setBackupForm(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Brief description of this backup"
-                      className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
+                    <h2 className="text-2xl font-semibold text-primary mb-2">Export Database</h2>
+                    <p className="text-secondary">
+                      Download a complete backup of your database as a SQL file.
+                    </p>
                   </div>
                 </div>
-
-                {/* Encryption Options */}
-                <div className="space-y-4">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="encrypt"
-                      checked={backupForm.encrypt}
-                      onChange={(e) => setBackupForm(prev => ({ ...prev, encrypt: e.target.checked }))}
-                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-app rounded bg-input"
-                    />
-                    <label htmlFor="encrypt" className="ml-2 text-sm text-secondary">
-                      Encrypt backup with password
-                    </label>
-                  </div>
-
-                  {backupForm.encrypt && (
-                    <div>
-                      <label className="block text-sm font-medium text-secondary mb-2">
-                        Encryption Password
-                      </label>
-                      <input
-                        type="password"
-                        value={backupForm.password}
-                        onChange={(e) => setBackupForm(prev => ({ ...prev, password: e.target.value }))}
-                        placeholder="Enter password for encryption"
-                        className="w-full px-3 py-2 bg-input border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                    </div>
+                
+                <button
+                  onClick={handleExport}
+                  disabled={!isReady || !token || !isAdmin}
+                  className={`w-full px-6 py-3 rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2 ${
+                    !isReady || !token || !isAdmin
+                      ? 'bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed opacity-60'
+                      : isExporting
+                      ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg cursor-wait'
+                      : 'bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black shadow-md hover:shadow-lg'
+                  }`}
+                >
+                  {isExporting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white dark:border-black border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-white dark:text-black font-semibold">Exporting...</span>
+                    </>
+                  ) : !isReady || !token || !isAdmin ? (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      <span className="font-semibold">Authentication Required</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      <span className="font-semibold">Export Database</span>
+                    </>
                   )}
-                </div>
-
-                {/* Create Button */}
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={isCreating || (backupForm.encrypt && !backupForm.password)}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-purple-400 disabled:to-blue-400 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md disabled:cursor-not-allowed"
-                  >
-                    {isCreating ? (
-                      <div className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Creating...
-                      </div>
-                    ) : (
-                      'Create Backup'
-                    )}
-                  </button>
-                </div>
-              </form>
+                </button>
+              </div>
             </div>
 
-            {/* Backup Schedule */}
-            <BackupSchedule 
-              schedule={schedule} 
-              onUpdate={handleUpdateSchedule}
-              className="mb-8"
-            />
-
-            {/* Backup List */}
-            <BackupList
-              backups={backups}
-              onDownload={handleDownloadBackup}
-              onRestore={handleRestoreBackup}
-              onDelete={handleDeleteBackup}
-              isLoading={isLoading}
-            />
-
-            {/* Restore Dialog */}
-            <BackupRestore
-              backup={restoreDialog.backup}
-              isOpen={restoreDialog.isOpen}
-              onClose={() => setRestoreDialog({ isOpen: false, backup: null })}
-              onConfirm={handleConfirmRestore}
-              isRestoring={isRestoring}
-            />
+            {/* Information Section */}
+            <div className="max-w-2xl mx-auto mt-12">
+              <div className="bg-surface rounded-lg border border-app p-8">
+                <h3 className="text-2xl font-semibold text-primary mb-4">About Database Backup</h3>
+                <div className="space-y-4 text-secondary">
+                  <p>
+                    The backup feature allows you to create a complete copy of your database. This is useful for:
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li>Creating regular backups before major changes</li>
+                    <li>Migrating data between environments</li>
+                    <li>Recovering from data loss or corruption</li>
+                    <li>Transferring your database to a new server</li>
+                  </ul>
+                  <p className="pt-4">
+                    <strong className="text-primary">Note:</strong> The exported file contains all tables and data in SQL format. Keep your backup files secure as they contain sensitive information.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </MainContentWrapper>
       </div>

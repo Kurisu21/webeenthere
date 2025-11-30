@@ -1,46 +1,5 @@
 // lib/backupApi.ts
-import { API_ENDPOINTS, API_BASE_URL } from './apiConfig';
-
-// Helper function to get auth headers
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': token ? `Bearer ${token}` : '',
-  };
-};
-
-// Helper function to make API requests
-const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
-  try {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        ...getAuthHeaders(),
-        ...options.headers,
-      },
-    };
-
-    const response = await fetch(url, config);
-    
-    if (!response.ok) {
-      let errorData;
-      try {
-        errorData = await response.json();
-      } catch {
-        errorData = { error: `HTTP error! status: ${response.status}` };
-      }
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Backup API Request failed:', error);
-    throw error;
-  }
-};
+import { API_ENDPOINTS, API_BASE_URL, apiGet, apiPost, apiPut, apiDelete, apiCall } from './apiConfig';
 
 // Type definitions
 export interface Backup {
@@ -118,10 +77,7 @@ export interface BackupRestoreRequest {
 export const backupApi = {
   // Create a new backup
   createBackup: async (request: BackupCreateRequest) => {
-    return apiRequest('/api/admin/backup/create', {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
+    return apiPost('/api/admin/backup/create', request);
   },
 
   // List all backups with optional filters
@@ -135,14 +91,13 @@ export const backupApi = {
     if (filters.limit) queryParams.append('limit', filters.limit.toString());
 
     const queryString = queryParams.toString();
-    return apiRequest(`/api/admin/backup/list${queryString ? `?${queryString}` : ''}`);
+    return apiGet(`/api/admin/backup/list${queryString ? `?${queryString}` : ''}`);
   },
 
   // Download a backup file
   downloadBackup: async (backupId: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/backup/${backupId}/download`, {
+    const response = await apiCall(`/api/admin/backup/${backupId}/download`, {
       method: 'GET',
-      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -154,40 +109,87 @@ export const backupApi = {
 
   // Restore from a backup
   restoreBackup: async (backupId: string, request: BackupRestoreRequest) => {
-    return apiRequest(`/api/admin/backup/${backupId}/restore`, {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
+    return apiPost(`/api/admin/backup/${backupId}/restore`, request);
   },
 
   // Delete a backup
   deleteBackup: async (backupId: string) => {
-    return apiRequest(`/api/admin/backup/${backupId}`, {
-      method: 'DELETE',
-    });
+    return apiDelete(`/api/admin/backup/${backupId}`);
   },
 
   // Get backup statistics
   getStats: async (): Promise<{ success: boolean; stats: BackupStats }> => {
-    return apiRequest('/api/admin/backup/stats');
+    return apiGet('/api/admin/backup/stats');
   },
 
   // Get backup schedule configuration
   getSchedule: async (): Promise<{ success: boolean; schedule: ScheduleConfig }> => {
-    return apiRequest('/api/admin/backup/schedule');
+    return apiGet('/api/admin/backup/schedule');
   },
 
   // Update backup schedule configuration
   updateSchedule: async (schedule: ScheduleConfig) => {
-    return apiRequest('/api/admin/backup/schedule', {
-      method: 'PUT',
-      body: JSON.stringify(schedule),
-    });
+    return apiPut('/api/admin/backup/schedule', schedule);
   },
 
   // Validate a backup
   validateBackup: async (backupId: string) => {
-    return apiRequest(`/api/admin/backup/${backupId}/validate`);
+    return apiGet(`/api/admin/backup/${backupId}/validate`);
+  },
+
+  // Export entire database
+  exportDatabase: async () => {
+    try {
+      console.log('[BackupAPI] Calling export endpoint: /api/admin/backup/export');
+      
+      const response = await apiCall('/api/admin/backup/export', {
+        method: 'GET',
+      });
+
+      console.log('[BackupAPI] Response status:', response.status);
+      console.log('[BackupAPI] Response ok:', response.ok);
+
+      if (!response.ok) {
+        let errorData;
+        try {
+          const clonedResponse = response.clone();
+          errorData = await clonedResponse.json();
+          console.error('[BackupAPI] Error response:', errorData);
+        } catch (parseError) {
+          const textError = await response.text();
+          console.error('[BackupAPI] Error response text:', textError);
+          errorData = { error: `HTTP error! status: ${response.status}`, details: textError };
+        }
+        
+        const errorMessage = errorData?.error || errorData?.message || `Failed to export database (Status: ${response.status})`;
+        throw new Error(errorMessage);
+      }
+
+      const blob = await response.blob();
+      console.log('[BackupAPI] Received blob, size:', blob.size, 'bytes');
+      
+      if (!blob || blob.size === 0) {
+        throw new Error('Received empty backup file from server');
+      }
+
+      return blob;
+    } catch (error: any) {
+      console.error('[BackupAPI] Export error:', error);
+      // Re-throw with more context if needed
+      if (error.message) {
+        throw error;
+      }
+      throw new Error(error.message || 'Failed to export database. Please check your connection and try again.');
+    }
+  },
+
+  // Import entire database (kept for potential future use, but not exposed in UI)
+  importDatabase: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Use apiPost with isFormData option for proper FormData handling
+    return apiPost('/api/admin/backup/import', formData, { isFormData: true });
   },
 };
 

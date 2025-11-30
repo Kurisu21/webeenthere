@@ -101,7 +101,7 @@ const navSections = [
     label: 'System',
     items: [
       { id: 'activityLogs', label: 'Activity Logs', icon: null, href: '/admin/activity-logs' },
-      { id: 'backupRecovery', label: 'Backup & Recovery', icon: null, href: '/admin/backup-recovery' },
+      { id: 'backupRecovery', label: 'Backup', icon: null, href: '/admin/backup-recovery' },
       { id: 'aiConfiguration', label: 'AI Configuration', icon: null, href: '/admin/ai-configuration' },
     ]
   }

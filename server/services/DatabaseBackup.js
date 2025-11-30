@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2');
+const { getDatabaseConnection, testConnection } = require('../database/database');
 require('dotenv').config();
 
 class DatabaseBackup {
@@ -18,19 +19,16 @@ class DatabaseBackup {
     try {
       console.log(`💾 Creating database backup: ${outputPath}`);
       
-      const connection = mysql.createConnection(this.dbConfig);
+      // Wait for database connection to be ready
+      console.log('🔌 Waiting for database connection...');
+      const isConnected = await testConnection();
+      if (!isConnected) {
+        throw new Error('Database connection not available. Please try again.');
+      }
       
-      // Add error handler to prevent unhandled errors
-      connection.on('error', (err) => {
-        console.error('❌ Database backup connection error:', err.message);
-        if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
-          console.log('🔄 Backup connection lost.');
-        } else if (err.fatal) {
-          console.error('💥 Fatal backup connection error:', err);
-        }
-      });
-      
-      const db = connection.promise();
+      // Use the connection pool directly (it handles connection management)
+      const db = getDatabaseConnection();
+      console.log('✅ Database connection established');
       
       // Get all tables
       const [tables] = await db.execute('SHOW TABLES');
@@ -79,8 +77,6 @@ class DatabaseBackup {
       // Write backup file
       fs.writeFileSync(outputPath, backupContent, 'utf8');
       
-      connection.end();
-      
       // Verify backup file
       if (fs.existsSync(outputPath)) {
         const stats = fs.statSync(outputPath);
@@ -101,6 +97,7 @@ class DatabaseBackup {
   }
 
   async restoreBackup(backupPath) {
+    let connection = null;
     try {
       console.log(`🔄 Restoring database from: ${backupPath}`);
       
@@ -108,23 +105,30 @@ class DatabaseBackup {
         throw new Error(`Backup file not found: ${backupPath}`);
       }
       
+      // Wait for database connection to be ready
+      console.log('🔌 Waiting for database connection...');
+      const isConnected = await testConnection();
+      if (!isConnected) {
+        throw new Error('Database connection not available. Please try again.');
+      }
+      
       // Read backup file
       const backupContent = fs.readFileSync(backupPath, 'utf8');
       
-      // Create connection with multiple statements support
-      const connection = mysql.createConnection({
+      // Get connection from pool for restore (need multiple statements)
+      // For restore, we need a direct connection with multipleStatements
+      const mysql = require('mysql2');
+      connection = mysql.createConnection({
         ...this.dbConfig,
         multipleStatements: true
       });
       
-      // Add error handler to prevent unhandled errors
-      connection.on('error', (err) => {
-        console.error('❌ Database restore connection error:', err.message);
-        if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
-          console.log('🔄 Restore connection lost.');
-        } else if (err.fatal) {
-          console.error('💥 Fatal restore connection error:', err);
-        }
+      // Wait for connection to be established
+      await new Promise((resolve, reject) => {
+        connection.connect((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
       });
       
       const db = connection.promise();
@@ -133,12 +137,20 @@ class DatabaseBackup {
       await db.execute(backupContent);
       
       connection.end();
+      connection = null;
       
       console.log(`✅ Database restored successfully: ${backupPath}`);
       return { success: true };
       
     } catch (error) {
       console.error(`❌ Database restore failed: ${error.message}`);
+      if (connection) {
+        try {
+          connection.end();
+        } catch (endError) {
+          console.error('Error closing connection:', endError);
+        }
+      }
       return { success: false, error: error.message };
     }
   }
@@ -147,19 +159,16 @@ class DatabaseBackup {
     try {
       console.log(`💾 Creating incremental database backup since: ${sinceDate.toISOString()}`);
       
-      const connection = mysql.createConnection(this.dbConfig);
+      // Wait for database connection to be ready
+      console.log('🔌 Waiting for database connection...');
+      const isConnected = await testConnection();
+      if (!isConnected) {
+        throw new Error('Database connection not available. Please try again.');
+      }
       
-      // Add error handler to prevent unhandled errors
-      connection.on('error', (err) => {
-        console.error('❌ Incremental backup connection error:', err.message);
-        if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
-          console.log('🔄 Incremental backup connection lost.');
-        } else if (err.fatal) {
-          console.error('💥 Fatal incremental backup connection error:', err);
-        }
-      });
-      
-      const db = connection.promise();
+      // Use the connection pool directly (it handles connection management)
+      const db = getDatabaseConnection();
+      console.log('✅ Database connection established');
       
       // Get all tables
       const [tables] = await db.execute('SHOW TABLES');
@@ -234,8 +243,6 @@ class DatabaseBackup {
       // Write backup file
       fs.writeFileSync(outputPath, backupContent, 'utf8');
       
-      connection.end();
-      
       // Verify backup file
       if (fs.existsSync(outputPath)) {
         const stats = fs.statSync(outputPath);
@@ -253,8 +260,14 @@ class DatabaseBackup {
 
   async getTableInfo() {
     try {
-      const connection = mysql.createConnection(this.dbConfig);
-      const db = connection.promise();
+      // Wait for database connection to be ready
+      const isConnected = await testConnection();
+      if (!isConnected) {
+        throw new Error('Database connection not available. Please try again.');
+      }
+      
+      // Use the connection pool directly (it handles connection management)
+      const db = getDatabaseConnection();
       
       const [tables] = await db.execute('SHOW TABLES');
       const tableNames = tables.map(row => Object.values(row)[0]);
@@ -271,8 +284,6 @@ class DatabaseBackup {
           createStatement: createTable[0]['Create Table']
         });
       }
-      
-      connection.end();
       
       return {
         success: true,

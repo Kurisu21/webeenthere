@@ -180,31 +180,40 @@ class AdminSubscriptionController {
         end_date
       } = req.query;
 
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const offset = (pageNum - 1) * limitNum;
+
       const filters = {
         user_id,
         action,
         payment_status,
         start_date,
         end_date,
-        limit: parseInt(limit)
+        limit: limitNum,
+        offset: offset
       };
 
-      const logs = await this.subscriptionLogModel.findAll(filters);
-
-      // Calculate pagination
-      const total = logs.length;
-      const startIndex = (parseInt(page) - 1) * parseInt(limit);
-      const endIndex = startIndex + parseInt(limit);
-      const paginatedLogs = logs.slice(startIndex, endIndex);
+      // Get total count and paginated logs in parallel
+      const [total, logs] = await Promise.all([
+        this.subscriptionLogModel.count({
+          user_id,
+          action,
+          payment_status,
+          start_date,
+          end_date
+        }),
+        this.subscriptionLogModel.findAll(filters)
+      ]);
 
       res.json({
         success: true,
-        data: paginatedLogs,
+        data: logs,
         pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(total / parseInt(limit)),
+          currentPage: pageNum,
+          totalPages: Math.ceil(total / limitNum),
           totalItems: total,
-          itemsPerPage: parseInt(limit)
+          itemsPerPage: limitNum
         }
       });
     } catch (error) {
@@ -230,32 +239,39 @@ class AdminSubscriptionController {
         max_amount
       } = req.query;
 
-      const filters = {
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const offset = (pageNum - 1) * limitNum;
+
+      const filterParams = {
         user_id,
         status,
         start_date,
         end_date,
         min_amount: min_amount ? parseFloat(min_amount) : undefined,
-        max_amount: max_amount ? parseFloat(max_amount) : undefined,
-        limit: parseInt(limit)
+        max_amount: max_amount ? parseFloat(max_amount) : undefined
       };
 
-      const transactions = await this.paymentTransactionModel.findAll(filters);
+      const filters = {
+        ...filterParams,
+        limit: limitNum,
+        offset: offset
+      };
 
-      // Calculate pagination
-      const total = transactions.length;
-      const startIndex = (parseInt(page) - 1) * parseInt(limit);
-      const endIndex = startIndex + parseInt(limit);
-      const paginatedTransactions = transactions.slice(startIndex, endIndex);
+      // Get total count and paginated transactions in parallel
+      const [total, transactions] = await Promise.all([
+        this.paymentTransactionModel.count(filterParams),
+        this.paymentTransactionModel.findAll(filters)
+      ]);
 
       res.json({
         success: true,
-        data: paginatedTransactions,
+        data: transactions,
         pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(total / parseInt(limit)),
+          currentPage: pageNum,
+          totalPages: Math.ceil(total / limitNum),
           totalItems: total,
-          itemsPerPage: parseInt(limit)
+          itemsPerPage: limitNum
         }
       });
     } catch (error) {

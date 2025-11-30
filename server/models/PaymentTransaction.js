@@ -81,13 +81,64 @@ class PaymentTransaction {
 
     query += ' ORDER BY pt.created_at DESC';
 
-    if (filters.limit) {
+    // Add OFFSET for pagination
+    if (filters.offset !== undefined) {
+      query += ' LIMIT ? OFFSET ?';
+      params.push(filters.limit || 50);
+      params.push(filters.offset);
+    } else if (filters.limit) {
       query += ' LIMIT ?';
       params.push(filters.limit);
     }
 
     const [rows] = await this.db.execute(query, params);
     return rows;
+  }
+
+  async count(filters = {}) {
+    let query = `
+      SELECT COUNT(*) as total
+      FROM payment_transactions pt
+    `;
+    const params = [];
+    const conditions = [];
+
+    if (filters.user_id) {
+      conditions.push('pt.user_id = ?');
+      params.push(filters.user_id);
+    }
+
+    if (filters.status) {
+      conditions.push('pt.status = ?');
+      params.push(filters.status);
+    }
+
+    if (filters.start_date) {
+      conditions.push('pt.created_at >= ?');
+      params.push(filters.start_date);
+    }
+
+    if (filters.end_date) {
+      conditions.push('pt.created_at <= ?');
+      params.push(filters.end_date);
+    }
+
+    if (filters.min_amount) {
+      conditions.push('pt.amount >= ?');
+      params.push(filters.min_amount);
+    }
+
+    if (filters.max_amount) {
+      conditions.push('pt.amount <= ?');
+      params.push(filters.max_amount);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    const [rows] = await this.db.execute(query, params);
+    return rows[0].total;
   }
 
   async updateStatus(id, status) {

@@ -415,6 +415,184 @@ class BackupController {
       });
     }
   }
+
+  async exportDatabase(req, res) {
+    let tempPath = null;
+    try {
+      console.log('📤 [BackupController] Starting database export...');
+      console.log('📤 [BackupController] User:', req.user?.id, req.user?.email);
+      
+      const DatabaseBackup = require('../services/DatabaseBackup');
+      const databaseBackup = new DatabaseBackup();
+      
+      // Create a temporary file path
+      tempPath = path.join(__dirname, '..', '..', 'temp', `database-export-${Date.now()}.sql`);
+      
+      // Ensure temp directory exists
+      const tempDir = path.dirname(tempPath);
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+        console.log('📤 [BackupController] Created temp directory:', tempDir);
+      }
+      
+      console.log('📤 [BackupController] Creating backup at:', tempPath);
+      const result = await databaseBackup.createBackup(tempPath);
+      
+      console.log('📤 [BackupController] Backup result:', {
+        success: result.success,
+        size: result.size,
+        error: result.error
+      });
+      
+      if (result.success) {
+        // Verify file exists and has content
+        if (!fs.existsSync(tempPath)) {
+          throw new Error('Backup file was not created');
+        }
+        
+        const stats = fs.statSync(tempPath);
+        if (stats.size === 0) {
+          throw new Error('Backup file is empty');
+        }
+        
+        // Set headers for file download
+        const fileName = `database-export-${new Date().toISOString().split('T')[0]}.sql`;
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.setHeader('Content-Type', 'application/sql');
+        res.setHeader('Content-Length', stats.size);
+        
+        console.log('📤 [BackupController] Streaming file, size:', stats.size, 'bytes');
+        
+        // Stream the file
+        const fileStream = fs.createReadStream(tempPath);
+        fileStream.pipe(res);
+        
+        // Clean up temp file after streaming
+        fileStream.on('end', () => {
+          console.log('📤 [BackupController] File stream completed, cleaning up temp file');
+          if (fs.existsSync(tempPath)) {
+            try {
+              fs.unlinkSync(tempPath);
+            } catch (unlinkError) {
+              console.error('📤 [BackupController] Error deleting temp file:', unlinkError);
+            }
+          }
+        });
+        
+        fileStream.on('error', (error) => {
+          console.error('📤 [BackupController] File stream error:', error);
+          if (tempPath && fs.existsSync(tempPath)) {
+            try {
+              fs.unlinkSync(tempPath);
+            } catch (unlinkError) {
+              console.error('📤 [BackupController] Error deleting temp file after stream error:', unlinkError);
+            }
+          }
+          if (!res.headersSent) {
+            res.status(500).json({
+              success: false,
+              error: 'Failed to stream backup file: ' + error.message
+            });
+          }
+        });
+      } else {
+        console.error('📤 [BackupController] Backup creation failed:', result.error);
+        if (tempPath && fs.existsSync(tempPath)) {
+          try {
+            fs.unlinkSync(tempPath);
+          } catch (unlinkError) {
+            console.error('📤 [BackupController] Error deleting temp file after failure:', unlinkError);
+          }
+        }
+        res.status(500).json({
+          success: false,
+          error: result.error || 'Failed to export database. Please check database connection.'
+        });
+      }
+      
+    } catch (error) {
+      console.error('📤 [BackupController] Export database error:', error);
+      console.error('📤 [BackupController] Error stack:', error.stack);
+      
+      // Clean up temp file if it exists
+      if (tempPath && fs.existsSync(tempPath)) {
+        try {
+          fs.unlinkSync(tempPath);
+        } catch (unlinkError) {
+          console.error('📤 [BackupController] Error deleting temp file in catch block:', unlinkError);
+        }
+      }
+      
+      // Only send error response if headers haven't been sent
+      if (!res.headersSent) {
+        const errorMessage = error.message || 'Failed to export database';
+        res.status(500).json({
+          success: false,
+          error: errorMessage
+        });
+      }
+    }
+  }
+
+  async importDatabase(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'No file uploaded'
+        });
+      }
+      
+      const DatabaseBackup = require('../services/DatabaseBackup');
+      const databaseBackup = new DatabaseBackup();
+      
+      const filePath = req.file.path;
+      
+      // Validate the backup file
+      const validation = await databaseBackup.validateBackup(filePath);
+      if (!validation.valid) {
+        // Clean up uploaded file
+        fs.unlinkSync(filePath);
+        return res.status(400).json({
+          success: false,
+          error: validation.error || 'Invalid backup file'
+        });
+      }
+      
+      console.log('📥 Importing database...');
+      const result = await databaseBackup.restoreBackup(filePath);
+      
+      // Clean up uploaded file
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: 'Database imported successfully'
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: result.error || 'Failed to import database'
+        });
+      }
+      
+    } catch (error) {
+      console.error('Import database error:', error);
+      
+      // Clean up uploaded file if it exists
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      
+      res.status(500).json({
+        success: false,
+        error: 'Failed to import database'
+      });
+    }
+  }
 }
 
 module.exports = BackupController;
