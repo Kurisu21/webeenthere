@@ -72,23 +72,38 @@ export const ModernColorPicker: React.FC<ModernColorPickerProps> = ({
     if (value && /^#[0-9A-Fa-f]{6}$/.test(value)) {
       const currentHex = hslToHex(hue, saturation, lightness).toUpperCase();
       if (value.toUpperCase() !== currentHex) {
+        isUpdatingFromValue.current = true;
         const [h, s, l] = hexToHsl(value);
         setHue(h);
         setSaturation(s);
         setLightness(l);
         setHex(value.toUpperCase());
+        // Reset flag after a short delay to allow state updates to complete
+        setTimeout(() => {
+          isUpdatingFromValue.current = false;
+        }, 0);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  // Update hex when HSL changes
+  // Track if we're updating from value prop to prevent infinite loops
+  const isUpdatingFromValue = useRef(false);
+
+  // Update hex when HSL changes (but don't trigger onChange if updating from value prop)
   useEffect(() => {
+    if (isUpdatingFromValue.current) {
+      return; // Don't trigger onChange if we're updating from value prop
+    }
+    
     const newHex = hslToHex(hue, saturation, lightness);
     const newHexUpper = newHex.toUpperCase();
     if (newHexUpper !== hex) {
       setHex(newHexUpper);
-      onChange(newHex);
+      // Only call onChange if value prop doesn't match (user is actively changing color)
+      if (!value || value.toUpperCase() !== newHexUpper) {
+        onChange(newHex);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hue, saturation, lightness]);

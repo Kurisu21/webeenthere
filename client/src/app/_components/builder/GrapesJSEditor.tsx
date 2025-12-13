@@ -7,6 +7,7 @@ import type { Editor } from 'grapesjs';
 import { businessBlocks } from './blocks/businessBlocks';
 import { contentCreatorBlocks } from './blocks/contentCreatorBlocks';
 import { enhancedSections } from './blocks/enhancedSections';
+import { comprehensiveBlocks } from './blocks/comprehensiveBlocks';
 import { responsiveCSS } from './blocks/responsiveUtils';
 import { imagePlaceholderCSS } from './blocks/imagePlaceholder';
 import { interactiveComponentsCSS } from './blocks/interactiveComponents';
@@ -505,14 +506,20 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
           ...contentCreatorBlocks,
           // Import enhanced sections
           ...enhancedSections,
+          // Import comprehensive blocks (Layout, Basic, Sections, Other)
+          ...comprehensiveBlocks,
         ],
       },
       layerManager: {
         appendTo: '.layers-container',
-        showToggle: true,
+        showToggle: false, // Hide the toggle button
       },
       traitManager: {
         appendTo: '.traits-container',
+      },
+      // Disable default panels (layer manager, blocks, settings buttons)
+      panels: {
+        defaults: [], // Empty array to disable all default panels
       },
       styleManager: {
         appendTo: '.styles-container',
@@ -855,6 +862,88 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
       // Inject after canvas is ready
       setTimeout(injectResponsiveCSS, 300);
       editor.on('canvas:frame:load', injectResponsiveCSS);
+
+      // Ensure canvas frame shows full content without cutting off
+      const ensureFullCanvasView = () => {
+        try {
+          const canvas = editor.Canvas;
+          const frame = canvas?.getFrameEl?.();
+          
+          if (frame && frame.contentDocument) {
+            const frameDoc = frame.contentDocument;
+            const frameBody = frameDoc.body;
+            const frameHtml = frameDoc.documentElement;
+            
+            // Ensure body and html show full content - hide scrollbar
+            if (frameBody) {
+              frameBody.style.overflowX = 'hidden';
+              frameBody.style.overflowY = 'auto';
+              frameBody.style.width = '100%';
+              frameBody.style.minWidth = '100%';
+              frameBody.style.maxWidth = '100vw';
+              frameBody.style.scrollbarWidth = 'none';
+              frameBody.style.msOverflowStyle = 'none';
+            }
+            
+            if (frameHtml) {
+              frameHtml.style.overflowX = 'hidden';
+              frameHtml.style.overflowY = 'auto';
+              frameHtml.style.width = '100%';
+              frameHtml.style.minWidth = '100%';
+              frameHtml.style.maxWidth = '100vw';
+              frameHtml.style.scrollbarWidth = 'none';
+              frameHtml.style.msOverflowStyle = 'none';
+            }
+            
+            // Add CSS to ensure no content is cut off
+            const existingFullView = frameDoc.getElementById('canvas-full-view-styles');
+            if (existingFullView) {
+              existingFullView.remove();
+            }
+            
+            const fullViewStyle = frameDoc.createElement('style');
+            fullViewStyle.id = 'canvas-full-view-styles';
+            fullViewStyle.textContent = `
+              html, body {
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+                width: 100% !important;
+                min-width: 100% !important;
+                max-width: 100vw !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                scrollbar-width: none !important;
+                -ms-overflow-style: none !important;
+              }
+              html::-webkit-scrollbar,
+              body::-webkit-scrollbar {
+                width: 0px !important;
+                height: 0px !important;
+                background: transparent !important;
+                display: none !important;
+              }
+              html::-webkit-scrollbar-thumb,
+              body::-webkit-scrollbar-thumb,
+              html::-webkit-scrollbar-track,
+              body::-webkit-scrollbar-track {
+                display: none !important;
+                background: transparent !important;
+              }
+              body > * {
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+              }
+            `;
+            frameDoc.head.appendChild(fullViewStyle);
+          }
+        } catch (error) {
+          console.warn('Could not ensure full canvas view:', error);
+        }
+      };
+      
+      setTimeout(ensureFullCanvasView, 300);
+      editor.on('canvas:frame:load', ensureFullCanvasView);
+      editor.on('canvas:update', ensureFullCanvasView);
       
       // Also inject image placeholder CSS
       const injectImagePlaceholderCSS = () => {
@@ -1192,6 +1281,32 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
               attributes: {
                 'data-gjs-type': 'image-placeholder',
               },
+              // Enable resizing from all edges and corners
+              resizable: true,
+              resizableOptions: {
+                // Allow resizing from all sides
+                tl: 1, // top-left corner
+                tc: 1, // top center
+                tr: 1, // top-right corner
+                cl: 1, // center left
+                cr: 1, // center right
+                bl: 1, // bottom-left corner
+                bc: 1, // bottom center
+                br: 1, // bottom-right corner
+                // Minimum dimensions
+                minW: 50,
+                minH: 50,
+                // Step size for resizing (optional, for snapping)
+                step: 1,
+              },
+              // Make it draggable
+              draggable: true,
+              // Make it selectable
+              selectable: true,
+              // Make it hoverable
+              hoverable: true,
+              // Make it editable (for text content if any)
+              editable: false,
               traits: [
                 {
                   type: 'text',
@@ -1567,11 +1682,25 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
               
               const placeholderText = component.get('placeholder-text') || component.getAttributes()?.['data-gjs-placeholder-text'] || 'Add Image';
               
-              // Set initial styles
+              // Set initial styles - ensure resizable by using explicit dimensions
+              // Use fixed dimensions or min dimensions to allow resizing
+              const currentWidth = component.getStyle('width') || '100%';
+              const currentHeight = component.getStyle('height') || '';
+              const currentMinHeight = component.getStyle('min-height') || '200px';
+              
               this.el.style.position = 'relative';
-              this.el.style.width = '100%';
-              this.el.style.height = '100%';
-              this.el.style.minHeight = '200px';
+              // Use explicit width/height if set, otherwise use 100% for width and min-height
+              if (currentWidth && currentWidth !== '100%') {
+                this.el.style.width = currentWidth;
+              } else {
+                this.el.style.width = '100%';
+              }
+              if (currentHeight) {
+                this.el.style.height = currentHeight;
+              } else {
+                this.el.style.height = 'auto';
+              }
+              this.el.style.minHeight = currentMinHeight;
               this.el.style.background = '#f3f4f6';
               this.el.style.border = '2px dashed #d1d5db';
               this.el.style.borderRadius = '8px';
@@ -1581,6 +1710,8 @@ export default function GrapesJSEditor({ onEditorInit, options }: GrapesJSEditor
               this.el.style.justifyContent = 'center';
               this.el.style.cursor = 'pointer';
               this.el.style.transition = 'all 0.2s ease';
+              // Ensure the element can be resized (remove any overflow hidden that might prevent it)
+              this.el.style.overflow = 'visible';
               
               if (!src) {
                 // Render placeholder

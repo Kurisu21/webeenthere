@@ -53,8 +53,6 @@ export default function UserSubscriptionDetailsPage() {
   const handleAssignPlan = async (data: {
     userId: number;
     planId: number;
-    startDate?: string;
-    endDate?: string;
     paymentReference?: string;
   }) => {
     try {
@@ -85,10 +83,9 @@ export default function UserSubscriptionDetailsPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+    // Display in PHP, but amount is in USD from database
+    const phpAmount = amount * 55.5;
+    return `₱${phpAmount.toFixed(2)}`;
   };
 
   const formatDateTime = (dateString: string) => {

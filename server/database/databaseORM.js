@@ -2886,7 +2886,7 @@ class DatabaseORM {
           {
             name: 'Monthly',
             type: 'monthly',
-            price: 5.40,
+            price: 2.15,
             features: '5 websites, 300 AI messages per month',
             website_limit: 5,
             ai_chat_limit: 300
@@ -2894,7 +2894,7 @@ class DatabaseORM {
           {
             name: 'Yearly',
             type: 'yearly',
-            price: 64.80,
+            price: 20.64,
             features: '20 websites, 4,000 AI messages per month',
             website_limit: 20,
             ai_chat_limit: 4000

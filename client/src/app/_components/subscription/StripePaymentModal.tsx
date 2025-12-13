@@ -10,6 +10,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { Plan } from '../../../lib/subscriptionApi';
 import { subscriptionApi } from '../../../lib/subscriptionApi';
+import { formatPriceInPhp, usdToPhp } from '../../../lib/currencyUtils';
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
@@ -153,16 +154,17 @@ const PaymentForm: React.FC<{
   const formatPrice = () => {
     if (plan.price === 0) return 'Free';
     if (plan.type === 'yearly') {
-      return `$${plan.price}/year`;
+      return formatPriceInPhp(plan.price, 'year');
     }
-    return `$${plan.price}/month`;
+    return formatPriceInPhp(plan.price, 'month');
   };
 
   const calculateSavings = () => {
     if (plan.type === 'yearly') {
-      // Assuming monthly plan is $9.99
-      const monthlyTotal = 9.99 * 12;
-      return monthlyTotal - plan.price;
+      // Monthly plan is $2.15
+      const monthlyTotal = 2.15 * 12;
+      const savings = monthlyTotal - plan.price;
+      return usdToPhp(savings); // Convert to PHP for display
     }
     return 0;
   };
@@ -233,7 +235,7 @@ const PaymentForm: React.FC<{
             </div>
             {plan.type === 'yearly' && calculateSavings() > 0 && (
               <div className="mt-2 text-sm text-green-600 dark:text-green-400 font-medium">
-                💰 Save ${calculateSavings().toFixed(2)} per year
+                💰 Save ₱{calculateSavings().toFixed(2)} per year
               </div>
             )}
           </div>

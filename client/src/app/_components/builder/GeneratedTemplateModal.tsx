@@ -40,10 +40,10 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               {template.name || 'Generated Template'}
@@ -71,8 +71,8 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
                 Template Preview
               </h3>
               
-              <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mb-4">
-                <div className="bg-white dark:bg-gray-800 rounded border shadow-sm min-h-[300px] relative overflow-hidden">
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-4 border border-gray-200 dark:border-gray-700">
+                <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 shadow-sm min-h-[300px] relative overflow-hidden">
                   {/* Real HTML preview with CSS */}
                   <div className="w-full h-full">
                     <style dangerouslySetInnerHTML={{ __html: template.css || template.css_base || '' }} />
@@ -105,7 +105,7 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
                           />
                         ))
                       ) : (
-                        <div className="text-center text-gray-500 py-8">
+                        <div className="text-center text-gray-500 dark:text-gray-400 py-8">
                           No elements to preview
                         </div>
                       )}
@@ -115,30 +115,30 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
               </div>
 
               {/* Template Info */}
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-sm bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Elements:</span>
+                  <span className="text-gray-600 dark:text-gray-400">Elements:</span>
                   <span className={`font-medium ${
                     (template.html || (template.elements && template.elements.length > 0)) 
                       ? 'text-green-600 dark:text-green-400' 
-                      : 'text-gray-900 dark:text-white'
+                      : 'text-gray-900 dark:text-gray-100'
                   }`}>
                     {template.html ? 'HTML Template' : (template.elements?.length || 0)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Category:</span>
-                  <span className="text-gray-900 dark:text-white capitalize">
+                  <span className="text-gray-600 dark:text-gray-400">Category:</span>
+                  <span className="text-gray-900 dark:text-gray-100 capitalize">
                     {template.category || 'ai-generated'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Tags:</span>
+                  <span className="text-gray-600 dark:text-gray-400">Tags:</span>
                   <div className="flex flex-wrap gap-1">
                     {template.tags?.map((tag: string, index: number) => (
                       <span
                         key={index}
-                        className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded"
+                        className="px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 text-xs rounded border border-blue-200 dark:border-blue-800"
                       >
                         {tag}
                       </span>
@@ -161,8 +161,8 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
                   </h4>
                   <div className={`border rounded-lg p-4 ${
                     (template.html || (template.elements && template.elements.length > 0))
-                      ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                      : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                      ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800'
+                      : 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800'
                   }`}>
                     <p className={`text-sm ${
                       (template.html || (template.elements && template.elements.length > 0))
@@ -184,7 +184,7 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
                     {suggestions.map((suggestion, index) => (
                       <div
                         key={index}
-                        className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3"
+                        className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-3"
                       >
                         <p className="text-sm text-green-800 dark:text-green-200">
                           {suggestion}
@@ -209,7 +209,7 @@ const GeneratedTemplateModal: React.FC<GeneratedTemplateModalProps> = ({
 
                 <button
                   onClick={onClose}
-                  className="w-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium py-3 px-4 rounded-md transition-all duration-200"
+                  className="w-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium py-3 px-4 rounded-md transition-all duration-200 border border-gray-300 dark:border-gray-600"
                 >
                   Generate Another
                 </button>

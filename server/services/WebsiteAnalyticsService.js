@@ -413,10 +413,33 @@ class WebsiteAnalyticsService {
         topWebsites = topWebsitesResult;
       }
 
+      // Helper function to safely convert to number
+      const toNumber = (value) => {
+        if (value === null || value === undefined) return 0;
+        const num = typeof value === 'number' ? value : parseFloat(value);
+        return isNaN(num) ? 0 : num;
+      };
+
+      const avgVisitsData = avgVisitsPerDay[0] || {};
+      const bounceRateData = bounceRate[0] || {};
+      const returnRateData = returnVisitorRate[0] || {};
+
       return {
-        avgVisitsPerDay: avgVisitsPerDay[0] || { avg_visits_per_day: 0, max_daily_visits: 0, min_daily_visits: 0 },
-        bounceRate: bounceRate[0] || { total_visitors: 0, bounced_visitors: 0, bounce_rate: 0 },
-        returnVisitorRate: returnVisitorRate[0] || { total_unique_visitors: 0, return_visitors: 0, return_rate: 0 },
+        avgVisitsPerDay: {
+          avg_visits_per_day: toNumber(avgVisitsData.avg_visits_per_day),
+          max_daily_visits: toNumber(avgVisitsData.max_daily_visits),
+          min_daily_visits: toNumber(avgVisitsData.min_daily_visits)
+        },
+        bounceRate: {
+          total_visitors: toNumber(bounceRateData.total_visitors),
+          bounced_visitors: toNumber(bounceRateData.bounced_visitors),
+          bounce_rate: toNumber(bounceRateData.bounce_rate)
+        },
+        returnVisitorRate: {
+          total_unique_visitors: toNumber(returnRateData.total_unique_visitors),
+          return_visitors: toNumber(returnRateData.return_visitors),
+          return_rate: toNumber(returnRateData.return_rate)
+        },
         topWebsites: topWebsites
       };
     } catch (error) {

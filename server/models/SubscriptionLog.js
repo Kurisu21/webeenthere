@@ -31,99 +31,119 @@ class SubscriptionLog {
   }
 
   async findAll(filters = {}) {
-    let query = `
-      SELECT sl.*, p.name as plan_name, p.type as plan_type, u.username, u.email
-      FROM subscription_logs sl 
-      JOIN plans p ON sl.plan_id = p.id 
-      JOIN users u ON sl.user_id = u.id
-    `;
-    const params = [];
-    const conditions = [];
+    // Add timeout wrapper to prevent hanging queries
+    const queryPromise = (async () => {
+      let query = `
+        SELECT sl.*, p.name as plan_name, p.type as plan_type, u.username, u.email
+        FROM subscription_logs sl 
+        LEFT JOIN plans p ON sl.plan_id = p.id 
+        LEFT JOIN users u ON sl.user_id = u.id
+      `;
+      const params = [];
+      const conditions = [];
 
-    if (filters.user_id) {
-      conditions.push('sl.user_id = ?');
-      params.push(filters.user_id);
-    }
+      if (filters.user_id) {
+        conditions.push('sl.user_id = ?');
+        params.push(filters.user_id);
+      }
 
-    if (filters.action) {
-      conditions.push('sl.action = ?');
-      params.push(filters.action);
-    }
+      if (filters.action) {
+        conditions.push('sl.action = ?');
+        params.push(filters.action);
+      }
 
-    if (filters.payment_status) {
-      conditions.push('sl.payment_status = ?');
-      params.push(filters.payment_status);
-    }
+      if (filters.payment_status) {
+        conditions.push('sl.payment_status = ?');
+        params.push(filters.payment_status);
+      }
 
-    if (filters.start_date) {
-      conditions.push('sl.created_at >= ?');
-      params.push(filters.start_date);
-    }
+      if (filters.start_date) {
+        conditions.push('sl.created_at >= ?');
+        params.push(filters.start_date);
+      }
 
-    if (filters.end_date) {
-      conditions.push('sl.created_at <= ?');
-      params.push(filters.end_date);
-    }
+      if (filters.end_date) {
+        conditions.push('sl.created_at <= ?');
+        params.push(filters.end_date);
+      }
 
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
+      if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ');
+      }
 
-    query += ' ORDER BY sl.created_at DESC';
+      query += ' ORDER BY sl.created_at DESC';
 
-    // Add OFFSET for pagination
-    if (filters.offset !== undefined) {
-      query += ' LIMIT ? OFFSET ?';
-      params.push(filters.limit || 50);
-      params.push(filters.offset);
-    } else if (filters.limit) {
-      query += ' LIMIT ?';
-      params.push(filters.limit);
-    }
+      // Add OFFSET for pagination
+      if (filters.offset !== undefined) {
+        query += ' LIMIT ? OFFSET ?';
+        params.push(filters.limit || 50);
+        params.push(filters.offset);
+      } else if (filters.limit) {
+        query += ' LIMIT ?';
+        params.push(filters.limit);
+      }
 
-    const [rows] = await this.db.execute(query, params);
-    return rows;
+      const [rows] = await this.db.execute(query, params);
+      return rows;
+    })();
+
+    // Add 30 second timeout
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Query timeout: Subscription logs query took longer than 30 seconds')), 30000);
+    });
+
+    return Promise.race([queryPromise, timeoutPromise]);
   }
 
   async count(filters = {}) {
-    let query = `
-      SELECT COUNT(*) as total
-      FROM subscription_logs sl
-    `;
-    const params = [];
-    const conditions = [];
+    // Add timeout wrapper to prevent hanging queries
+    const queryPromise = (async () => {
+      let query = `
+        SELECT COUNT(*) as total
+        FROM subscription_logs sl
+      `;
+      const params = [];
+      const conditions = [];
 
-    if (filters.user_id) {
-      conditions.push('sl.user_id = ?');
-      params.push(filters.user_id);
-    }
+      if (filters.user_id) {
+        conditions.push('sl.user_id = ?');
+        params.push(filters.user_id);
+      }
 
-    if (filters.action) {
-      conditions.push('sl.action = ?');
-      params.push(filters.action);
-    }
+      if (filters.action) {
+        conditions.push('sl.action = ?');
+        params.push(filters.action);
+      }
 
-    if (filters.payment_status) {
-      conditions.push('sl.payment_status = ?');
-      params.push(filters.payment_status);
-    }
+      if (filters.payment_status) {
+        conditions.push('sl.payment_status = ?');
+        params.push(filters.payment_status);
+      }
 
-    if (filters.start_date) {
-      conditions.push('sl.created_at >= ?');
-      params.push(filters.start_date);
-    }
+      if (filters.start_date) {
+        conditions.push('sl.created_at >= ?');
+        params.push(filters.start_date);
+      }
 
-    if (filters.end_date) {
-      conditions.push('sl.created_at <= ?');
-      params.push(filters.end_date);
-    }
+      if (filters.end_date) {
+        conditions.push('sl.created_at <= ?');
+        params.push(filters.end_date);
+      }
 
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
+      if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ');
+      }
 
-    const [rows] = await this.db.execute(query, params);
-    return rows[0].total;
+      const [rows] = await this.db.execute(query, params);
+      return rows[0].total;
+    })();
+
+    // Add 30 second timeout
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Query timeout: Subscription logs count query took longer than 30 seconds')), 30000);
+    });
+
+    return Promise.race([queryPromise, timeoutPromise]);
   }
 
   async getStats() {

@@ -278,21 +278,252 @@ button:active:not(:disabled) {
   --gjs-thumb-bg: rgba(255,255,255,0.06);
 }
 
-/* GrapesJS Style Manager Styling - Hidden by default */
+/* GrapesJS Style Manager Styling - Completely Hidden */
 .gjs-sm-label,
 .gjs-sm-sector,
 .gjs-sm-properties,
-.gjs-sm-title {
+.gjs-sm-title,
+.gjs-sm-field,
+.gjs-sm-property,
+.gjs-sm-v-unit,
+.gjs-sm-field-color,
+.gjs-sm-sectors,
+.gjs-sm-sector-title,
+.gjs-sm-sector-content {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Hide default style manager UI completely */
+.styles-container,
+.traits-container,
+.gjs-sm-container,
+.gjs-sm-view {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Hide any GrapesJS panels that might show style manager */
+.gjs-pn-panels .gjs-pn-panel[data-name="sw-visibility"],
+.gjs-pn-panels .gjs-pn-panel[data-name="open-sm"] {
   display: none !important;
 }
 
-/* Hide default style manager UI */
-.styles-container:not([style*="display: none"]) {
+/* Hide brush/classes button if it exists */
+.gjs-pn-btn[data-name="open-sm"],
+.gjs-pn-btn[title*="Style Manager"],
+.gjs-pn-btn[title*="Open Style Manager"],
+.gjs-pn-btn[data-name="sw-visibility"] {
   display: none !important;
 }
 
-.traits-container:not([style*="display: none"]) {
+/* Hide any GrapesJS panels that might show classes/state dropdowns */
+.gjs-clm-tags,
+.gjs-clm-select,
+.gjs-clm-field,
+.gjs-clm-states,
+.gjs-clm-state,
+.gjs-clm-selects,
+.gjs-clm-field-wrapper {
   display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Hide all GrapesJS style manager UI completely */
+.gjs-sm-container,
+.gjs-sm-view,
+.gjs-sm-sectors,
+.gjs-sm-sector,
+.gjs-sm-properties,
+.gjs-sm-property,
+.gjs-sm-field,
+.gjs-sm-label,
+.gjs-sm-title,
+.gjs-sm-sector-title,
+.gjs-sm-sector-content {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* Hide the "Select an element before using Style Manager" message */
+.gjs-sm-view::before,
+.gjs-sm-view::after,
+.gjs-sm-container::before,
+.gjs-sm-container::after,
+.gjs-sm-view .gjs-sm-empty,
+.gjs-sm-container .gjs-sm-empty,
+[class*="gjs-sm"][class*="empty"],
+.gjs-sm-view > div:empty,
+.gjs-sm-container > div:empty {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* Hide any text content in style manager */
+.gjs-sm-view,
+.gjs-sm-container {
+  font-size: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
+}
+
+/* Hide any messages about selecting elements */
+.gjs-sm-view *,
+.gjs-sm-container * {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Hide Style Manager empty state message */
+.gjs-sm-view:empty::before,
+.gjs-sm-container:empty::before,
+.gjs-sm-view:empty::after,
+.gjs-sm-container:empty::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Hide any text nodes or content in style manager */
+.gjs-sm-view,
+.gjs-sm-container,
+[class*="gjs-sm"] {
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+}
+
+/* Specifically target the "Select an element" message */
+.gjs-sm-view:has-text("Select an element"),
+.gjs-sm-container:has-text("Select an element"),
+.gjs-sm-view:has-text("Style Manager"),
+.gjs-sm-container:has-text("Style Manager") {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Hide any divs or spans that might contain the message */
+.gjs-sm-view div,
+.gjs-sm-view span,
+.gjs-sm-container div,
+.gjs-sm-container span {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Ensure canvas takes full available space and extends to edge */
+.gjs-editor-parent {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.gjs-cv-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Canvas frame should show full content without cutting off - hide scrollbars */
+.gjs-frame {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE/Edge */
+}
+
+/* Hide scrollbar on canvas frame for webkit browsers */
+.gjs-frame::-webkit-scrollbar {
+  width: 0px !important;
+  background: transparent !important;
+  display: none !important;
+}
+
+/* Ensure iframe body shows full content - hide scrollbar but allow scrolling */
+.gjs-frame body,
+.gjs-frame html {
+  overflow-x: hidden !important;
+  overflow-y: auto !important; /* Allow vertical scrolling */
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100vw !important; /* Ensure it doesn't exceed viewport */
+  scrollbar-width: none !important; /* Firefox - hide scrollbar */
+  -ms-overflow-style: none !important; /* IE/Edge - hide scrollbar */
+}
+
+/* Hide scrollbar for webkit browsers (Chrome, Safari) */
+.gjs-frame body::-webkit-scrollbar,
+.gjs-frame html::-webkit-scrollbar {
+  width: 0px !important;
+  height: 0px !important;
+  background: transparent !important;
+  display: none !important;
+}
+
+.gjs-frame body::-webkit-scrollbar-thumb,
+.gjs-frame html::-webkit-scrollbar-thumb,
+.gjs-frame body::-webkit-scrollbar-track,
+.gjs-frame html::-webkit-scrollbar-track {
+  display: none !important;
+  background: transparent !important;
+}
+
+/* Canvas wrapper should not have padding/margin - hide scrollbars */
+.gjs-cv-canvas__frames {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE/Edge */
+}
+
+.gjs-cv-canvas__frames::-webkit-scrollbar {
+  width: 0px !important;
+  background: transparent !important;
+  display: none !important;
+}
+
+/* Remove any gaps between canvas and properties panel */
+.gjs-editor-parent,
+.gjs-cv-canvas,
+.gjs-cv-canvas__frames {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
 }
 
 /* Style Manager section headers (right panel) - Clean design */
@@ -373,16 +604,20 @@ button:active:not(:disabled) {
   outline: 2px solid var(--accent) !important;
 }
 
-/* GrapesJS Toolbar Styling */
+/* Hide ALL GrapesJS Panel Buttons */
 .gjs-pn-btn {
-  background-color: transparent !important;
-  color: var(--text-secondary) !important;
-  border: none !important;
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
 }
 
 .gjs-pn-btn:hover {
-  background-color: var(--surface-elevated) !important;
-  color: var(--text-primary) !important;
+  display: none !important;
 }
 
 /* Left panel group headers (Layout/Basic/Sections/Icons) */
@@ -612,14 +847,28 @@ button:active:not(:disabled) {
   display: block !important;
 }
 
-/* GrapesJS Device Buttons */
+/* Hide GrapesJS Panel Commands */
 .gjs-pn-commands {
-  background-color: var(--surface-elevated) !important;
-  border-top: 1px solid var(--border) !important;
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
 }
 
+/* Hide GrapesJS Device Panel */
 .gjs-pn-devices {
-  background-color: transparent !important;
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
 }
 
 .gjs-pn-btn-device {
@@ -812,15 +1061,60 @@ button:active:not(:disabled) {
 
 /* COMPREHENSIVE THEME SUPPORT FOR ALL GRAPESJS ELEMENTS */
 
-/* All GrapesJS Panels */
+/* Hide ALL GrapesJS Panels completely */
 .gjs-pn-panels {
-  background-color: var(--surface) !important;
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
 }
 
 .gjs-pn-panel {
-  background-color: var(--surface) !important;
-  color: var(--text-primary) !important;
-  border-bottom: 1px solid var(--border) !important;
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* Hide all GrapesJS panel buttons */
+.gjs-pn-btn {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* Hide specific panel buttons */
+.gjs-pn-btn[data-name="open-layers"],
+.gjs-pn-btn[data-name="open-blocks"],
+.gjs-pn-btn[data-name="open-sm"],
+.gjs-pn-btn[data-name="open-tm"],
+.gjs-pn-btn[data-name="sw-visibility"],
+.gjs-pn-btn[title*="Layer"],
+.gjs-pn-btn[title*="Block"],
+.gjs-pn-btn[title*="Settings"],
+.gjs-pn-btn[title*="Open"],
+.gjs-pn-btn[title*="Toggle"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
 }
 
 .gjs-pn-commands {

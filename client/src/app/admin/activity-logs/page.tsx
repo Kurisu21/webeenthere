@@ -13,7 +13,6 @@ import {
   formatActivityDate,
   getActionIcon,
   getActionColor,
-  downloadBlob,
   createDateFilter
 } from '../../../lib/activityApi';
 import { formatActivityDetails, getActionDescription, formatActivityTimestamp } from '../../../lib/activityFormatters';
@@ -28,7 +27,6 @@ export default function AdminActivityLogsPage() {
     totalPages: 0
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<Array<{id: number, username: string, email: string}>>([]);
 
@@ -110,20 +108,6 @@ export default function AdminActivityLogsPage() {
 
   const handleSearch = () => {
     fetchLogs();
-  };
-
-  const handleExport = async (format: 'csv' | 'json') => {
-    try {
-      setIsExporting(true);
-      const blob = await activityApi.exportActivityLogs(filters, format);
-      const filename = `activity-logs-${new Date().toISOString().split('T')[0]}.${format}`;
-      downloadBlob(blob, filename);
-    } catch (err) {
-      console.error('Failed to export logs:', err);
-      setError('Failed to export activity logs');
-    } finally {
-      setIsExporting(false);
-    }
   };
 
   const handlePageChange = (newPage: number) => {
@@ -305,22 +289,6 @@ export default function AdminActivityLogsPage() {
                     className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300"
                   >
                     Search
-                  </button>
-                  
-                  <button
-                    onClick={() => handleExport('csv')}
-                    disabled={isExporting}
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-green-400 disabled:to-emerald-400 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300"
-                  >
-                    {isExporting ? 'Exporting...' : 'Export CSV'}
-                  </button>
-                  
-                  <button
-                    onClick={() => handleExport('json')}
-                    disabled={isExporting}
-                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-blue-400 disabled:to-cyan-400 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300"
-                  >
-                    {isExporting ? 'Exporting...' : 'Export JSON'}
                   </button>
                 </div>
                 

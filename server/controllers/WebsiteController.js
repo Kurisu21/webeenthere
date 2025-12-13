@@ -1116,6 +1116,181 @@ class WebsiteController {
       });
     }
   }
+
+  // Import website from HTML file (user)
+  async importWebsiteFromHTML(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'No HTML file uploaded'
+        });
+      }
+
+      const userId = req.user.id;
+      const { title } = req.body;
+
+      if (!title) {
+        return res.status(400).json({
+          success: false,
+          message: 'Website title is required'
+        });
+      }
+
+      // Check subscription limits
+      const websiteLimits = await this.subscriptionService.checkWebsiteLimit(userId);
+      if (!websiteLimits.canCreate) {
+        return res.status(403).json({
+          success: false,
+          message: `Website creation limit reached. You have used ${websiteLimits.used || 0} of ${websiteLimits.limit} websites allowed.`,
+          error: 'SUBSCRIPTION_LIMIT_REACHED',
+          upgradeRequired: true,
+          currentUsage: websiteLimits
+        });
+      }
+
+      // Read the uploaded file
+      const fs = require('fs');
+      const htmlContent = fs.readFileSync(req.file.path, 'utf8');
+
+      // Parse HTML and extract CSS (reuse template controller logic)
+      const { htmlBody, css } = this.parseHTMLFile(htmlContent);
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      // Generate unique slug
+      const { generateUsernameBasedSlug } = require('../utils/slugGenerator');
+      const User = require('../models/User');
+      const userModel = new User(this.db);
+      const user = await userModel.findById(userId);
+      
+      if (!user || !user.username) {
+        return res.status(400).json({
+          success: false,
+          message: 'User not found or username missing'
+        });
+      }
+      
+      const websiteSlug = await generateUsernameBasedSlug(this.websiteModel, user.username);
+
+      // Store as JSON format (GrapesJS compatible)
+      const normalizedHtmlCss = JSON.stringify({ html: htmlBody, css: css });
+
+      // Create website
+      const websiteData = {
+        user_id: userId,
+        title,
+        slug: websiteSlug,
+        html_content: normalizedHtmlCss,
+        css_content: css,
+        template_id: null, // Not from a template
+        is_published: false,
+        is_active: true
+      };
+
+      // Generate preview if content exists
+      let previewBuffer = null;
+      if (htmlBody) {
+        try {
+          previewBuffer = await this.previewService.generatePreview(htmlBody, css);
+        } catch (error) {
+          console.error('Error generating preview during HTML import:', error);
+          // Continue without preview if generation fails
+        }
+      }
+
+      if (previewBuffer) {
+        websiteData.preview_url = previewBuffer;
+      }
+
+      const websiteId = await this.websiteModel.create(websiteData);
+
+      // Log activity
+      await databaseActivityLogger.logActivity({
+        userId,
+        action: 'create_website',
+        entityType: 'website',
+        entityId: websiteId,
+        details: { title, source: 'html_import' }
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Website imported successfully',
+        data: { id: websiteId }
+      });
+    } catch (error) {
+      console.error('Error importing website from HTML:', error);
+      
+      // Clean up uploaded file if it exists
+      if (req.file && req.file.path) {
+        const fs = require('fs');
+        try {
+          if (fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+          }
+        } catch (cleanupError) {
+          console.error('Error cleaning up uploaded file:', cleanupError);
+        }
+      }
+
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Error importing website from HTML'
+      });
+    }
+  }
+
+  // Parse HTML file and extract body content and CSS (reused from TemplateController)
+  parseHTMLFile(htmlContent) {
+    // Remove DOCTYPE if present
+    let cleaned = htmlContent.replace(/<!DOCTYPE[^>]*>/gi, '');
+
+    // Extract CSS from <style> tags
+    const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+    const cssParts = [];
+    let match;
+    while ((match = styleRegex.exec(cleaned)) !== null) {
+      cssParts.push(match[1].trim());
+    }
+
+    // Remove <style> tags from HTML
+    cleaned = cleaned.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+
+    // Extract body content
+    const bodyMatch = cleaned.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    let htmlBody = '';
+    
+    if (bodyMatch && bodyMatch[1]) {
+      htmlBody = bodyMatch[1].trim();
+    } else {
+      // If no <body> tag, try to extract content between <html> tags or use entire content
+      const htmlMatch = cleaned.match(/<html[^>]*>([\s\S]*?)<\/html>/i);
+      if (htmlMatch && htmlMatch[1]) {
+        // Remove <head> section if present
+        htmlBody = htmlMatch[1].replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '').trim();
+      } else {
+        // If no structure tags, assume the entire content is body
+        htmlBody = cleaned.trim();
+      }
+    }
+
+    // Combine all CSS parts
+    const css = cssParts.join('\n\n');
+
+    // Clean up HTML body - remove script tags and other unwanted elements
+    htmlBody = htmlBody
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<link[^>]*>/gi, '')
+      .replace(/<meta[^>]*>/gi, '')
+      .trim();
+
+    return {
+      htmlBody: htmlBody || '',
+      css: css || ''
+    };
+  }
 }
 
 module.exports = WebsiteController;

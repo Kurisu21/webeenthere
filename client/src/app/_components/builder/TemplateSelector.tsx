@@ -10,13 +10,17 @@ import {
 } from '../../../lib/templateApi';
 import TemplatePreview from './TemplatePreview';
 import TemplatePreviewModal from './TemplatePreviewModal';
+import { ActionButton } from '../shared/ActionButton';
 
 interface TemplateSelectorProps {
   onTemplateSelect: (template: Template) => void;
   onStartFromScratch: () => void;
+  isCreating?: boolean;
+  canCreate?: boolean;
+  usageLimit?: { used: number; limit: number; canCreate: boolean } | null;
 }
 
-const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: TemplateSelectorProps) => {
+const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch, isCreating = false, canCreate = true, usageLimit = null }: TemplateSelectorProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -284,6 +288,8 @@ const TemplateSelector = memo(({ onTemplateSelect, onStartFromScratch }: Templat
                 onSelect={() => onTemplateSelect(template)}
                 onPreview={() => handleTemplatePreview(template)}
                 isFeatured={template.is_featured}
+                disabled={isCreating}
+                canCreate={canCreate}
               />
             ))}
           </div>
@@ -345,31 +351,38 @@ const TemplateCard = memo(({ template, onSelect, onPreview, isFeatured }: Templa
         
         {/* Action Buttons Overlay */}
         <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <button
+          <ActionButton
             onClick={(e) => {
               e.stopPropagation();
-              onSelect();
+              if (!disabled && canCreate) onSelect();
             }}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all duration-300 hover:from-blue-700 hover:to-indigo-700 transform translate-y-4 group-hover:translate-y-0 shadow-xl shadow-blue-500/30 hover:scale-105"
-          >
-            <svg className="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Use Template
-          </button>
-          <button
+            disabled={disabled || !canCreate}
+            variant="primary"
+            size="md"
+            label="Use Template"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            }
+            className="transform translate-y-4 group-hover:translate-y-0 shadow-xl hover:scale-105"
+          />
+          <ActionButton
             onClick={(e) => {
               e.stopPropagation();
               onPreview();
             }}
-            className="bg-white/10 backdrop-blur-md text-white px-5 py-2.5 rounded-xl font-medium transition-all duration-300 hover:bg-white/20 border border-white/20 transform translate-y-4 group-hover:translate-y-0 shadow-xl"
-          >
-            <svg className="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            Preview
-          </button>
+            variant="secondary"
+            size="md"
+            label="Preview"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            }
+            className="transform translate-y-4 group-hover:translate-y-0 shadow-xl bg-white/10 backdrop-blur-md text-white border-white/20 hover:bg-white/20 dark:bg-white/10 dark:text-white dark:border-white/20 dark:hover:bg-white/20"
+          />
         </div>
 
         {/* Featured Badge */}

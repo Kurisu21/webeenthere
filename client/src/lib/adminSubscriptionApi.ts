@@ -101,8 +101,6 @@ export const adminSubscriptionApi = {
   async assignPlan(data: {
     userId: number;
     planId: number;
-    startDate?: string;
-    endDate?: string;
     paymentReference?: string;
   }): Promise<{ success: boolean; data?: any; error?: string }> {
     return await apiPost(`${API_ENDPOINTS.ADMIN_SUBSCRIPTIONS}/assign`, data);
@@ -201,12 +199,10 @@ export const adminSubscriptionHelpers = {
     return 'bg-red-500';
   },
 
-  // Format currency
+  // Format currency (display in PHP, but amount is in USD from database)
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+    const phpAmount = amount * 55.5;
+    return `₱${phpAmount.toFixed(2)}`;
   },
 
   // Format date

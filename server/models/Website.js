@@ -66,6 +66,14 @@ class Website {
   }
 
   async delete(id) {
+    // Delete related records first to avoid foreign key constraint errors
+    // 1. Delete website analytics (website_id is NOT NULL, so must delete)
+    await this.db.execute('DELETE FROM website_analytics WHERE website_id = ?', [id]);
+    
+    // 2. Set website_id to NULL in media_assets (media can be shared across websites)
+    await this.db.execute('UPDATE media_assets SET website_id = NULL WHERE website_id = ?', [id]);
+    
+    // 3. Now delete the website (ai_prompts and templates.source_website_id have ON DELETE SET NULL)
     await this.db.execute('DELETE FROM websites WHERE id = ?', [id]);
   }
 

@@ -286,13 +286,19 @@ class DatabaseSettingsService {
 
   // AI Configuration
   async getAiConfig() {
-    return this.getSetting('ai_config') || {
-      model: 'x-ai/grok-4.1-fast:free',
-      maxTokens: 4000,
+    const config = await this.getSetting('ai_config') || {
+      model: 'x-ai/grok-4.1-fast',
       temperature: 0.7,
       updatedAt: new Date().toISOString(),
       updatedBy: 'system'
     };
+    
+    // Remove maxTokens if it exists (no longer used)
+    if (config && typeof config === 'object' && 'maxTokens' in config) {
+      delete config.maxTokens;
+    }
+    
+    return config;
   }
 
   async setAiConfig(config, updatedBy = null) {

@@ -65,8 +65,6 @@ export default function AdminSubscriptionsPage() {
   const handleAssignPlan = async (data: {
     userId: number;
     planId: number;
-    startDate?: string;
-    endDate?: string;
     paymentReference?: string;
   }) => {
     try {
@@ -100,6 +98,10 @@ export default function AdminSubscriptionsPage() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
+
+  // Calculate pagination helpers
+  const hasPrev = pagination ? pagination.currentPage > 1 : false;
+  const hasNext = pagination ? pagination.currentPage < pagination.totalPages : false;
 
   return (
     <div className="min-h-screen bg-surface">
@@ -246,7 +248,7 @@ export default function AdminSubscriptionsPage() {
                 <nav className="flex items-center space-x-2">
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={!pagination.hasPrev}
+                    disabled={!hasPrev}
                     className="px-3 py-2 text-sm font-medium text-secondary bg-surface-elevated border border-app rounded-lg hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Previous
@@ -273,7 +275,7 @@ export default function AdminSubscriptionsPage() {
                   
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={!pagination.hasNext}
+                    disabled={!hasNext}
                     className="px-3 py-2 text-sm font-medium text-secondary bg-surface-elevated border border-app rounded-lg hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Next

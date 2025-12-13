@@ -133,28 +133,65 @@ class PreviewService {
       });
 
       // Combine HTML and CSS into a complete HTML document
+      // Add default styles to prevent black backgrounds and ensure proper rendering
+      const defaultStyles = `
+        * {
+          box-sizing: border-box;
+        }
+        html, body {
+          margin: 0;
+          padding: 0;
+          background-color: #ffffff;
+          width: 100%;
+          min-height: 100vh;
+        }
+        body {
+          background-color: #ffffff;
+        }
+        img {
+          max-width: 100%;
+          height: auto;
+          display: block;
+        }
+      `;
+
       const fullHtml = `
         <!DOCTYPE html>
         <html lang="en">
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>${defaultStyles}</style>
           <style>${parsedCss || ''}</style>
         </head>
-        <body>
+        <body style="background-color: #ffffff; margin: 0; padding: 0;">
           ${parsedHtml}
         </body>
         </html>
       `;
 
-      // Set content and wait for it to load (use domcontentloaded for faster loading)
+      // Set content and wait for it to fully load including images and styles
       await page.setContent(fullHtml, {
-        waitUntil: 'domcontentloaded', // Changed from networkidle0 to domcontentloaded for faster loading
+        waitUntil: 'networkidle0', // Wait for all network requests to finish (images, fonts, etc.)
         timeout: 30000
       });
 
-      // Wait for page to be fully rendered (reduced from 1500ms to 1000ms)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wait for images to load and page to be fully rendered
+      await page.evaluate(() => {
+        return Promise.all(
+          Array.from(document.images).map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise((resolve, reject) => {
+              img.onload = resolve;
+              img.onerror = resolve; // Resolve even on error to not block
+              setTimeout(resolve, 3000); // Timeout after 3 seconds
+            });
+          })
+        );
+      });
+
+      // Additional wait for CSS animations and transitions to settle
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Get the actual page dimensions
       const pageDimensions = await page.evaluate(() => {

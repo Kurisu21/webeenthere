@@ -176,8 +176,14 @@ class ReportController {
         'xml': 'application/xml'
       };
 
+      // Generate filename with brand name and date
+      const appName = (process.env.APP_NAME || 'WeBeenthere').toLowerCase().replace(/\s+/g, '-');
+      const dateStr = new Date().toISOString().split('T')[0];
+      const reportType = report.type || 'report';
+      const filename = `${appName}-${reportType}-${dateStr}.${format}`;
+
       res.setHeader('Content-Type', contentTypes[format] || 'application/json');
-      res.setHeader('Content-Disposition', `attachment; filename="report.${format}"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
       res.send(exportedData);
     } catch (error) {

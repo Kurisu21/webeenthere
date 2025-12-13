@@ -39,6 +39,7 @@ class InvoiceController {
   async getInvoice(req, res) {
     try {
       const userId = req.user.id;
+      const userRole = req.user.role;
       const { id } = req.params;
 
       const invoice = await this.invoiceService.getInvoiceDetails(parseInt(id));
@@ -50,8 +51,8 @@ class InvoiceController {
         });
       }
 
-      // Verify invoice belongs to user
-      if (invoice.user_id !== userId) {
+      // Verify invoice belongs to user OR user is admin
+      if (invoice.user_id !== userId && userRole !== 'admin') {
         return res.status(403).json({
           success: false,
           error: 'Access denied'
@@ -75,6 +76,7 @@ class InvoiceController {
   async downloadInvoice(req, res) {
     try {
       const userId = req.user.id;
+      const userRole = req.user.role;
       const { id } = req.params;
 
       const invoice = await this.invoiceService.getInvoiceDetails(parseInt(id));
@@ -86,8 +88,8 @@ class InvoiceController {
         });
       }
 
-      // Verify invoice belongs to user
-      if (invoice.user_id !== userId) {
+      // Verify invoice belongs to user OR user is admin
+      if (invoice.user_id !== userId && userRole !== 'admin') {
         return res.status(403).json({
           success: false,
           error: 'Access denied'
@@ -116,6 +118,7 @@ class InvoiceController {
   async viewInvoice(req, res) {
     try {
       const userId = req.user.id;
+      const userRole = req.user.role;
       const { id } = req.params;
 
       const invoice = await this.invoiceService.getInvoiceDetails(parseInt(id));
@@ -127,8 +130,8 @@ class InvoiceController {
         });
       }
 
-      // Verify invoice belongs to user
-      if (invoice.user_id !== userId) {
+      // Verify invoice belongs to user OR user is admin
+      if (invoice.user_id !== userId && userRole !== 'admin') {
         return res.status(403).json({
           success: false,
           error: 'Access denied'

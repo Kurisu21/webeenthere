@@ -3,22 +3,77 @@
 import React, { useState, useEffect } from 'react';
 
 interface AIGenerationPanelProps {
-  onGenerate: (description: string, options: { websiteType: string; style: string; colorScheme: string }) => void;
+  onGenerate: (description: string, websiteType?: string) => void;
   isGenerating: boolean;
   onTemplateGenerated?: (template: any) => void;
+  canCreate?: boolean;
+}
+
+type ContentType = 'landing-page' | 'portfolio' | 'e-commerce' | 'business' | 'content-creator' | null;
+
+interface ContentTypeConfig {
+  id: ContentType;
+  label: string;
+  icon: string;
+  defaultPrompt: string;
+  structureGuidance: string;
+  contentGuidance: string;
 }
 
 const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({ 
   onGenerate, 
   isGenerating, 
-  onTemplateGenerated 
+  onTemplateGenerated,
+  canCreate = true
 }) => {
   const [prompt, setPrompt] = useState('');
-  const [websiteType, setWebsiteType] = useState('general');
-  const [style, setStyle] = useState('modern');
-  const [colorScheme, setColorScheme] = useState('blue');
+  const [selectedContentType, setSelectedContentType] = useState<ContentType>(null);
   const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
   const [currentTagline, setCurrentTagline] = useState(0);
+
+  // Content type configurations with default prompts focused on structure and content
+  const contentTypes: ContentTypeConfig[] = [
+    {
+      id: 'landing-page',
+      label: 'Landing Page',
+      icon: '📄',
+      defaultPrompt: 'Create a compelling landing page with hero section, features, testimonials, and call-to-action',
+      structureGuidance: 'Include: hero section with headline and CTA, features/benefits section, social proof/testimonials, pricing (if applicable), and footer. Use clear hierarchy and conversion-focused layout.',
+      contentGuidance: 'Generate persuasive copy that highlights value proposition, benefits, and clear calls-to-action. Include realistic testimonials and feature descriptions.'
+    },
+    {
+      id: 'portfolio',
+      label: 'Portfolio',
+      icon: '🎨',
+      defaultPrompt: 'Create a professional portfolio showcasing work, skills, and experience',
+      structureGuidance: 'Include: hero/intro section, about section, projects/work gallery, skills section, and contact. Use grid layouts for projects and organized sections for easy navigation.',
+      contentGuidance: 'Generate professional portfolio content including project descriptions, skill lists, about text, and contact information. Use realistic project names and descriptions.'
+    },
+    {
+      id: 'e-commerce',
+      label: 'E-commerce',
+      icon: '🛒',
+      defaultPrompt: 'Create an e-commerce website with product showcase, categories, and shopping features',
+      structureGuidance: 'Include: header with navigation, hero/banner section, product categories, featured products grid, product detail sections, and checkout/contact. Use card-based layouts for products.',
+      contentGuidance: 'Generate product listings with names, descriptions, prices, and categories. Include realistic product information and shopping-related content.'
+    },
+    {
+      id: 'business',
+      label: 'Business',
+      icon: '🏢',
+      defaultPrompt: 'Create a professional business website with services, about, and contact information',
+      structureGuidance: 'Include: header with navigation, hero section, services/offerings section, about/company section, testimonials, and contact form. Use professional, corporate layout structure.',
+      contentGuidance: 'Generate business-focused content including service descriptions, company information, team details, and professional contact information.'
+    },
+    {
+      id: 'content-creator',
+      label: 'Content Creator Portfolio',
+      icon: '📹',
+      defaultPrompt: 'Create a content creator portfolio showcasing videos, social media, and brand collaborations',
+      structureGuidance: 'Include: hero section with intro, featured content/videos section, social media links, collaboration highlights, about section, and contact. Use media-rich layouts with video/image placeholders.',
+      contentGuidance: 'Generate content creator-focused sections including video descriptions, social media stats, collaboration examples, and personal branding content.'
+    }
+  ];
 
   const placeholders = [
     "Create a template for business that is premium look",
@@ -69,18 +124,34 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
     };
   }, []);
 
+  const handleContentTypeSelect = (contentType: ContentType) => {
+    // Only allow one selection at a time
+    if (selectedContentType === contentType) {
+      // Deselect if clicking the same type
+      setSelectedContentType(null);
+      setPrompt('');
+    } else {
+      setSelectedContentType(contentType);
+      const config = contentTypes.find(ct => ct.id === contentType);
+      if (config) {
+        setPrompt(config.defaultPrompt);
+      }
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (prompt.trim() && !isGenerating) {
-      onGenerate(prompt, { websiteType, style, colorScheme });
+      onGenerate(prompt, selectedContentType || undefined);
     }
   };
 
   return (
-    <div className={`${professionalTheme.bg} border ${professionalTheme.border} rounded-xl p-8 mb-8 ${professionalTheme.shadow} backdrop-blur-sm relative overflow-hidden`}>
+    <div className={`${professionalTheme.bg} border ${professionalTheme.border} rounded-xl p-8 mb-8 ${professionalTheme.shadow} backdrop-blur-sm relative z-10 overflow-hidden`}>
       {/* Subtle animated background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-indigo-500/5 animate-pulse"></div>
+      
       <div className="relative z-10">
       {/* Header */}
       <div className="text-center mb-8">
@@ -96,6 +167,29 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
       {/* Main input area */}
       <div className="max-w-5xl md:max-w-6xl mx-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Content Type Selection */}
+          <div className="flex flex-wrap gap-3 justify-center mb-4">
+            {contentTypes.map((type) => (
+              <button
+                key={type.id}
+                type="button"
+                onClick={() => handleContentTypeSelect(type.id)}
+                disabled={isGenerating}
+                className={`
+                  flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200
+                  ${selectedContentType === type.id
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white border-blue-500 shadow-lg scale-105'
+                    : 'bg-surface/80 text-primary border-app hover:bg-surface-elevated hover:border-blue-400/50'
+                  }
+                  ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                `}
+              >
+                <span className="text-lg">{type.icon}</span>
+                <span className="font-medium text-sm md:text-base">{type.label}</span>
+              </button>
+            ))}
+          </div>
+
           {/* Large input container */}
           <div className={`bg-surface/80 backdrop-blur-sm border ${professionalTheme.border} rounded-xl p-4 md:p-6 shadow-lg ${professionalTheme.glow} hover:shadow-xl hover:${professionalTheme.glow} transition-all duration-300`}>
             <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
@@ -114,7 +208,7 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
                       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                         e.preventDefault();
                         if (prompt.trim() && !isGenerating) {
-                          onGenerate(prompt, { websiteType, style, colorScheme });
+                          onGenerate(prompt);
                         }
                       }
                     }}
@@ -127,8 +221,9 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
               {/* Send button */}
               <button
                 type="submit"
-                disabled={isGenerating || !prompt.trim()}
-                className={`p-3 bg-gradient-to-r ${professionalTheme.primary} hover:opacity-90 disabled:bg-surface-elevated rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg ${professionalTheme.shadow} flex-shrink-0 hover:shadow-xl hover:shadow-blue-500/30`}
+                disabled={isGenerating || !prompt.trim() || !canCreate}
+                className={`p-3 bg-gradient-to-r ${professionalTheme.primary} hover:opacity-90 disabled:bg-surface-elevated disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg ${professionalTheme.shadow} flex-shrink-0 hover:shadow-xl hover:shadow-blue-500/30`}
+                title={!canCreate ? 'You have reached your website limit. Please upgrade to create more.' : ''}
               >
                 {isGenerating ? (
                   <div className="animate-spin rounded-full h-5 w-5 md:h-6 md:w-6 border-b-2 border-white"></div>
@@ -138,74 +233,6 @@ const AIGenerationPanel: React.FC<AIGenerationPanelProps> = ({
                   </svg>
                 )}
               </button>
-            </div>
-          </div>
-
-          {/* Options row */}
-          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 md:space-x-8">
-            <div className="flex items-center space-x-2 md:space-x-3">
-              <label className={`${professionalTheme.text} text-xs md:text-sm font-semibold`}>Type:</label>
-              <div className="relative">
-                <select
-                  value={websiteType}
-                  onChange={(e) => setWebsiteType(e.target.value)}
-                  className={`px-3 md:px-4 py-2 bg-surface-elevated/80 backdrop-blur-sm border ${professionalTheme.border} rounded-xl text-primary text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--ring)] transition-all duration-300 hover:bg-surface cursor-pointer appearance-none pr-6 md:pr-8 hover:shadow-md hover:shadow-blue-500/20`}
-                >
-                  <option value="general" className="bg-surface text-primary">General</option>
-                  <option value="portfolio" className="bg-surface text-primary">Portfolio</option>
-                  <option value="business" className="bg-surface text-primary">Business</option>
-                  <option value="ecommerce" className="bg-surface text-primary">E-commerce</option>
-                  <option value="blog" className="bg-surface text-primary">Blog</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2 md:pr-3 pointer-events-none">
-                  <svg className="w-3 h-3 md:w-4 md:h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2 md:space-x-3">
-              <label className={`${professionalTheme.text} text-xs md:text-sm font-semibold`}>Style:</label>
-              <div className="relative">
-                <select
-                  value={style}
-                  onChange={(e) => setStyle(e.target.value)}
-                  className={`px-3 md:px-4 py-2 bg-surface-elevated/80 backdrop-blur-sm border ${professionalTheme.border} rounded-xl text-primary text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--ring)] transition-all duration-300 hover:bg-surface cursor-pointer appearance-none pr-6 md:pr-8 hover:shadow-md hover:shadow-blue-500/20`}
-                >
-                  <option value="modern" className="bg-surface text-primary">Modern</option>
-                  <option value="minimal" className="bg-surface text-primary">Minimal</option>
-                  <option value="classic" className="bg-surface text-primary">Classic</option>
-                  <option value="creative" className="bg-surface text-primary">Creative</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2 md:pr-3 pointer-events-none">
-                  <svg className="w-3 h-3 md:w-4 md:h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2 md:space-x-3">
-              <label className={`${professionalTheme.text} text-xs md:text-sm font-semibold`}>Colors:</label>
-              <div className="relative">
-                <select
-                  value={colorScheme}
-                  onChange={(e) => setColorScheme(e.target.value)}
-                  className={`px-3 md:px-4 py-2 bg-surface-elevated/80 backdrop-blur-sm border ${professionalTheme.border} rounded-xl text-primary text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--ring)] transition-all duration-300 hover:bg-surface cursor-pointer appearance-none pr-6 md:pr-8 hover:shadow-md hover:shadow-blue-500/20`}
-                >
-                  <option value="blue" className="bg-surface text-primary">Blue</option>
-                  <option value="purple" className="bg-surface text-primary">Purple</option>
-                  <option value="green" className="bg-surface text-primary">Green</option>
-                  <option value="red" className="bg-surface text-primary">Red</option>
-                  <option value="dark" className="bg-surface text-primary">Dark</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2 md:pr-3 pointer-events-none">
-                  <svg className="w-3 h-3 md:w-4 md:h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
             </div>
           </div>
         </form>

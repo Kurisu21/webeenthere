@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Background from '@/app/_components/layout/Background';
 import Link from 'next/link';
 import { homeApi, PublicStats } from '@/lib/homeApi';
+import { formatPriceInPhp, usdToPhp } from '@/lib/currencyUtils';
 
 export default function Home() {
   const [stats, setStats] = useState<PublicStats | null>(null);
@@ -440,7 +441,7 @@ export default function Home() {
             
             <div className="bg-gradient-to-br from-blue-600 to-purple-600 p-8 rounded-lg transform scale-105">
               <h3 className="text-2xl font-bold text-white mb-4">Monthly</h3>
-              <div className="text-4xl font-bold text-white mb-6">$5.40<span className="text-lg text-blue-200">/month</span></div>
+              <div className="text-4xl font-bold text-white mb-6">{formatPriceInPhp(2.15, 'month')}</div>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center text-white">
                   <svg className="w-5 h-5 text-blue-200 mr-3" fill="currentColor" viewBox="0 0 20 20">
@@ -474,8 +475,8 @@ export default function Home() {
             
             <div className="bg-gray-700 p-8 rounded-lg border border-gray-600">
               <h3 className="text-2xl font-bold text-white mb-4">Yearly</h3>
-              <div className="text-4xl font-bold text-white mb-6">$64.80<span className="text-lg text-gray-400">/year</span></div>
-              <div className="text-sm text-green-400 mb-4 font-medium">Save $0.00/year (Same as monthly)</div>
+              <div className="text-4xl font-bold text-white mb-6">{formatPriceInPhp(20.64, 'year')}</div>
+              <div className="text-sm text-green-400 mb-4 font-medium">Save ₱{usdToPhp((2.15 * 12) - 20.64).toFixed(2)}/year (20% off)</div>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center text-gray-300">
                   <svg className="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">

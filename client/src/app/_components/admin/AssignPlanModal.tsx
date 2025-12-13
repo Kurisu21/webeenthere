@@ -9,8 +9,6 @@ interface AssignPlanModalProps {
   onAssign: (data: {
     userId: number;
     planId: number;
-    startDate?: string;
-    endDate?: string;
     paymentReference?: string;
   }) => void;
   isLoading?: boolean;
@@ -30,8 +28,6 @@ const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
   const [formData, setFormData] = useState({
     userId: userId || 0,
     planId: 0,
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: '',
     paymentReference: ''
   });
 
@@ -40,7 +36,9 @@ const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
       loadPlans();
       setFormData(prev => ({
         ...prev,
-        userId: userId || 0
+        userId: userId || 0,
+        planId: 0,
+        paymentReference: ''
       }));
     }
   }, [isOpen, userId]);
@@ -75,8 +73,6 @@ const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
     onAssign({
       userId: formData.userId,
       planId: formData.planId,
-      startDate: formData.startDate || undefined,
-      endDate: formData.endDate || undefined,
       paymentReference: formData.paymentReference || undefined
     });
   };
@@ -85,8 +81,6 @@ const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
     setFormData({
       userId: userId || 0,
       planId: 0,
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: '',
       paymentReference: ''
     });
     onClose();
@@ -156,37 +150,6 @@ const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
                 </option>
               ))}
             </select>
-          </div>
-
-          {/* Start Date */}
-          <div>
-            <label className="block text-sm font-medium text-primary mb-2">
-              Start Date
-            </label>
-            <input
-              type="date"
-              value={formData.startDate}
-              onChange={(e) => handleInputChange('startDate', e.target.value)}
-              className="w-full px-3 py-2 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={isLoading}
-            />
-          </div>
-
-          {/* End Date */}
-          <div>
-            <label className="block text-sm font-medium text-primary mb-2">
-              End Date (Optional)
-            </label>
-            <input
-              type="date"
-              value={formData.endDate}
-              onChange={(e) => handleInputChange('endDate', e.target.value)}
-              className="w-full px-3 py-2 bg-surface border border-app rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={isLoading}
-            />
-            <p className="text-xs text-secondary mt-1">
-              Leave empty for unlimited duration (free plans) or auto-renewal (paid plans)
-            </p>
           </div>
 
           {/* Payment Reference */}

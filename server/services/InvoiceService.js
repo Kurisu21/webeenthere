@@ -112,124 +112,385 @@ class InvoiceService {
       // Generate PDF
       const pdfBuffer = await this.generatePDF(transactionId);
 
+      // Format dates
+      const issueDate = new Date(invoice.issue_date);
+      const dueDate = invoice.due_date ? new Date(invoice.due_date) : null;
+      const formattedIssueDate = issueDate.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      const formattedDueDate = dueDate ? dueDate.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }) : 'N/A';
+
       // Send email with PDF attachment
       const mailOptions = {
         from: process.env.EMAIL_USER || 'your-email@gmail.com',
         to: invoice.email, // User's email from the database
-        subject: `Payment Receipt - Invoice ${invoice.invoice_number}`,
+        subject: `Invoice ${invoice.invoice_number} - Payment Receipt`,
         html: `
           <!DOCTYPE html>
           <html>
           <head>
             <meta charset="utf-8">
-            <title>Payment Receipt</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Invoice ${invoice.invoice_number}</title>
             <style>
-              body {
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              * {
                 margin: 0;
-                padding: 20px;
-                min-height: 100vh;
+                padding: 0;
+                box-sizing: border-box;
               }
-              .email-container {
-                background: white;
-                border-radius: 15px;
-                padding: 40px;
-                max-width: 600px;
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                background-color: #f5f7fa;
+                padding: 20px;
+                line-height: 1.6;
+              }
+              .email-wrapper {
+                max-width: 700px;
                 margin: 0 auto;
-                box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-              }
-              .logo {
-                font-size: 2.5em;
-                font-weight: bold;
-                background: linear-gradient(45deg, #667eea, #764ba2);
-                -webkit-background-clip: text;
-                color: transparent;
-                margin-bottom: 20px;
-                text-align: center;
-              }
-              h1 {
-                color: #333;
-                margin-bottom: 20px;
-                font-size: 1.8em;
-              }
-              .receipt-info {
-                background: #f8f9fa;
-                padding: 20px;
+                background-color: #ffffff;
                 border-radius: 8px;
-                margin: 20px 0;
-                border-left: 4px solid #764ba2;
+                overflow: hidden;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
               }
-              .info-row {
+              .header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 40px 40px 30px;
+                color: white;
+              }
+              .header h1 {
+                font-size: 32px;
+                font-weight: 700;
+                margin-bottom: 5px;
+                letter-spacing: -0.5px;
+              }
+              .header .subtitle {
+                font-size: 16px;
+                opacity: 0.95;
+                font-weight: 300;
+              }
+              .content {
+                padding: 40px;
+              }
+              .invoice-header {
                 display: flex;
                 justify-content: space-between;
-                padding: 8px 0;
-                border-bottom: 1px solid #e0e0e0;
+                margin-bottom: 40px;
+                padding-bottom: 30px;
+                border-bottom: 2px solid #e5e7eb;
               }
-              .info-row:last-child {
+              .invoice-details {
+                flex: 1;
+              }
+              .invoice-meta {
+                text-align: right;
+                flex: 1;
+              }
+              .invoice-meta h2 {
+                font-size: 24px;
+                color: #1f2937;
+                margin-bottom: 20px;
+                font-weight: 600;
+              }
+              .meta-row {
+                margin-bottom: 12px;
+                font-size: 14px;
+              }
+              .meta-label {
+                color: #6b7280;
+                font-weight: 500;
+                display: inline-block;
+                min-width: 100px;
+                margin-bottom: 4px;
+              }
+              .meta-value {
+                color: #1f2937;
+                font-weight: 600;
+                display: block;
+              }
+              .status-badge {
+                display: inline-block;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-top: 8px;
+              }
+              .status-paid {
+                background-color: #d1fae5;
+                color: #065f46;
+              }
+              .status-pending {
+                background-color: #fef3c7;
+                color: #92400e;
+              }
+              .bill-to {
+                margin-bottom: 40px;
+              }
+              .bill-to h3 {
+                font-size: 14px;
+                color: #6b7280;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 12px;
+                font-weight: 600;
+              }
+              .bill-to p {
+                color: #1f2937;
+                font-size: 15px;
+                margin-bottom: 4px;
+              }
+              .bill-to .name {
+                font-weight: 600;
+                font-size: 16px;
+                margin-bottom: 6px;
+              }
+              .items-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 30px;
+              }
+              .items-table thead {
+                background-color: #f9fafb;
+                border-bottom: 2px solid #e5e7eb;
+              }
+              .items-table th {
+                padding: 14px 16px;
+                text-align: left;
+                font-size: 12px;
+                font-weight: 600;
+                color: #6b7280;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+              }
+              .items-table td {
+                padding: 18px 16px;
+                border-bottom: 1px solid #e5e7eb;
+                font-size: 15px;
+                color: #1f2937;
+              }
+              .items-table tbody tr:last-child td {
                 border-bottom: none;
               }
-              .info-label {
+              .item-description {
                 font-weight: 600;
-                color: #666;
+                color: #1f2937;
               }
-              .info-value {
-                color: #333;
+              .item-type {
+                color: #6b7280;
+                font-size: 14px;
+                margin-top: 4px;
               }
-              .amount {
-                font-size: 1.5em;
-                font-weight: bold;
-                color: #764ba2;
-                text-align: center;
-                margin: 20px 0;
+              .item-amount {
+                text-align: right;
+                font-weight: 600;
+                color: #1f2937;
+              }
+              .totals {
+                margin-top: 20px;
+                margin-left: auto;
+                width: 300px;
+              }
+              .total-row {
+                display: flex;
+                justify-content: space-between;
+                padding: 10px 0;
+                font-size: 15px;
+              }
+              .total-row.subtotal {
+                color: #6b7280;
+                border-bottom: 1px solid #e5e7eb;
+                margin-bottom: 10px;
+              }
+              .total-row.grand-total {
+                margin-top: 15px;
+                padding-top: 15px;
+                border-top: 2px solid #1f2937;
+                font-size: 18px;
+                font-weight: 700;
+                color: #1f2937;
+              }
+              .total-label {
+                font-weight: 500;
+              }
+              .total-value {
+                font-weight: 600;
+              }
+              .payment-info {
+                background-color: #f9fafb;
+                border-left: 4px solid #667eea;
+                padding: 20px;
+                border-radius: 6px;
+                margin: 30px 0;
+              }
+              .payment-info h4 {
+                font-size: 14px;
+                color: #6b7280;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 8px;
+                font-weight: 600;
+              }
+              .payment-info p {
+                color: #1f2937;
+                font-size: 14px;
+                font-family: 'Courier New', monospace;
+                word-break: break-all;
+              }
+              .notes {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid #e5e7eb;
+              }
+              .notes h4 {
+                font-size: 14px;
+                color: #6b7280;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 8px;
+                font-weight: 600;
+              }
+              .notes p {
+                color: #1f2937;
+                font-size: 14px;
               }
               .footer {
-                color: #999;
-                font-size: 0.9em;
-                margin-top: 30px;
+                background-color: #f9fafb;
+                padding: 30px 40px;
                 text-align: center;
+                border-top: 1px solid #e5e7eb;
+              }
+              .footer p {
+                color: #6b7280;
+                font-size: 13px;
+                margin-bottom: 8px;
+              }
+              .footer .company {
+                color: #1f2937;
+                font-weight: 600;
+                margin-top: 10px;
+              }
+              @media only screen and (max-width: 600px) {
+                .invoice-header {
+                  flex-direction: column;
+                }
+                .invoice-meta {
+                  text-align: left;
+                  margin-top: 20px;
+                }
+                .totals {
+                  width: 100%;
+                }
+                .content {
+                  padding: 20px;
+                }
+                .header {
+                  padding: 30px 20px 20px;
+                }
               }
             </style>
           </head>
           <body>
-            <div class="email-container">
-              <div class="logo">WEBeenThere</div>
-              <h1>Payment Receipt</h1>
-              <p>Dear ${invoice.username},</p>
-              <p>Thank you for your subscription! Your payment has been successfully processed.</p>
+            <div class="email-wrapper">
+              <div class="header">
+                <h1>Webeenthere</h1>
+                <div class="subtitle">Invoice</div>
+              </div>
               
-              <div class="receipt-info">
-                <div class="info-row">
-                  <span class="info-label">Invoice Number:</span>
-                  <span class="info-value">${invoice.invoice_number}</span>
+              <div class="content">
+                <div class="invoice-header">
+                  <div class="invoice-details">
+                    <div class="bill-to">
+                      <h3>Bill To</h3>
+                      <p class="name">${invoice.username || 'Customer'}</p>
+                      <p>${invoice.email || ''}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="invoice-meta">
+                    <h2>Invoice #${invoice.invoice_number}</h2>
+                    <div class="meta-row">
+                      <span class="meta-label">Issue Date:</span>
+                      <span class="meta-value">${formattedIssueDate}</span>
+                    </div>
+                    ${dueDate ? `
+                    <div class="meta-row">
+                      <span class="meta-label">Due Date:</span>
+                      <span class="meta-value">${formattedDueDate}</span>
+                    </div>
+                    ` : ''}
+                    <div class="meta-row">
+                      <span class="meta-label">Status:</span>
+                      <span class="meta-value">
+                        <span class="status-badge ${invoice.status === 'paid' ? 'status-paid' : 'status-pending'}">
+                          ${invoice.status.toUpperCase()}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">Plan:</span>
-                  <span class="info-value">${invoice.plan_name} (${invoice.plan_type})</span>
+
+                <table class="items-table">
+                  <thead>
+                    <tr>
+                      <th>Description</th>
+                      <th style="text-align: right;">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <div class="item-description">${invoice.plan_name || 'Subscription'}</div>
+                        <div class="item-type">${invoice.plan_type || ''} Plan</div>
+                      </td>
+                      <td class="item-amount">$${parseFloat(invoice.amount).toFixed(2)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="totals">
+                  <div class="total-row subtotal">
+                    <span class="total-label">Subtotal</span>
+                    <span class="total-value">$${parseFloat(invoice.amount).toFixed(2)}</span>
+                  </div>
+                  ${parseFloat(invoice.tax_amount) > 0 ? `
+                  <div class="total-row subtotal">
+                    <span class="total-label">Tax</span>
+                    <span class="total-value">$${parseFloat(invoice.tax_amount).toFixed(2)}</span>
+                  </div>
+                  ` : ''}
+                  <div class="total-row grand-total">
+                    <span class="total-label">Total</span>
+                    <span class="total-value">$${parseFloat(invoice.total_amount).toFixed(2)}</span>
+                  </div>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">Transaction Reference:</span>
-                  <span class="info-value">${invoice.transaction_reference}</span>
+
+                ${invoice.transaction_reference ? `
+                <div class="payment-info">
+                  <h4>Payment Reference</h4>
+                  <p>${invoice.transaction_reference}</p>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">Issue Date:</span>
-                  <span class="info-value">${new Date(invoice.issue_date).toLocaleDateString()}</span>
+                ` : ''}
+
+                ${invoice.notes ? `
+                <div class="notes">
+                  <h4>Notes</h4>
+                  <p>${invoice.notes}</p>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">Status:</span>
-                  <span class="info-value" style="color: ${invoice.status === 'paid' ? '#28a745' : '#ffc107'}; font-weight: bold;">${invoice.status.toUpperCase()}</span>
-                </div>
+                ` : ''}
               </div>
 
-              <div class="amount">
-                Total: $${parseFloat(invoice.total_amount).toFixed(2)}
-              </div>
-
-              <p>Your receipt PDF is attached to this email for your records.</p>
-              
               <div class="footer">
-                <p>If you have any questions, please contact our support team.</p>
-                <p>&copy; ${new Date().getFullYear()} WEBeenThere. All rights reserved.</p>
+                <p>Your invoice PDF is attached to this email for your records.</p>
+                <p>If you have any questions about this invoice, please contact our support team.</p>
+                <p class="company">&copy; ${new Date().getFullYear()} Webeenthere. All rights reserved.</p>
               </div>
             </div>
           </body>

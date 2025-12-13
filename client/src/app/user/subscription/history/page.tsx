@@ -58,10 +58,9 @@ export default function SubscriptionHistoryPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+    // Display in PHP, but amount is in USD from database
+    const phpAmount = amount * 55.5;
+    return `₱${phpAmount.toFixed(2)}`;
   };
 
   const formatDateTime = (dateString: string) => {

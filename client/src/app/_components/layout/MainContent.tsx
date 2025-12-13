@@ -7,14 +7,19 @@ import { getProfileImageUrl } from '../../../lib/apiConfig';
 
 interface MainContentProps {
   currentWebsite?: any;
+  onShowInstructions?: () => void;
 }
 
-const MainContent = memo(({ currentWebsite }: MainContentProps) => {
+const MainContent = memo(({ currentWebsite, onShowInstructions }: MainContentProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState<any>(null);
   const [userWebsites, setUserWebsites] = useState<any[]>([]);
   const [currentTime, setCurrentTime] = useState<string>('');
   const router = useRouter();
+
+  useEffect(() => {
+    console.log('📦 MainContent - onShowInstructions prop changed:', typeof onShowInstructions);
+  }, [onShowInstructions]);
 
   // Load user data and websites
   useEffect(() => {
@@ -116,45 +121,33 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
             </h1>
             <p className="text-secondary text-sm md:text-base">{currentTime}</p>
           </div>
-          <div className="flex items-center space-x-2 md:space-x-4">
-            {/* Search Bar */}
-            <div className="relative group flex-1 md:flex-none">
-              <input
-                type="text"
-                placeholder="Search websites..."
-                className="w-full md:w-auto pl-10 pr-4 py-2 bg-surface-elevated border border-app rounded-lg text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-all duration-300 group-hover:border-app text-sm md:text-base"
-              />
-              <svg className="w-4 h-4 md:w-5 md:h-5 absolute left-3 top-2.5 text-secondary group-hover:text-primary transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            
-            {/* Profile Picture */}
-            {userData?.id && getProfileImageUrl(userData.id) ? (
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden border-2 border-app hover:border-[var(--accent)] transition-all duration-300 transform hover:scale-110 cursor-pointer">
-                <img
-                  src={getProfileImageUrl(userData.id) || ''}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    // Fallback to initials if image fails to load
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const parent = target.parentElement;
-                    if (parent) {
-                      parent.innerHTML = `<span class="text-secondary font-medium text-sm md:text-base flex items-center justify-center w-full h-full bg-surface-elevated">${getUserInitial(userData?.username || userData?.name || '')}</span>`;
-                    }
-                  }}
-                />
-              </div>
-            ) : (
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-surface-elevated rounded-full flex items-center justify-center hover:bg-[var(--accent)] transition-all duration-300 transform hover:scale-110 cursor-pointer">
-                <span className="text-secondary font-medium text-sm md:text-base">
-                  {getUserInitial(userData?.username || userData?.name || '')}
-                </span>
-              </div>
-            )}
-          </div>
+        <div className="flex items-center space-x-2 md:space-x-4">
+          {/* Instruction Button */}
+          <button
+            onClick={(e) => {
+              console.log('🔔 Instructions button clicked!');
+              console.log('onShowInstructions prop:', onShowInstructions);
+              e.preventDefault();
+              e.stopPropagation();
+              if (onShowInstructions) {
+                console.log('Calling onShowInstructions...');
+                onShowInstructions();
+              } else {
+                console.error('❌ onShowInstructions is undefined!');
+              }
+            }}
+            className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg flex items-center gap-2 transition-all duration-300 cursor-pointer"
+            aria-label="Show instructions"
+            id="instruction-trigger-button"
+            title="Show instructions"
+            type="button"
+          >
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm font-medium">Instructions</span>
+          </button>
+        </div>
         </div>
 
         {/* Website Preview */}
@@ -216,45 +209,33 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
           </h1>
           <p className="text-secondary text-sm md:text-base">{currentTime}</p>
         </div>
-        <div className="flex items-center space-x-2 md:space-x-4">
-          {/* Search Bar */}
-          <div className="relative group flex-1 md:flex-none">
-            <input
-              type="text"
-              placeholder="Search websites..."
-              className="w-full md:w-auto pl-10 pr-4 py-2 bg-surface-elevated border border-app rounded-lg text-primary placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-all duration-300 group-hover:border-app text-sm md:text-base"
-            />
-            <svg className="w-4 h-4 md:w-5 md:h-5 absolute left-3 top-2.5 text-secondary group-hover:text-primary transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+          <div className="flex items-center space-x-2 md:space-x-4">
+            {/* Instruction Button */}
+            <button
+              onClick={(e) => {
+                console.log('🔔 Instructions button clicked! (second instance)');
+                console.log('onShowInstructions prop:', onShowInstructions);
+                e.preventDefault();
+                e.stopPropagation();
+                if (onShowInstructions) {
+                  console.log('Calling onShowInstructions...');
+                  onShowInstructions();
+                } else {
+                  console.error('❌ onShowInstructions is undefined!');
+                }
+              }}
+              className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg flex items-center gap-2 transition-all duration-300 cursor-pointer"
+              aria-label="Show instructions"
+              id="instruction-trigger-button"
+              title="Show instructions"
+              type="button"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-sm font-medium">Instructions</span>
+            </button>
           </div>
-          
-          {/* Profile Picture */}
-          {userData?.id && getProfileImageUrl(userData.id) ? (
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden border-2 border-app hover:border-[var(--accent)] transition-all duration-300 transform hover:scale-110 cursor-pointer">
-              <img
-                src={getProfileImageUrl(userData.id) || ''}
-                alt="Profile"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Fallback to initials if image fails to load
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const parent = target.parentElement;
-                  if (parent) {
-                    parent.innerHTML = `<span class="text-gray-300 font-medium text-sm md:text-base flex items-center justify-center w-full h-full bg-gray-700">${getUserInitial(userData?.username || userData?.name || '')}</span>`;
-                  }
-                }}
-              />
-            </div>
-          ) : (
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all duration-300 transform hover:scale-110 cursor-pointer">
-              <span className="text-gray-300 font-medium text-sm md:text-base">
-                {getUserInitial(userData?.username || userData?.name || '')}
-              </span>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Create New Website Section */}
@@ -332,18 +313,18 @@ const MainContent = memo(({ currentWebsite }: MainContentProps) => {
                 <div className="flex space-x-2 items-center">
                   <button
                     onClick={() => handleEditWebsite(website.id)}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-xs font-medium transition-colors duration-300"
+                    className={`${website.is_published ? 'flex-1' : 'w-full'} bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-xs font-medium transition-colors duration-300`}
                   >
                     Edit
                   </button>
-                  {website.is_published && (
+                  {website.is_published ? (
                     <button
                       onClick={() => handleViewWebsite(website.slug)}
                       className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-xs font-medium transition-colors duration-300"
                     >
                       View
                     </button>
-                  )}
+                  ) : null}
                 </div>
               </div>
             ))}

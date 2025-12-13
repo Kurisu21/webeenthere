@@ -1,3 +1,4 @@
+
 // services/AiService.js
 const databaseSettingsService = require('./DatabaseSettingsService');
 
@@ -6,30 +7,31 @@ class AiService {
     this.apiKey = process.env.OPENROUTER_API_KEY;
     // Model will be loaded from settings, with fallback to default
     this.model = null;
-    this.maxTokens = 4000;
     this.temperature = 0.7;
   }
 
   // Get AI configuration from settings (with caching)
   async getAiConfig() {
+    // Set model directly to default
+    this.model = 'x-ai/grok-4.1-fast';
+    this.temperature = 0.7;
+    
     try {
       const config = await databaseSettingsService.getAiConfig();
-      this.model = config.model || 'x-ai/grok-4.1-fast:free';
-      this.maxTokens = config.maxTokens || 4000;
-      this.temperature = config.temperature || 0.7;
-      return config;
+      // Only override defaults if config exists and has values
+      if (config) {
+        if (config.model) this.model = config.model;
+        if (config.temperature) this.temperature = config.temperature;
+      }
     } catch (error) {
       console.error('Failed to load AI config from settings, using defaults:', error);
-      // Fallback to defaults
-      this.model = 'x-ai/grok-4.1-fast:free';
-      this.maxTokens = 4000;
-      this.temperature = 0.7;
-      return {
-        model: this.model,
-        maxTokens: this.maxTokens,
-        temperature: this.temperature
-      };
+      // Already set to defaults above, so just continue
     }
+    
+    return {
+      model: this.model,
+      temperature: this.temperature
+    };
   }
 
   // Ensure config is loaded before making API calls
@@ -39,21 +41,56 @@ class AiService {
     }
   }
 
+  // Build simplified prompt without structure guidance
+  buildSimpleTemplatePrompt(description) {
+    return `You are an expert web designer. Generate a complete website template based on the user's description.
+
+CRITICAL: Return ONLY valid JSON. The HTML and CSS strings MUST be properly escaped for JSON:
+- Escape all quotes: " becomes \\"
+- Escape all newlines: \\n becomes \\\\n
+- Escape all backslashes: \\ becomes \\\\
+- Do NOT use @import in CSS - use direct CSS only
+- Do NOT include <script>, <iframe>, or external links
+
+**IMPORTANT - IMAGE PLACEHOLDERS:**
+For ALL images in your HTML, use the editor's image placeholder block format:
+<div data-gjs-type="image-placeholder" data-gjs-placeholder-text="Add Image" style="width: 100%; min-height: 300px; border-radius: 8px;"></div>
+
+DO NOT use regular <img> tags. Always use the image placeholder format above so users can easily add images through the editor's image library. You can customize:
+- data-gjs-placeholder-text: The button text (e.g., "Add Hero Image", "Add Product Image")
+- style: Adjust width, height, min-height, aspect-ratio, border-radius, etc.
+
+Return ONLY valid JSON in this exact format (no markdown, no code blocks, no explanations):
+{
+  "html": "Complete HTML body content (no <html> or <head> tags, just body content - properly escaped for JSON)",
+  "css": "Complete CSS styles (no @import, properly escaped for JSON)",
+  "slots": [{"id":"slot_id","type":"image|text|button","description":"Description"}],
+  "meta": {"title":"Template Title"}
+}
+
+USER REQUEST: "${description}"
+
+Generate a creative, unique website that matches the user's request. Be creative with the structure and design. Use semantic HTML5 tags. Make it visually appealing with modern CSS. Include proper responsive design.
+
+IMPORTANT: Ensure your JSON is valid - all quotes, newlines, and special characters in HTML/CSS strings must be properly escaped.`;
+  }
+
   // Generate complete website template using OpenRoute API
   async generateCompleteTemplate(params) {
     try {
-      const { description, websiteType, style, colorScheme, includeSections, userId, tailwindMode = false } = params;
+      const { description, websiteType, style, colorScheme, includeSections, userId, tailwindMode = false, simpleMode = false } = params;
       
       console.log('Generating template with params:', params);
       
       if (!this.apiKey) {
         console.log('No API key found, using fallback HTML/CSS');
         const fallback = this.createFallbackHtmlCss(params);
-        const sanitized = this.sanitizeOutput({ html: fallback.html, css: fallback.css });
+        // Skip sanitization to preserve exact content
+        // const sanitized = this.sanitizeOutput({ html: fallback.html, css: fallback.css });
         return {
           success: true,
-          html: sanitized.html,
-          css: sanitized.css,
+          html: fallback.html || '',
+          css: fallback.css || '',
           slots: fallback.slots,
           meta: fallback.meta,
           reasoning: 'Generated fallback (no API key configured)',
@@ -63,30 +100,48 @@ class AiService {
 
       console.log('API key found, attempting to call OpenRoute API...');
 
-      // Enhanced prompt with user input as priority
-      const enhancedPrompt = this.buildTemplatePrompt({
-        description,
-        websiteType,
-        style,
-        colorScheme,
-        includeSections,
-        tailwindMode
-      });
+      // Use simplified prompt if simpleMode is enabled
+      let enhancedPrompt;
+      if (simpleMode) {
+        enhancedPrompt = this.buildSimpleTemplatePrompt(description);
+        console.log('Using SIMPLIFIED prompt (no structure guidance)');
+      } else {
+        // Enhanced prompt with user input as priority
+        enhancedPrompt = this.buildTemplatePrompt({
+          description,
+          websiteType,
+          style,
+          colorScheme,
+          includeSections,
+          tailwindMode
+        });
+      }
 
       console.log('Sending request to OpenRoute API with prompt:', enhancedPrompt);
 
       // Call OpenRoute API
       const response = await this.callOpenRouteAPI(enhancedPrompt);
       
+      // Log the full AI response for debugging
+      console.log('=== AI TEMPLATE GENERATION RESPONSE ===');
+      console.log('Response success:', response.success);
+      if (response.success) {
+        console.log('Raw AI content length:', response.content?.length || 0);
+        console.log('Raw AI content preview (first 500 chars):', response.content?.substring(0, 500) || 'No content');
+      } else {
+        console.log('AI API error:', response.error);
+      }
+      
       if (!response.success) {
         console.log('OpenRoute API call failed:', response.error);
         console.log('Using fallback HTML/CSS');
         const fallback = this.createFallbackHtmlCss(params);
-        const sanitized = this.sanitizeOutput({ html: fallback.html, css: fallback.css });
+        // Skip sanitization to preserve exact content
+        // const sanitized = this.sanitizeOutput({ html: fallback.html, css: fallback.css });
         return {
           success: true,
-          html: sanitized.html,
-          css: sanitized.css,
+          html: fallback.html || '',
+          css: fallback.css || '',
           slots: fallback.slots,
           meta: fallback.meta,
           reasoning: `Generated fallback (OpenRoute API failed: ${response.error})`,
@@ -96,11 +151,28 @@ class AiService {
 
       // Parse strict JSON into { html, css, slots, meta }
       const { html, css, slots, meta } = this.parseTemplateStrictResponse(response.content, params);
-      const sanitized = this.sanitizeOutput({ html, css });
+      
+      // Log parsed template data
+      console.log('=== PARSED TEMPLATE DATA ===');
+      console.log('HTML length:', html?.length || 0);
+      console.log('CSS length:', css?.length || 0);
+      console.log('Slots count:', slots?.length || 0);
+      console.log('Meta:', JSON.stringify(meta, null, 2));
+      console.log('HTML preview (first 300 chars):', html?.substring(0, 300) || 'No HTML');
+      console.log('CSS preview (first 300 chars):', css?.substring(0, 300) || 'No CSS');
+      
+      // Skip sanitization to preserve exact AI-generated HTML/CSS content
+      // const sanitized = this.sanitizeOutput({ html, css });
+      
+      // Log output (unsanitized)
+      console.log('=== OUTPUT (UNSANITIZED - PRESERVING EXACT CONTENT) ===');
+      console.log('HTML length:', html?.length || 0);
+      console.log('CSS length:', css?.length || 0);
+      
       return {
         success: true,
-        html: sanitized.html,
-        css: sanitized.css,
+        html: html || '',
+        css: css || '',
         slots,
         meta,
         reasoning: response.reasoning || 'Template generated successfully',
@@ -110,11 +182,12 @@ class AiService {
     } catch (error) {
       console.error('Generate Complete Template Error:', error);
       const fallback = this.createFallbackHtmlCss(params);
-      const sanitized = this.sanitizeOutput({ html: fallback.html, css: fallback.css });
+      // Skip sanitization to preserve exact content
+      // const sanitized = this.sanitizeOutput({ html: fallback.html, css: fallback.css });
       return {
         success: true,
-        html: sanitized.html,
-        css: sanitized.css,
+        html: fallback.html || '',
+        css: fallback.css || '',
         slots: fallback.slots,
         meta: fallback.meta,
         reasoning: 'Generated fallback due to error',
@@ -168,19 +241,215 @@ class AiService {
   // Parse strict { html, css, slots, meta } response (with markdown tolerance)
   parseTemplateStrictResponse(content, params) {
     try {
-      console.log('Raw AI response:', content);
+      console.log('=== PARSING AI RESPONSE ===');
+      console.log('Raw AI response length:', content?.length || 0);
+      console.log('Raw AI response preview (first 1000 chars):', content?.substring(0, 1000) || 'No content');
+      
       let cleanContent = content.trim().replace(/```json\s*/g, '').replace(/```\s*/g, '');
       const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON found in AI response');
-      const jsonString = jsonMatch[0];
-      const data = JSON.parse(jsonString);
-      const html = typeof data.html === 'string' ? data.html : '';
-      const css = typeof data.css === 'string' ? data.css : '';
+      if (!jsonMatch) {
+        console.error('No JSON found in AI response');
+        throw new Error('No JSON found in AI response');
+      }
+      
+      let jsonString = jsonMatch[0];
+      console.log('Extracted JSON string length:', jsonString.length);
+      console.log('Extracted JSON preview (first 500 chars):', jsonString.substring(0, 500));
+      
+      let data;
+      try {
+        data = JSON.parse(jsonString);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError.message);
+        console.log('Error position:', parseError.message.match(/position (\d+)/)?.[1] || 'unknown');
+        console.log('Attempting to fix JSON...');
+        
+        // More robust JSON fixing - extract values manually
+        try {
+          console.log('Attempting manual extraction of HTML and CSS...');
+          
+          // Find "html": and extract the string value (handling escaped quotes)
+          const htmlStart = jsonString.indexOf('"html"');
+          const cssStart = jsonString.indexOf('"css"');
+          
+          if (htmlStart !== -1 && cssStart !== -1) {
+            // Extract HTML value
+            let htmlValue = '';
+            let htmlPos = jsonString.indexOf(':', htmlStart) + 1;
+            // Skip whitespace
+            while (htmlPos < jsonString.length && /\s/.test(jsonString[htmlPos])) htmlPos++;
+            
+            if (jsonString[htmlPos] === '"') {
+              htmlPos++; // Skip opening quote
+              let inString = true;
+              let escaped = false;
+              while (htmlPos < jsonString.length && inString) {
+                if (escaped) {
+                  htmlValue += jsonString[htmlPos];
+                  escaped = false;
+                } else if (jsonString[htmlPos] === '\\') {
+                  htmlValue += jsonString[htmlPos];
+                  escaped = true;
+                } else if (jsonString[htmlPos] === '"') {
+                  // Check if this is the end of the string (next char should be , or } or whitespace)
+                  let nextPos = htmlPos + 1;
+                  while (nextPos < jsonString.length && /\s/.test(jsonString[nextPos])) nextPos++;
+                  if (nextPos >= jsonString.length || jsonString[nextPos] === ',' || jsonString[nextPos] === '}') {
+                    inString = false;
+                    break;
+                  }
+                  htmlValue += jsonString[htmlPos];
+                } else {
+                  htmlValue += jsonString[htmlPos];
+                }
+                htmlPos++;
+              }
+            }
+            
+            // Extract CSS value (similar approach)
+            let cssValue = '';
+            let cssPos = jsonString.indexOf(':', cssStart) + 1;
+            while (cssPos < jsonString.length && /\s/.test(jsonString[cssPos])) cssPos++;
+            
+            if (jsonString[cssPos] === '"') {
+              cssPos++;
+              let inString = true;
+              let escaped = false;
+              while (cssPos < jsonString.length && inString) {
+                if (escaped) {
+                  cssValue += jsonString[cssPos];
+                  escaped = false;
+                } else if (jsonString[cssPos] === '\\') {
+                  cssValue += jsonString[cssPos];
+                  escaped = true;
+                } else if (jsonString[cssPos] === '"') {
+                  let nextPos = cssPos + 1;
+                  while (nextPos < jsonString.length && /\s/.test(jsonString[nextPos])) nextPos++;
+                  if (nextPos >= jsonString.length || jsonString[nextPos] === ',' || jsonString[nextPos] === '}') {
+                    inString = false;
+                    break;
+                  }
+                  cssValue += jsonString[cssPos];
+                } else {
+                  cssValue += jsonString[cssPos];
+                }
+                cssPos++;
+              }
+            }
+            
+            if (htmlValue || cssValue) {
+              console.log('Successfully extracted HTML and CSS manually');
+              // Unescape the values (handle JSON escape sequences)
+              htmlValue = htmlValue
+                .replace(/\\\\/g, '\\') // Unescape backslashes first
+                .replace(/\\"/g, '"')    // Unescape quotes
+                .replace(/\\n/g, '\n')   // Unescape newlines
+                .replace(/\\t/g, '\t')   // Unescape tabs
+                .replace(/\\r/g, '\r')   // Unescape carriage returns
+                .replace(/\\'/g, "'");    // Unescape single quotes
+              
+              cssValue = cssValue
+                .replace(/\\\\/g, '\\')  // Unescape backslashes first
+                .replace(/\\"/g, '"')    // Unescape quotes
+                .replace(/\\n/g, '\n')   // Unescape newlines
+                .replace(/\\t/g, '\t')   // Unescape tabs
+                .replace(/\\r/g, '\r')   // Unescape carriage returns
+                .replace(/\\'/g, "'");   // Unescape single quotes
+              
+              // Remove <link> tags from HTML
+              htmlValue = htmlValue.replace(/<link[^>]*>/gi, '');
+              
+              // Remove @import from CSS
+              cssValue = cssValue.replace(/@import\s+url\([^)]*\);?/gi, '').replace(/@import\s+['"][^'"]*['"];?/gi, '');
+              
+              // Try to extract slots and meta
+              let slots = [];
+              let meta = { title: params.description || 'AI Template' };
+              
+              try {
+                const slotsStart = jsonString.indexOf('"slots"');
+                if (slotsStart !== -1) {
+                  const slotsArrayStart = jsonString.indexOf('[', slotsStart);
+                  const slotsArrayEnd = jsonString.indexOf(']', slotsArrayStart);
+                  if (slotsArrayStart !== -1 && slotsArrayEnd !== -1) {
+                    const slotsStr = jsonString.substring(slotsArrayStart, slotsArrayEnd + 1);
+                    slots = JSON.parse(slotsStr);
+                  }
+                }
+              } catch (e) {
+                console.warn('Could not parse slots, using empty array');
+              }
+              
+              try {
+                const metaStart = jsonString.indexOf('"meta"');
+                if (metaStart !== -1) {
+                  const metaObjStart = jsonString.indexOf('{', metaStart);
+                  let braceCount = 0;
+                  let metaObjEnd = metaObjStart;
+                  for (let i = metaObjStart; i < jsonString.length; i++) {
+                    if (jsonString[i] === '{') braceCount++;
+                    if (jsonString[i] === '}') braceCount--;
+                    if (braceCount === 0) {
+                      metaObjEnd = i;
+                      break;
+                    }
+                  }
+                  if (metaObjStart !== -1 && metaObjEnd !== -1) {
+                    const metaStr = jsonString.substring(metaObjStart, metaObjEnd + 1);
+                    meta = JSON.parse(metaStr);
+                  }
+                }
+              } catch (e) {
+                console.warn('Could not parse meta, using default');
+              }
+              
+              console.log('Extracted values - HTML length:', htmlValue.length, 'CSS length:', cssValue.length, 'Slots:', slots.length);
+              return { html: htmlValue, css: cssValue, slots, meta };
+            }
+          }
+        } catch (regexError) {
+          console.error('Manual extraction also failed:', regexError.message);
+        }
+        
+        // Fallback: try to fix common JSON issues
+        let fixedJson = jsonString
+          .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
+          .replace(/([{,]\s*)(\w+):/g, '$1"$2":') // Quote unquoted keys
+          .replace(/:\s*'([^']*)'/g, ': "$1"') // Replace single quotes with double quotes
+          .replace(/([^\\])"/g, '$1\\"') // Escape unescaped quotes (but this might break things)
+          .replace(/\\n/g, '\\n') // Preserve newlines
+          .replace(/\\"/g, '\\"'); // Preserve escaped quotes
+        
+        console.log('Fixed JSON preview (first 500 chars):', fixedJson.substring(0, 500));
+        try {
+          data = JSON.parse(fixedJson);
+        } catch (secondError) {
+          console.error('Second parse attempt also failed:', secondError.message);
+          throw parseError; // Throw original error
+        }
+      }
+      
+      console.log('Parsed JSON keys:', Object.keys(data));
+      
+      // Clean HTML - remove any <link> tags that shouldn't be in body content
+      let html = typeof data.html === 'string' ? data.html : '';
+      html = html.replace(/<link[^>]*>/gi, ''); // Remove link tags from HTML
+      
+      let css = typeof data.css === 'string' ? data.css : '';
+      // Remove @import statements from CSS (should be done before parsing, but do it here too for safety)
+      css = css.replace(/@import\s+url\([^)]*\);?/gi, '').replace(/@import\s+['"][^'"]*['"];?/gi, '');
+      
       const slots = Array.isArray(data.slots) ? data.slots : [];
       const meta = typeof data.meta === 'object' && data.meta !== null ? data.meta : { title: params.description || 'AI Template' };
+      
+      console.log('Extracted values - HTML length:', html.length, 'CSS length:', css.length, 'Slots:', slots.length);
+      
       return { html, css, slots, meta };
     } catch (error) {
-      console.error('Parse Template Strict Response Error:', error);
+      console.error('=== PARSE TEMPLATE STRICT RESPONSE ERROR ===');
+      console.error('Error:', error.message);
+      console.error('Stack:', error.stack);
+      console.log('Using fallback template');
       const fb = this.createFallbackHtmlCss(params);
       return { html: fb.html, css: fb.css, slots: fb.slots, meta: fb.meta };
     }
@@ -401,10 +670,36 @@ ${css || ''}`;
 
   // Build enhanced prompt prioritizing user input with professional design guidelines
   buildTemplatePrompt(params) {
-    const { description, websiteType, style, colorScheme, includeSections, tailwindMode = false } = params;
+    const { description, websiteType = 'general', style = 'modern', colorScheme = 'blue', includeSections, tailwindMode = false } = params;
     const sections = Array.isArray(includeSections) && includeSections.length > 0
       ? includeSections.join(', ')
       : 'header, hero, 2-3 content sections, footer';
+    
+    // Content type-specific structure and content guidance (NOT design)
+    const contentTypeGuidance = {
+      'landing-page': {
+        structure: 'Be creative with layout - consider hero sections, features/benefits, social proof/testimonials, pricing (if applicable), and footer. Use unique, conversion-focused arrangements that vary from typical patterns.',
+        content: 'Generate persuasive copy that highlights value proposition, benefits, and clear calls-to-action. Include realistic testimonials and feature descriptions. Be creative with how you present the content.'
+      },
+      'portfolio': {
+        structure: 'Be creative with how you showcase work - consider hero/intro sections, about sections, projects/work displays, skills sections, and contact. Use unique layouts and arrangements, not standard grid patterns.',
+        content: 'Generate professional portfolio content including project descriptions, skill lists, about text, and contact information. Use realistic project names and descriptions. Be creative with content presentation.'
+      },
+      'e-commerce': {
+        structure: 'Be creative with product presentation - consider navigation, hero/banner sections, product categories, featured products, product details, and checkout/contact. Use unique, engaging layouts that facilitate browsing.',
+        content: 'Generate product listings with names, descriptions, prices, and categories. Include realistic product information and shopping-related content. Be creative with how products are presented.'
+      },
+      'business': {
+        structure: 'Be creative with corporate layout - consider navigation, hero sections, services/offerings, about/company sections, testimonials, and contact forms. Use unique, professional arrangements that convey trust.',
+        content: 'Generate business-focused content including service descriptions, company information, team details, and professional contact information. Be creative with how business information is presented.'
+      },
+      'content-creator': {
+        structure: 'Be creative with media presentation - consider hero sections, featured content/videos, social media links, collaboration highlights, about sections, and contact. Use unique, media-rich layouts that showcase content effectively.',
+        content: 'Generate content creator-focused sections including video descriptions, social media stats, collaboration examples, and personal branding content. Be creative with how creator content is displayed.'
+      }
+    };
+    
+    const typeGuidance = contentTypeGuidance[websiteType] || null;
     
     // Color scheme mappings for professional palettes
     const colorPalettes = {
@@ -427,6 +722,17 @@ CRITICAL REQUIREMENTS:
 - All code must be clean, semantic, and follow modern web standards
 - **NEVER include the user's prompt text in the website content** - create appropriate content based on the prompt's intent
 - **Generate realistic, professional content** that matches what the user requested, not placeholder text or the prompt itself
+- **Generate COMPLETE HTML with multiple sections** like header, hero, about/services, features, testimonials, contact, footer
+- **Use modern CSS** with gradients, animations, hover effects, and smooth transitions
+- **Make it visually impressive** with proper spacing, typography, and color schemes
+- **DESIGN QUALITY**: Generate templates with the same visual quality as premium portfolio and gaming websites:
+  - Rich gradients (linear-gradient, radial-gradient) for backgrounds and buttons
+  - Sophisticated animations (@keyframes for glow, float, shimmer effects)
+  - Modern visual effects (backdrop-filter: blur(), text-shadow, multi-layer box-shadow)
+  - Professional typography with gradient text effects where appropriate
+  - Smooth hover interactions with transforms and shadow changes
+  - Glassmorphism effects (backdrop-filter: blur() with rgba backgrounds)
+  - SVG patterns and geometric shapes for visual interest
 
 OUTPUT FORMAT (STRICT JSON):
 {
@@ -436,21 +742,69 @@ OUTPUT FORMAT (STRICT JSON):
   "meta": {"title":"Template Title", "colorScheme":"${colorScheme}", "style":"${style}"}${tailwindMode ? ',\n  "tailwind_html": "..."' : ''}
 }
 
+**CRITICAL EDITOR COMPATIBILITY REQUIREMENTS:**
+The HTML and CSS you generate will be loaded into a GrapesJS visual editor using:
+- editor.setComponents(html) - expects plain HTML string that can be parsed into editable components
+- editor.setStyle(css) - expects plain CSS string
+
+**HTML FORMAT REQUIREMENTS FOR EDITOR COMPATIBILITY:**
+1. **Use semantic HTML structure creatively** - GrapesJS parses HTML into components, so keep structure clean but feel free to be creative with layouts
+2. **Avoid deeply nested structures** - Keep nesting to 3-4 levels maximum for better editor parsing
+3. **Use proper HTML5 semantic tags creatively** - <header>, <nav>, <main>, <section>, <article>, <footer> - use these creatively, not in a fixed pattern
+4. **Each major section should be a separate element** - Don't nest too many divs, use semantic tags instead, but arrange them uniquely
+5. **Avoid inline event handlers** - No onclick, onload, etc. (already mentioned, but critical)
+6. **Use creative, descriptive class names** - GrapesJS uses classes to identify components, so use unique names that describe the specific design
+7. **Keep HTML clean and well-formatted** - Proper indentation helps GrapesJS parse correctly
+8. **Avoid special characters in attributes** - Use standard quotes, no smart quotes or special Unicode
+9. **Text content should be directly in elements** - Not wrapped in extra spans unless necessary
+10. **Use data-slot attributes for editable content** - This helps the editor identify what can be edited
+
+**CSS FORMAT REQUIREMENTS FOR EDITOR COMPATIBILITY:**
+1. **Use standard CSS syntax** - No experimental features that might not parse
+2. **Keep selectors simple** - Complex selectors work but simple ones are easier for editor to manage
+3. **Use CSS variables in :root** - These work well with GrapesJS style manager
+4. **Avoid @import statements** - Use direct CSS only
+5. **Media queries should be at the end** - Better for editor organization
+6. **Use standard units** - px, rem, em, %, vw, vh - avoid exotic units
+7. **Keep CSS readable** - Proper formatting helps editor parse and display styles correctly
+
 USER REQUEST: "${description}"
-WEBSITE TYPE: ${websiteType}
-DESIGN STYLE: ${style}
-COLOR SCHEME: ${colorScheme}
+
+**IMPORTANT**: Analyze the user's description to determine:
+- Website type (portfolio, business, ecommerce, blog, landing page, etc.)
+- Design style (modern, minimal, elegant, bold, creative, etc.)
+- Color scheme (blue, purple, green, red, dark, orange, teal, etc.)
+
+Choose appropriate values based on the user's intent and description. For example:
+- "portfolio" or "showcase my work" → portfolio type
+- "business" or "company" → business type
+- "ecommerce" or "online store" → ecommerce type
+- "premium" or "elegant" → elegant style
+- "bold" or "eye-catching" → bold style
+- "minimal" or "clean" → minimal style
+- User mentions colors → use those colors, otherwise use blue as default
+
 REQUIRED SECTIONS: ${sections}
+
+${typeGuidance ? `**CONTENT TYPE-SPECIFIC GUIDANCE (${websiteType.toUpperCase()}):**
+
+**STRUCTURE SUGGESTIONS (be creative, don't follow a pattern):**
+${typeGuidance.structure}
+
+**CONTENT SUGGESTIONS (be creative with presentation):**
+${typeGuidance.content}
+
+**CRITICAL**: Use this guidance as inspiration, NOT as a template. Be creative and unique with each generation. Vary your HTML structure, layout arrangements, and content presentation. Do NOT follow the same pattern for every request - each website should feel fresh and different.
+
+` : ''}
 
 **CRITICAL CONTENT GENERATION RULES:**
 1. **Understand the user's intent** from their prompt and create appropriate content
-2. **For portfolio requests**: Create sections for "About Me", "My Work/Projects", "Skills", "Education", "Contact" with realistic content
-3. **For business requests**: Create sections for "Services", "About Us", "Testimonials", "Contact" with professional content
-4. **For blog requests**: Create article layouts, category navigation, author sections
-5. **For landing pages**: Create compelling hero sections, feature highlights, testimonials, CTAs
-6. **NEVER use the user's exact prompt text as content** - interpret it and create appropriate website content
-7. **Use professional, realistic text** that matches the website type and user's intent
-8. **Example**: If user says "portfolio for someone who just graduated", create content like "Recent Graduate", "Education", "Projects", "Skills", "Get In Touch" - NOT the prompt text itself
+2. **NEVER use the user's exact prompt text as content** - interpret it and create appropriate website content
+3. **Use professional, realistic text** that matches the website type and user's intent
+4. **Generate unique content** - each website type should have distinct, appropriate content (not generic placeholder text)
+5. **Example**: If user says "portfolio for someone who just graduated", create content like "Recent Graduate", "Education", "Projects", "Skills", "Get In Touch" - NOT the prompt text itself
+6. **Focus on structure and content quality** - the HTML structure should match the website type's needs, and content should be realistic and appropriate
 
 DESIGN GUIDELINES - PROFESSIONAL TEMPLATE REQUIREMENTS:
 
@@ -485,51 +839,71 @@ Muted Text: ${palette.muted}
 - Font weights: 400 (regular), 500 (medium), 600 (semibold), 700 (bold)
 - Proper text contrast: minimum 4.5:1 for body text, 3:1 for large text
 
-**Components to Include:**
-1. **Header/Navigation:**
-   - Sticky positioning with backdrop blur
-   - Logo/brand area (data-slot="logo")
-   - Navigation menu (horizontal on desktop, hamburger on mobile)
-   - Clean, minimal design
+**Components to Consider (be creative with arrangement and design):**
+- Header/Navigation with logo/brand area (data-slot="logo")
+- Hero sections with headlines (data-slot="headline"), subheadlines (data-slot="subheadline"), images (data-slot="hero_image"), and CTAs (data-slot="primary_cta")
+- Content sections with features, about, services, testimonials, etc.
+- Footer with links and copyright (data-slot="footer_text")
 
-2. **Hero Section:**
-   - Compelling headline (data-slot="headline")
-   - Supporting subheadline (data-slot="subheadline")
-   - Hero image/visual area (data-slot="hero_image")
-   - Primary CTA button (data-slot="primary_cta")
-   - Secondary CTA button (optional, data-slot="secondary_cta")
-   - Modern layout with proper spacing
+**IMPORTANT**: These are suggestions, not requirements. Be creative with how you arrange and design these components. Each website should have a unique structure and layout that matches its purpose and the user's request.
 
-3. **Content Sections:**
-   - Feature sections with icons/images (data-slot="feature_icon_X", "feature_title_X", "feature_desc_X")
-   - About/Description section
-   - Services/Products section (if applicable)
-   - Testimonials or social proof (if applicable)
-   - Use cards with subtle borders and shadows
-
-4. **Footer:**
-   - Footer logo (data-slot="footer_logo")
-   - Footer links or content
-   - Copyright text (data-slot="footer_text")
-   - Clean, organized layout
-
-**CSS Requirements:**
+**CSS Requirements - PREMIUM DESIGN QUALITY:**
 - Use CSS custom properties (variables) for colors, spacing, and typography
 - Example: :root { --brand: ${palette.primary}; --bg: ${palette.bg}; --text: ${palette.text}; --spacing-xs: 4px; --spacing-sm: 8px; --spacing-md: 16px; --spacing-lg: 24px; --spacing-xl: 32px; --spacing-2xl: 48px; --spacing-3xl: 64px; }
 - Mobile-first media queries: @media (min-width: 640px), @media (min-width: 768px), @media (min-width: 1024px)
 - Smooth transitions: transition: all 0.2s ease or transition: transform 0.2s ease, opacity 0.2s ease
-- Subtle animations: Use @keyframes for loading states, hover effects, or entrance animations
-- Professional button styles: rounded corners (8-12px), proper padding, hover states with transform or shadow changes
-- Card components: border-radius: 12-16px, subtle shadow, padding: 24-32px
+- **PREMIUM ANIMATIONS**: Use @keyframes for sophisticated effects like:
+  - Glow animations: text-shadow pulsing, element glowing
+  - Float animations: subtle translateY movements for hero sections
+  - Shimmer effects: gradient animations on buttons/cards
+  - Fade-in animations: opacity transitions for content sections
+- **PROFESSIONAL BUTTON STYLES**: 
+  - Rounded corners (8-12px), proper padding, hover states with transform or shadow changes
+  - Gradient backgrounds: linear-gradient(45deg, color1, color2)
+  - Box shadows: 0 10px 30px rgba(0, 0, 0, 0.1) for depth
+  - Hover effects: transform: translateY(-2px to -5px), enhanced shadows
+- **CARD COMPONENTS**: 
+  - border-radius: 12-16px, subtle shadow, padding: 24-32px
+  - Hover effects: transform: translateY(-8px to -10px), enhanced box-shadow
+  - Background: rgba() with backdrop-filter: blur() for glassmorphism effects
+- **USE GRADIENTS CREATIVELY**: 
+  - Linear gradients for buttons: linear-gradient(45deg, #color1, #color2)
+  - Radial gradients for hero sections: radial-gradient(circle at position, color1, transparent)
+  - Multiple gradient layers for depth
+- **MODERN VISUAL EFFECTS**:
+  - backdrop-filter: blur(10px to 20px) for glassmorphism headers/navs
+  - text-shadow: 0 0 20px color for glow effects on headings
+  - box-shadow: Multiple layers (0 1px 3px, 0 4px 6px, 0 10px 25px) for depth
+  - background gradients: linear-gradient(135deg, color1 0%, color2 50%, color3 100%) for rich backgrounds
+  - SVG patterns: Use data URIs for grid patterns, geometric shapes
+- **TYPOGRAPHY EFFECTS**:
+  - Gradient text: background: linear-gradient(), -webkit-background-clip: text, -webkit-text-fill-color: transparent
+  - Text shadows for depth and glow
+  - Letter spacing for modern feel
+- **INTERACTIVE ELEMENTS**:
+  - Smooth hover transitions (0.2s to 0.3s ease)
+  - Transform effects on hover (scale, translateY)
+  - Color transitions on links and buttons
+  - Underline animations using ::after pseudo-elements
 
 **HTML Requirements:**
-- Semantic HTML5: <header>, <nav>, <main>, <section>, <article>, <footer>
+- Semantic HTML5: <header>, <nav>, <main>, <section>, <article>, <footer> - use creatively, not in a fixed pattern
 - Proper heading hierarchy (h1 → h2 → h3)
 - Accessibility: aria-labels where needed, alt text placeholders
 - Use data-slot attributes for all replaceable content
-- Clean, readable class names (BEM-like: .site-header, .hero-section, .feature-card)
+- Creative, descriptive class names that match the specific design (avoid generic patterns)
 - No inline styles (except data attributes)
 - Proper indentation and structure
+- **VARY YOUR STRUCTURE** - Don't use the same HTML pattern for every request. Be creative and unique!
+- **MUST include multiple complete sections**: header with navigation, hero section, 2-4 content sections (about, services, features, testimonials, etc.), and footer
+- **Each section should be substantial** with proper content, not just placeholders
+- **CRITICAL: DO NOT include <link> tags in the HTML** - HTML should only contain body content (no <head>, <html>, <link>, <script>, or <style> tags)
+- **Icons should use Font Awesome classes** like <i class="fas fa-icon-name"></i> - the editor will handle adding the Font Awesome CDN link
+- **Include smooth scrolling** and interactive elements where appropriate
+- **Escape all quotes properly in JSON** - use \" for quotes inside HTML strings
+- **Structure for editor compatibility**: Keep HTML structure simple and flat where possible - GrapesJS editor needs to parse this into editable components
+- **Avoid complex nested divs** - Use semantic HTML5 elements instead of div soup
+- **Each major content block should be a direct child** of its parent section for better editor componentization
 
 **Responsive Design:**
 - Mobile: Single column, stacked layout, hamburger menu
@@ -550,30 +924,43 @@ ${style === 'modern' ? `- Clean lines, minimal design, lots of white space
 - Subtle shadows and depth
 - Modern typography with good hierarchy
 - Smooth animations and transitions
-- Card-based layouts` : ''}
+- Card-based layouts
+- Use gradients sparingly but effectively
+- backdrop-filter: blur() for modern glassmorphism effects` : ''}
 
 ${style === 'minimal' ? `- Extremely clean, maximum white space
 - Minimal color usage (mostly monochrome with one accent)
 - Simple typography, no decorative elements
-- Focus on content and readability` : ''}
+- Focus on content and readability
+- Subtle hover effects only` : ''}
 
 ${style === 'bold' ? `- Strong colors and high contrast
 - Large, impactful typography
 - Bold geometric shapes
 - Strong visual hierarchy
-- Eye-catching design elements` : ''}
+- Eye-catching design elements
+- Vibrant gradients and bold shadows
+- Text shadows for emphasis
+- Strong hover effects with transforms` : ''}
 
 ${style === 'elegant' ? `- Sophisticated color palette
 - Refined typography with serif or elegant sans-serif
 - Subtle decorative elements
 - Premium feel with attention to detail
-- Classic layouts with modern touches` : ''}
+- Classic layouts with modern touches
+- Subtle animations and transitions
+- Gradient text effects for headings` : ''}
 
 ${style === 'creative' ? `- Unique layouts and compositions
 - Creative use of space and typography
 - Artistic elements and patterns
 - Bold color combinations
-- Experimental but functional design` : ''}
+- Experimental but functional design
+- Multiple gradient layers
+- Animated backgrounds and effects
+- Glow effects and text shadows
+- Creative hover interactions
+- SVG patterns and geometric shapes` : ''}
 
 **Website Type Considerations:**
 
@@ -625,6 +1012,15 @@ All replaceable content must have data-slot attributes:
   "meta": {"title":"${websiteType} - ${style}","colorScheme":"${colorScheme}","style":"${style}"}
 }
 
+**CREATIVITY & VARIATION REQUIREMENTS:**
+- **BE CREATIVE AND UNIQUE** - Do NOT follow a fixed template or pattern. Each website should have its own distinct structure and layout.
+- **Vary your approach** - Use different layouts, section arrangements, and component structures for each request.
+- **Think outside the box** - Experiment with different HTML structures, creative section arrangements, and unique component designs.
+- **Avoid repetitive patterns** - Each generation should feel fresh and different, not like a copy of a template.
+- **Use semantic HTML creatively** - While maintaining editor compatibility, be creative with how you structure and organize content.
+- **Unique class names** - Use creative, descriptive class names that match the specific design (not generic names like "section-1", "section-2").
+- **Innovative layouts** - Try different grid patterns, flex arrangements, and creative spacing approaches.
+
 **CRITICAL:**
 - Return ONLY the JSON object, no markdown, no code blocks, no explanations
 - HTML must be complete and valid
@@ -657,7 +1053,6 @@ All replaceable content must have data-slot attributes:
               content: prompt
             }
           ],
-          max_tokens: this.maxTokens,
           temperature: this.temperature
         })
       });
@@ -681,7 +1076,6 @@ All replaceable content must have data-slot attributes:
         content,
         reasoning: 'Template generated using OpenRoute API'
       };
-
     } catch (error) {
       console.error('OpenRoute API Error:', error);
       return {

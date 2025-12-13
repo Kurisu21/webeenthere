@@ -157,8 +157,38 @@ class SubscriptionService {
   async checkAiChatLimit(userId) {
     const subscription = await this.userPlanModel.findByUserId(userId);
     if (!subscription) {
-      // Default to free plan limits
-      return { canUse: false, remaining: 0, limit: 20 };
+      // Default to free plan limits - use user creation date for free users
+      const [userResult] = await this.db.execute(
+        'SELECT created_at, ai_chat_usage, ai_chat_reset_date FROM users WHERE id = ?',
+        [userId]
+      );
+      const userCreated = userResult[0]?.created_at ? new Date(userResult[0].created_at) : new Date();
+      const now = new Date();
+      const daysSinceCreation = Math.floor((now - userCreated) / (1000 * 60 * 60 * 24));
+      const cyclesSinceCreation = Math.floor(daysSinceCreation / 30);
+      const nextCycleStart = new Date(userCreated);
+      nextCycleStart.setDate(userCreated.getDate() + (cyclesSinceCreation + 1) * 30);
+      
+      let usage = userResult[0]?.ai_chat_usage || 0;
+      const lastResetDate = userResult[0]?.ai_chat_reset_date ? new Date(userResult[0].ai_chat_reset_date) : null;
+      
+      // Reset if we've crossed a 30-day boundary
+      if (!lastResetDate || (daysSinceCreation >= 30 && Math.floor((lastResetDate - userCreated) / (1000 * 60 * 60 * 24)) < cyclesSinceCreation * 30)) {
+        await this.db.execute(
+          'UPDATE users SET ai_chat_usage = 0, ai_chat_reset_date = ? WHERE id = ?',
+          [now, userId]
+        );
+        usage = 0;
+      }
+      
+      const remaining = 20 - usage;
+      return {
+        canUse: remaining > 0,
+        remaining: Math.max(0, remaining),
+        limit: 20,
+        used: usage,
+        nextResetDate: nextCycleStart.toISOString()
+      };
     }
 
     // If unlimited (null limit), return true
@@ -166,19 +196,46 @@ class SubscriptionService {
       return { canUse: true, remaining: -1, limit: -1 }; // -1 means unlimited
     }
 
-    // Get user's AI chat usage
+    // Check if reset is needed based on subscription start_date (30-day cycle)
+    const startDate = new Date(subscription.start_date);
+    const now = new Date();
+    const daysSinceStart = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+    const cyclesSinceStart = Math.floor(daysSinceStart / 30);
+    
+    // Get user's AI chat usage and reset_date
     const [result] = await this.db.execute(
-      'SELECT ai_chat_usage FROM users WHERE id = ?',
+      'SELECT ai_chat_usage, ai_chat_reset_date FROM users WHERE id = ?',
       [userId]
     );
-    const usage = result[0]?.ai_chat_usage || 0;
+    let usage = result[0]?.ai_chat_usage || 0;
+    const lastResetDate = result[0]?.ai_chat_reset_date ? new Date(result[0].ai_chat_reset_date) : null;
+    
+    // Calculate next reset date (30 days from subscription start, then every 30 days)
+    const nextCycleStart = new Date(startDate);
+    nextCycleStart.setDate(startDate.getDate() + (cyclesSinceStart + 1) * 30);
+    
+    // Calculate the last expected reset date based on cycles
+    const lastExpectedReset = new Date(startDate);
+    lastExpectedReset.setDate(startDate.getDate() + cyclesSinceStart * 30);
+    
+    // If we've passed a 30-day cycle boundary, reset usage
+    if (!lastResetDate || lastResetDate < lastExpectedReset) {
+      // Reset usage and update reset_date
+      await this.db.execute(
+        'UPDATE users SET ai_chat_usage = 0, ai_chat_reset_date = ? WHERE id = ?',
+        [now, userId]
+      );
+      usage = 0;
+    }
+    
     const remaining = subscription.ai_chat_limit - usage;
 
     return {
       canUse: remaining > 0,
       remaining: Math.max(0, remaining),
       limit: subscription.ai_chat_limit,
-      used: usage
+      used: usage,
+      nextResetDate: nextCycleStart.toISOString()
     };
   }
 

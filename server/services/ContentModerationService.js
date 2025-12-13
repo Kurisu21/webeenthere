@@ -7,8 +7,9 @@ class ContentModerationService {
     // In production, you might want to use npm package 'bad-words' or similar
     this.profanityWords = this.initializeProfanityList();
     
-    // Patterns to detect code injection attempts
+    // Patterns to detect code injection attempts (XSS and SQL)
     this.injectionPatterns = [
+      // XSS patterns
       /<script[\s\S]*?>[\s\S]*?<\/script>/gi,
       /javascript:/gi,
       /on\w+\s*=/gi, // onclick=, onerror=, etc.
@@ -17,16 +18,40 @@ class ContentModerationService {
       /<embed[\s\S]*?>/gi,
       /eval\s*\(/gi,
       /exec\s*\(/gi,
-      /SELECT.*FROM/gi,
-      /INSERT.*INTO/gi,
-      /DELETE.*FROM/gi,
-      /UPDATE.*SET/gi,
-      /DROP.*TABLE/gi,
-      /UNION.*SELECT/gi,
       /<svg[\s\S]*?onload/gi,
       /data:text\/html/gi,
       /vbscript:/gi,
-      /expression\s*\(/gi
+      /expression\s*\(/gi,
+      // SQL injection patterns
+      /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE|UNION|SCRIPT)\b[\s\S]*?)/gi,
+      /(\b(OR|AND)\s+\d+\s*=\s*\d+)/gi, // OR 1=1, AND 1=1
+      /(\b(OR|AND)\s+['"]\w+['"]\s*=\s*['"]\w+['"])/gi, // OR 'a'='a'
+      /(\bUNION\s+ALL\s+SELECT)/gi,
+      /(\bSELECT\s+.*\s+FROM\s+.*\s+WHERE)/gi,
+      /(\bINSERT\s+INTO\s+.*\s+VALUES)/gi,
+      /(\bDELETE\s+FROM\s+.*\s+WHERE)/gi,
+      /(\bUPDATE\s+.*\s+SET\s+.*\s+WHERE)/gi,
+      /(\bDROP\s+(TABLE|DATABASE|INDEX|VIEW))/gi,
+      /(\bCREATE\s+(TABLE|DATABASE|INDEX|VIEW))/gi,
+      /(\bALTER\s+TABLE)/gi,
+      /(\bTRUNCATE\s+TABLE)/gi,
+      /(\bEXEC\s*\()/gi,
+      /(\bEXECUTE\s*\()/gi,
+      /(\bSP_\w+)/gi, // Stored procedures
+      /(\bxp_\w+)/gi, // Extended stored procedures
+      /(--|\#|\/\*|\*\/)/g, // SQL comments
+      /(\+\s*['"]|['"]\s*\+)/g, // SQL string concatenation
+      /(0x[0-9a-fA-F]{4,})/g, // Hex encoding
+      /(\bSLEEP\s*\()/gi,
+      /(\bWAITFOR\s+DELAY)/gi,
+      /(\bBENCHMARK\s*\()/gi,
+      /(\bIF\s*\(.*\s*THEN)/gi,
+      /(\bCASE\s*\(.*\s*THEN)/gi,
+      /(\bEXTRACTVALUE\s*\()/gi,
+      /(\bUPDATEXML\s*\()/gi,
+      /(\bLOAD_FILE\s*\()/gi,
+      /(\bINTO\s+OUTFILE)/gi,
+      /(\bINTO\s+DUMPFILE)/gi,
     ];
     
     // Maximum input length (prevent abuse)

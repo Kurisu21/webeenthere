@@ -190,41 +190,69 @@ class User {
     }
   }
 
-  // Get profile image blob
-  async getProfileImage(userId) {
-    try {
-      // Get only profile_image column (mime_type column doesn't exist in database)
-      const [rows] = await this.db.execute(
-        'SELECT profile_image FROM users WHERE id = ?',
-        [userId]
-      );
-      
-      if (!rows[0] || !rows[0].profile_image) {
-        console.log(`[User Model] No profile image found for user ${userId}`);
-        return null;
+  // Get profile image blob with retry logic for connection errors
+  async getProfileImage(userId, retries = 3) {
+    const maxRetries = retries;
+    let lastError;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // Get only profile_image column (mime_type column doesn't exist in database)
+        const [rows] = await this.db.execute(
+          'SELECT profile_image FROM users WHERE id = ?',
+          [userId]
+        );
+        
+        if (!rows[0] || !rows[0].profile_image) {
+          console.log(`[User Model] No profile image found for user ${userId}`);
+          return null;
+        }
+        
+        const blobData = rows[0].profile_image;
+        const isBuffer = Buffer.isBuffer(blobData);
+        const dataSize = isBuffer ? blobData.length : (blobData ? blobData.length : 0);
+        
+        console.log(`[User Model] Retrieved profile image for user ${userId}:`, {
+          isBuffer,
+          dataSize,
+          mimeType: 'image/jpeg' // Default since column doesn't exist
+        });
+        
+        // Ensure we return a Buffer
+        const buffer = Buffer.isBuffer(blobData) ? blobData : Buffer.from(blobData);
+        
+        return {
+          data: buffer,
+          mimeType: 'image/jpeg' // Default mime type since column doesn't exist
+        };
+      } catch (error) {
+        lastError = error;
+        
+        // Check if it's a connection error that we should retry
+        const isConnectionError = 
+          error.code === 'ECONNRESET' || 
+          error.code === 'PROTOCOL_CONNECTION_LOST' ||
+          error.code === 'ETIMEDOUT' ||
+          error.code === 'ECONNREFUSED' ||
+          error.errno === -4077; // ECONNRESET errno on Windows
+        
+        if (isConnectionError && attempt < maxRetries) {
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Exponential backoff, max 5s
+          console.warn(`[User Model] Connection error getting profile image (attempt ${attempt}/${maxRetries}):`, error.message);
+          console.log(`[User Model] Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        
+        // If it's not a connection error or we've exhausted retries, throw
+        console.error(`[User Model] Error getting profile image:`, error.message);
+        throw error;
       }
-      
-      const blobData = rows[0].profile_image;
-      const isBuffer = Buffer.isBuffer(blobData);
-      const dataSize = isBuffer ? blobData.length : (blobData ? blobData.length : 0);
-      
-      console.log(`[User Model] Retrieved profile image for user ${userId}:`, {
-        isBuffer,
-        dataSize,
-        mimeType: 'image/jpeg' // Default since column doesn't exist
-      });
-      
-      // Ensure we return a Buffer
-      const buffer = Buffer.isBuffer(blobData) ? blobData : Buffer.from(blobData);
-      
-      return {
-        data: buffer,
-        mimeType: 'image/jpeg' // Default mime type since column doesn't exist
-      };
-    } catch (error) {
-      console.error(`[User Model] Error getting profile image:`, error.message);
-      throw error;
     }
+    
+    // If we've exhausted all retries, throw the last error
+    console.error(`[User Model] Failed to get profile image after ${maxRetries} attempts:`, lastError.message);
+    throw lastError;
   }
 
   // Get user by ID

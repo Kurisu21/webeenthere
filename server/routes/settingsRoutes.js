@@ -191,10 +191,6 @@ router.put('/ai', [
     .optional()
     .isString()
     .withMessage('Model must be a string'),
-  body('maxTokens')
-    .optional()
-    .isInt({ min: 1, max: 16000 })
-    .withMessage('Max tokens must be between 1 and 16000'),
   body('temperature')
     .optional()
     .isFloat({ min: 0, max: 2 })

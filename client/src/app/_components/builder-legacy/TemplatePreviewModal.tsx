@@ -38,10 +38,14 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+    <>
+      {/* Overlay that covers everything including sidebar - higher z-index than sidebar (z-40) */}
+      <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[50]" onClick={onClose}></div>
+      {/* Modal Content */}
+      <div className="fixed inset-0 flex items-center justify-center z-[60] p-4 pointer-events-none">
+        <div className="relative bg-white dark:bg-gray-900 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700 pointer-events-auto">
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,17 +62,18 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 dark:text-gray-500 text-2xl transition-colors bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-8 h-8 flex items-center justify-center"
+            aria-label="Close modal"
           >
             ×
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700">
+        <div className="flex border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
           <button
             onClick={() => setActiveTab('preview')}
-            className={`px-6 py-3 font-medium transition-colors ${
+            className={`px-6 py-3 font-medium transition-colors bg-white dark:bg-gray-900 ${
               activeTab === 'preview'
                 ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -78,7 +83,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('elements')}
-            className={`px-6 py-3 font-medium transition-colors ${
+            className={`px-6 py-3 font-medium transition-colors bg-white dark:bg-gray-900 ${
               activeTab === 'elements'
                 ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -108,14 +113,14 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
                       {template.name.toLowerCase().replace(/\s+/g, '-')}.webeenthere.com
                     </div>
                   </div>
-                  <div className="relative" style={{ height: '600px', width: '100%', minHeight: '600px' }}>
+                  <div className="relative bg-white dark:bg-gray-900" style={{ aspectRatio: '16/9', minHeight: '400px', width: '100%' }}>
                     {template.source_website_id ? (
-                      // Use WebsitePreviewImage if source_website_id exists (same as user/main and user/page)
+                      // Use WebsitePreviewImage if source_website_id exists (same as WebsiteCard alignment)
                       <WebsitePreviewImage
                         websiteId={template.source_website_id}
                         alt={`${template.name} preview`}
                         className="w-full h-full"
-                        style={{ objectFit: 'contain', backgroundColor: '#f8f9fa' }}
+                        style={{ objectFit: 'cover' }}
                       />
                     ) : (
                       // Fallback to gradient background for templates without source_website_id
@@ -184,20 +189,21 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
           <div className="flex space-x-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors font-medium"
             >
               Cancel
             </button>
             <button
               onClick={() => onSelect(template)}
-              className="px-6 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-medium"
+              className="px-6 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-medium shadow-lg shadow-blue-500/20"
             >
               Use This Template
             </button>
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

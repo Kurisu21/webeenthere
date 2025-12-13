@@ -337,7 +337,6 @@ class SettingsController {
     try {
       const {
         model,
-        maxTokens,
         temperature
       } = req.body;
 
@@ -346,13 +345,6 @@ class SettingsController {
         return res.status(400).json({ 
           success: false, 
           error: 'Model must be a string' 
-        });
-      }
-
-      if (maxTokens && (typeof maxTokens !== 'number' || maxTokens < 1 || maxTokens > 16000)) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Max tokens must be between 1 and 16000' 
         });
       }
 
@@ -365,15 +357,17 @@ class SettingsController {
 
       const currentConfig = await this.settingsService.getAiConfig();
       
-      // Update only provided fields
+      // Update only provided fields (remove maxTokens if it exists)
       const updatedConfig = {
         ...currentConfig,
         model: model !== undefined ? model : currentConfig.model,
-        maxTokens: maxTokens !== undefined ? Number(maxTokens) : currentConfig.maxTokens,
         temperature: temperature !== undefined ? Number(temperature) : currentConfig.temperature,
         updatedAt: new Date().toISOString(),
         updatedBy: req.user.username || 'admin'
       };
+      
+      // Remove maxTokens if it exists in the config
+      delete updatedConfig.maxTokens;
 
       await this.settingsService.updateAiConfig(updatedConfig, req.user.id || null);
 

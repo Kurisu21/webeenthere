@@ -15,17 +15,27 @@ interface EditorContext {
 export function buildEditorContextPrompt(context: EditorContext, userPrompt: string | null): string {
   const { html, css, selectedComponent, currentDevice, availableDevices, componentCount } = context;
 
-  const basePrompt = `You are an AI assistant integrated into Webeenthere, a website builder using GrapesJS.
+  const basePrompt = `You are an AI assistant integrated into Webeenthere, a website builder.
 
-Your role is to analyze the current website state and either:
+Your role is to analyze the current website HTML and CSS and either:
 1. Suggest improvements automatically (when no user prompt is provided)
 2. Execute specific user requests (when a user prompt is provided)
 
+**CRITICAL: You MUST edit the HTML and CSS content directly and return the modified versions.**
+
 You MUST return ONLY valid JSON in this exact format:
 {
-  "explanation": "Simple, user-friendly explanation in plain English (avoid technical jargon like 'component', 'property', 'GrapesJS API', etc.). Write as if explaining to a non-technical person what change was made and why. Example: 'I added a 💻 emoji next to your name in the header to show you're a developer' instead of 'I modified the nav-brand component's content property'",
-  "code": "JavaScript code using GrapesJS API to make the changes"
+  "explanation": "Simple, user-friendly explanation in plain English. Write as if explaining to a non-technical person what change was made and why. Example: 'I changed the farm name in the header to No Mockz's Land' instead of 'I modified the div element with id slot-farm-name'",
+  "html_content": "The complete modified HTML content with your changes applied",
+  "css_content": "The complete modified CSS content (include all existing CSS plus any new styles you add)"
 }
+
+**IMPORTANT RULES:**
+1. **You MUST return the COMPLETE HTML and CSS** - not just the changed parts
+2. **Preserve ALL existing content** - only modify what the user requested
+3. **Maintain proper HTML structure** - ensure all tags are properly closed
+4. **Keep all existing IDs, classes, and attributes** - only change the content/text as requested
+5. **If adding CSS, append to existing CSS** - don't replace the entire CSS unless necessary
 
 EXPLANATION GUIDELINES:
 - Write in simple, conversational language
@@ -98,16 +108,65 @@ GRAPESJS API REFERENCE:
 
 DEVICE SELECTION:
 Available devices: ${availableDevices.join(', ')}
+
+${selectedComponent ? `🎯 CRITICAL: USER HAS SELECTED A COMPONENT - YOU MUST ONLY EDIT THIS SELECTED COMPONENT!
+
+SELECTED COMPONENT INFO:
+- Tag: ${selectedComponent.tagName || 'unknown'}
+- Type: ${selectedComponent.type || 'none'}
+- ID: ${selectedComponent.id || 'none'}
+- Classes: ${selectedComponent.classes || 'none'}
+
+**MANDATORY RULES WHEN COMPONENT IS SELECTED:**
+1. **ONLY modify the selected component** - Use editor.getSelected() to get it
+2. **DO NOT search for components** - The user has already selected what they want to edit
+3. **DO NOT use editor.getWrapper().find()** - Use editor.getSelected() instead
+4. **AUTO-APPLY changes** - Since component is selected, apply changes immediately
+
+**CORRECT PATTERN WHEN COMPONENT IS SELECTED:**
+\`\`\`javascript
+// Get the selected component
+const selected = editor.getSelected();
+if (selected) {
+  // Modify ONLY the selected component
+  selected.set('content', 'new text');
+  // OR
+  selected.addStyle({ color: 'red' });
+  console.log('✅ Modified selected component');
+} else {
+  console.log('⚠️ No component selected');
+}
+\`\`\`
+
+**WRONG PATTERN (DO NOT USE WHEN COMPONENT IS SELECTED):**
+\`\`\`javascript
+// ❌ DON'T DO THIS - user already selected the component
+const comp = editor.getWrapper().find('header')[0];
+\`\`\`
+
+The user has explicitly selected a component, so you MUST edit only that component and auto-apply the changes.` : ''}
 Current device: ${currentDevice}
 IMPORTANT: Always call editor.Devices.select('device-name') before applying styles.
 The first device typically applies to all screen sizes, others create responsive breakpoints.
 
-CURRENT WEBSITE STATE:
-HTML (${html.length} characters):
-${html.substring(0, 2000)}${html.length > 2000 ? '... (truncated)' : ''}
+**CURRENT WEBSITE HTML AND CSS (EDIT THESE DIRECTLY):**
 
-CSS (${css.length} characters):
-${css.substring(0, 2000)}${css.length > 2000 ? '... (truncated)' : ''}
+CURRENT HTML CONTENT (${html.length} characters):
+\`\`\`html
+${html}
+\`\`\`
+
+CURRENT CSS CONTENT (${css.length} characters):
+\`\`\`css
+${css}
+\`\`\`
+
+**YOUR TASK:**
+1. Read the HTML and CSS above carefully
+2. Make ONLY the changes requested by the user
+3. Return the COMPLETE modified HTML in "html_content"
+4. Return the COMPLETE modified CSS in "css_content"
+5. Write a simple explanation of what you changed in "explanation"
 
 Component count: ${componentCount}
 
@@ -119,7 +178,16 @@ ${selectedComponent ? `Selected component:
 
 ${userPrompt ? `USER REQUEST: "${userPrompt}"
 
-Please execute this request by generating JavaScript code that uses GrapesJS APIs to make the requested changes.` : `AUTOMATIC SUGGESTION:
+**INSTRUCTIONS:**
+1. Find the relevant part in the HTML/CSS above
+2. Make the requested change directly in the HTML/CSS
+3. Return the COMPLETE modified HTML and CSS
+4. Ensure all HTML tags are properly closed
+5. Preserve all existing structure, IDs, classes, and attributes
+6. Only change what the user requested
+
+**EXAMPLE:**
+If user says "change the farm name to No Mockz's Land", find the element with id="slot-farm-name" in the HTML and change its text content to "No Mockz's Land", then return the complete modified HTML.` : `AUTOMATIC SUGGESTION:
 
 Analyze the current website and suggest ONE meaningful improvement. Focus on:
 - SEO improvements (missing alt text, meta tags, heading structure)
@@ -128,242 +196,51 @@ Analyze the current website and suggest ONE meaningful improvement. Focus on:
 - Performance (image optimization, code efficiency)
 - Design consistency (spacing, typography, color palette)
 
-Provide a suggestion that would genuinely improve the website.`}
+Make the improvement directly in the HTML/CSS and return the complete modified versions.`}
 
 **COMMON MISTAKES TO AVOID:**
-- ❌ component.setContent() - DOES NOT EXIST, use component.set('content', value)
-- ❌ component.setText() - DOES NOT EXIST, use component.set('content', value)
-- ❌ component.content = value - DOES NOT WORK, use component.set('content', value)
-- ❌ document.querySelector() - NEVER use DOM APIs, use editor.getWrapper().find()
-- ❌ element.innerHTML - NEVER use DOM APIs, use component.set('content', value)
+- ❌ Returning only the changed part - You MUST return the COMPLETE HTML and CSS
+- ❌ Breaking HTML structure - Ensure all tags are properly closed
+- ❌ Removing existing content - Only modify what's requested, preserve everything else
+- ❌ Forgetting to include CSS - If you add styles, include them in css_content
+- ❌ Not preserving IDs/classes - Keep all existing attributes
 
-**CRITICAL: MODIFYING vs REMOVING (READ THIS CAREFULLY):**
-- ✅ MODIFY existing components: component.set('content', 'new text') - PRESERVES component
-- ✅ MODIFY existing styles: component.addStyle({ color: 'red' }) - PRESERVES component
-- ✅ MODIFY properties: component.set('attribute', 'value') - PRESERVES component
-- ❌ NEVER remove: component.remove() - THIS DELETES THE COMPONENT
-- ❌ NEVER replace: component.replaceWith() - THIS REMOVES THE OLD COMPONENT
-- ❌ NEVER clear: component.empty() - THIS REMOVES ALL CHILDREN
-- ❌ NEVER use editor.setComponents() - THIS REPLACES EVERYTHING
+**CRITICAL: EDITING HTML/CSS DIRECTLY:**
+- ✅ Find the text/content in HTML and replace it directly
+- ✅ Add new CSS rules to the existing CSS (append, don't replace)
+- ✅ Preserve ALL HTML structure, tags, attributes, IDs, classes
+- ✅ Only change the specific content/text requested
+- ❌ DON'T remove any existing HTML elements
+- ❌ DON'T replace the entire HTML/CSS - only modify what's needed
+- ❌ DON'T break the HTML structure or leave unclosed tags
 
-**GOLDEN RULE: If you can't find a component, DON'T create a new one to replace it.**
-**Instead, log that it wasn't found and suggest the user check the structure.**
+**GOLDEN RULE: Make minimal changes - only what the user requested. Preserve everything else.**
 
-**EXAMPLES - MODIFYING EXISTING COMPONENTS (CORRECT):**
-\`\`\`javascript
-// Example 1: Update link text in navigation - MODIFY, don't remove
-console.log('=== Updating navigation links ===');
-const navLinks = editor.getWrapper().find('nav a');
-console.log(\`Found \${navLinks.length} navigation links\`);
-if (navLinks.length === 0) {
-  console.log('⚠️ No navigation links found. Trying alternative selector...');
-  const allLinks = editor.getWrapper().find('a');
-  console.log(\`Found \${allLinks.length} total links\`);
-  allLinks.forEach((link, index) => {
-    const currentText = link.get('content') || '';
-    console.log(\`Link \${index + 1}: Current text: "\${currentText}"\`);
-    if (currentText.toLowerCase().includes('about') || currentText.toLowerCase().includes('contact')) {
-      link.set('content', currentText + ' ✨');
-      console.log(\`✅ Updated link \${index + 1} text\`);
-    }
-  });
-} else {
-  navLinks.forEach((link, index) => {
-    const currentText = link.get('content') || '';
-    console.log(\`Link \${index + 1}: Current text: "\${currentText}"\`);
-    // Modify the link text - PRESERVE the component, just change content
-    link.set('content', currentText + ' ✨');
-    console.log(\`✅ Updated link \${index + 1} text\`);
-  });
-}
-
-// Example 2: Update header/navbar text - MODIFY existing component
-console.log('=== Updating header ===');
-// Try multiple ways to find header
-let header = editor.getWrapper().find('header')[0];
-if (!header) {
-  header = editor.getWrapper().find('nav')[0];
-}
-if (!header) {
-  header = editor.getWrapper().find('[class*="header"], [class*="nav"]')[0];
-}
-
-if (header) {
-  console.log('✅ Found header/nav component');
-  // Find brand/logo text inside header - MODIFY, don't remove
-  const brand = header.find('.brand, .logo, [class*="brand"]')[0];
-  if (brand) {
-    const oldText = brand.get('content') || '';
-    console.log(\`Current brand text: "\${oldText}"\`);
-    // MODIFY the text, don't remove the component
-    brand.set('content', oldText + ' ✨');
-    console.log('✅ Updated brand text');
-  } else {
-    console.log('⚠️ Brand/logo not found in header');
-  }
-  
-  // Update navigation links inside header - MODIFY each one
-  const navLinks = header.find('a');
-  console.log(\`Found \${navLinks.length} links in header\`);
-  navLinks.forEach((link, i) => {
-    const currentText = link.get('content') || '';
-    console.log(\`Nav link \${i + 1}: "\${currentText}"\`);
-    // MODIFY the link text
-    link.set('content', currentText + ' ✨');
-    console.log(\`✅ Updated nav link \${i + 1}\`);
-  });
-} else {
-  console.log('⚠️ Header/nav not found. Check the HTML structure.');
-}
-
-// Example 3: Update styles - MODIFY existing styles (preserves component)
-console.log('=== Updating styles ===');
-editor.Devices.select('${currentDevice}');
-const header = editor.getWrapper().find('header, nav')[0];
-if (header) {
-  const currentStyles = header.getStyle();
-  console.log('Current header styles:', currentStyles);
-  // MODIFY styles - adds to existing, doesn't remove component
-  header.addStyle({ backgroundColor: 'blue', color: 'white' });
-  console.log('✅ Updated header styles');
-} else {
-  console.log('⚠️ Header not found for styling');
-}
-
-// Example 4: Update text content - MODIFY, preserve structure
-console.log('=== Updating text content ===');
-const textElements = editor.getWrapper().find('p, span, div');
-console.log(\`Found \${textElements.length} text elements\`);
-textElements.slice(0, 5).forEach((elem, index) => {
-  const currentContent = elem.get('content') || '';
-  if (currentContent.trim()) {
-    console.log(\`Element \${index + 1}: "\${currentContent.substring(0, 30)}..."\`);
-    // MODIFY the content - component stays, only text changes
-    elem.set('content', currentContent.trim() + ' ✨');
-    console.log(\`✅ Updated element \${index + 1}\`);
-  }
-});
-
-// Example 5: Update specific component by ID or class - MODIFY it
-console.log('=== Updating specific component ===');
-// Find by ID
-const specificComp = editor.getWrapper().find('#my-id')[0];
-if (specificComp) {
-  const oldContent = specificComp.get('content') || '';
-  specificComp.set('content', 'Updated content');
-  console.log('✅ Updated component by ID');
-} else {
-  // Find by class
-  const compByClass = editor.getWrapper().find('.my-class')[0];
-  if (compByClass) {
-    compByClass.set('content', 'Updated content');
-    console.log('✅ Updated component by class');
-  }
+**EXAMPLES - EDITING HTML/CSS DIRECTLY (CORRECT):**
+\`\`\`json
+{
+  "explanation": "I changed the farm name in the header to No Mockz's Land",
+  "html_content": "<header id=\"irjh\"><nav class=\"container\"><div id=\"slot-farm-name\" class=\"logo\">No Mockz's Land</div>...</header>",
+  "css_content": "/* existing CSS */\n.logo { color: blue; }"
 }
 \`\`\`
 
-**WRONG EXAMPLES (DO NOT DO THIS):**
-\`\`\`javascript
-// ❌ WRONG - Removing component
-const link = editor.getWrapper().find('a')[0];
-link.remove(); // DON'T DO THIS - removes the component
-
-// ❌ WRONG - Replacing component
-const oldComponent = editor.getWrapper().find('header')[0];
-oldComponent.replaceWith('<div>New header</div>'); // DON'T DO THIS
-
-// ❌ WRONG - Clearing content
-const section = editor.getWrapper().find('section')[0];
-section.empty(); // DON'T DO THIS - removes all children
-\`\`\`
-
-**EXECUTION RULES:**
-1. **ALWAYS find components first** using editor.getWrapper().find(selector)
-2. **ALWAYS check if component exists** before modifying: if (component) { ... }
-3. **ALWAYS preserve structure** - modify properties, don't remove/replace
-4. **ALWAYS log what you're doing** with console.log for debugging
-5. **ALWAYS select device** before styling: editor.Devices.select('device-name')
-6. **NEVER remove components** unless user explicitly asks to delete something
-7. **NEVER replace components** - modify the existing component instead
-8. **NEVER use DOM APIs** - only GrapesJS component methods
-
-**STEP-BY-STEP PATTERN FOR MODIFYING (MANDATORY):**
-1. Find the component: const comp = editor.getWrapper().find('selector')[0];
-2. **ALWAYS check if found**: if (comp) { ... } else { console.log('Component not found'); }
-3. **ALWAYS get current value first**: const current = comp.get('content') || '';
-4. **ALWAYS log before modifying**: console.log('Current value:', current);
-5. **CRITICAL: YOU MUST CALL comp.set()** - Don't just find the component, you MUST modify it:
-   comp.set('content', 'new value'); // THIS LINE IS REQUIRED - DO NOT SKIP IT
-6. **ALWAYS confirm**: console.log('✅ Updated successfully');
-7. **If component not found, try alternative selectors** before giving up
-
-**CRITICAL REMINDER:** Finding a component is NOT enough - you MUST call component.set() to actually modify it. If you find a component but don't call set() on it, the modification will fail.
-
-**CRITICAL: Component Finding Strategy (MANDATORY):**
-When looking for components, you MUST try multiple selectors in order:
-
-1. **First, try the most specific selector:**
-\`\`\`javascript
-let component = editor.getWrapper().find('header')[0];
-\`\`\`
-
-2. **If not found, try alternative tag names:**
-\`\`\`javascript
-if (!component) component = editor.getWrapper().find('nav')[0];
-\`\`\`
-
-3. **If still not found, try by class or attribute:**
-\`\`\`javascript
-if (!component) component = editor.getWrapper().find('.navbar, .header, [class*="nav"], [class*="header"]')[0];
-\`\`\`
-
-4. **If still not found, try finding children of common containers:**
-\`\`\`javascript
-if (!component) {
-  const body = editor.getWrapper().find('body')[0];
-  if (body) component = body.find('header, nav')[0];
+**EXAMPLE 2: Adding CSS**
+If user says "make the header blue", find the header in HTML and add CSS:
+\`\`\`json
+{
+  "explanation": "I made the header background blue",
+  "html_content": "<header id=\"irjh\">...</header>",
+  "css_content": "/* existing CSS */\nheader { background-color: blue; }"
 }
 \`\`\`
 
-5. **For nested elements (like links in nav), find parent first, then children:**
-\`\`\`javascript
-const header = editor.getWrapper().find('header, nav')[0];
-if (header) {
-  const links = header.find('a');
-  links.forEach((link, index) => {
-    const currentText = link.get('content') || '';
-    link.set('content', currentText + ' ✨');
-  });
-}
-\`\`\`
-
-6. **ALWAYS log what you find:**
-\`\`\`javascript
-console.log('Looking for header...');
-const header = editor.getWrapper().find('header')[0];
-if (header) {
-  console.log('✅ Found header component');
-} else {
-  console.log('⚠️ Header not found, trying nav...');
-  const nav = editor.getWrapper().find('nav')[0];
-  if (nav) {
-    console.log('✅ Found nav component');
-  } else {
-    console.log('❌ Neither header nor nav found');
-    const allComponents = editor.getWrapper().find('*');
-    console.log('Available components:', allComponents.map(c => c.get('tagName') || c.get('type')).join(', '));
-  }
-}
-\`\`\`
-
-7. **NEVER proceed if component is null/undefined** - always check first with if (component) { ... }
-
-Remember:
-- MODIFY existing components, don't remove them
-- Use component.set('property', value) to change properties
-- Use component.addStyle({...}) to change styles
-- Include console.log for debugging
-- Return ONLY valid JSON, no markdown`;
+**REMEMBER:**
+- Return COMPLETE HTML and CSS, not just changes
+- Preserve all existing structure
+- Only modify what's requested
+- Ensure valid JSON format
+- No markdown code blocks in the JSON response`;
 
   return basePrompt;
 }

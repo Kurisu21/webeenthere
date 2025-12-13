@@ -11,15 +11,17 @@ import { PropertiesPanel } from './PropertiesPanel';
 import WebeenthereAIAssistant from './ai-assistant/WebeenthereAIAssistant';
 import PreviewModal from './PreviewModal';
 import ImageLibrary from './ImageLibrary';
+import { GlobalResponsiveSettings } from './GlobalResponsiveSettings';
 import './BuilderLayout.css';
 import type { Editor } from 'grapesjs';
 
 interface BuilderLayoutProps {
   websiteId: string;
   currentWebsite?: any;
+  onShowInstructions?: () => void;
 }
 
-export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayoutProps) {
+export default function BuilderLayout({ websiteId, currentWebsite, onShowInstructions }: BuilderLayoutProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [editor, setEditor] = useState<any>(null);
@@ -32,7 +34,17 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
   const [previewCss, setPreviewCss] = useState('');
   const [showImageLibrary, setShowImageLibrary] = useState(false);
   const [imageLibraryTarget, setImageLibraryTarget] = useState<{ component: any; editor: Editor } | null>(null);
+  const [showGlobalResponsive, setShowGlobalResponsive] = useState(false);
   const editorRef = useRef<any>(null);
+  
+  // Store original AI-generated HTML/CSS to preserve structure when saving
+  // This prevents GrapesJS normalization from changing the structure
+  const originalAiContentRef = useRef<{ html: string; css: string } | null>(null);
+  
+  // Title editing state
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(currentWebsite?.title || 'Building Website');
+  const titleInputRef = useRef<HTMLInputElement>(null);
   
   // Get theme mode
   const themeMode = user?.theme_mode || 'light';
@@ -125,11 +137,112 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
     setImageLibraryTarget(null);
   };
 
+  // Completely disable beforeunload prompts - we have auto-save so they're not needed
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Don't set returnValue or return anything - this prevents the prompt
+      // Only allow prompts for explicit exit actions (handled in handleExit)
+      e.preventDefault();
+      // Don't set returnValue - this prevents the browser prompt
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
+  // Prevent canvas iframe from triggering navigation and beforeunload
+  useEffect(() => {
+    if (!editor) return;
+
+    const preventCanvasNavigation = () => {
+      try {
+        const canvas = editor.Canvas;
+        const frame = canvas?.getFrameEl?.();
+        
+        if (frame && frame.contentDocument) {
+          const frameDoc = frame.contentDocument;
+          const frameWindow = frame.contentWindow;
+          
+          // Prevent hashchange from triggering navigation
+          if (frameWindow) {
+            frameWindow.addEventListener('hashchange', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }, { capture: true });
+            
+            // Prevent popstate from triggering navigation
+            frameWindow.addEventListener('popstate', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }, { capture: true });
+          }
+          
+          // Prevent form submissions
+          const preventFormSubmit = (e: Event) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          };
+          
+          frameDoc.addEventListener('submit', preventFormSubmit, true);
+          
+          // Prevent all link clicks from navigating (but allow GrapesJS to handle them)
+          const preventLinkNavigation = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            if (target) {
+              const link = target.tagName === 'A' ? target : target.closest('a');
+              if (link) {
+                const href = (link as HTMLAnchorElement).href;
+                // Only prevent external links, allow hash links for GrapesJS
+                if (href && href !== '#' && !href.startsWith('#') && !href.startsWith('javascript:')) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return false;
+                }
+              }
+            }
+          };
+          
+          frameDoc.addEventListener('click', preventLinkNavigation, true);
+          
+          // Prevent scroll events from triggering anything
+          const preventScrollNavigation = (e: Event) => {
+            // Just prevent default on scroll to avoid any side effects
+            // But don't stop propagation so GrapesJS can still handle scrolling
+          };
+          
+          frameDoc.addEventListener('scroll', preventScrollNavigation, { passive: true });
+          if (frameWindow) {
+            frameWindow.addEventListener('scroll', preventScrollNavigation, { passive: true });
+          }
+        }
+      } catch (error) {
+        console.warn('Could not prevent canvas navigation:', error);
+      }
+    };
+
+    // Run immediately and on frame load
+    preventCanvasNavigation();
+    editor.on('canvas:frame:load', preventCanvasNavigation);
+    editor.on('canvas:update', preventCanvasNavigation);
+    
+    return () => {
+      editor.off('canvas:frame:load', preventCanvasNavigation);
+      editor.off('canvas:update', preventCanvasNavigation);
+    };
+  }, [editor]);
+
   // Initialize editor and load content
   useEffect(() => {
     if (editor) {
       editorRef.current = editor;
 
+      // Clear any stored original AI content when loading website from database
+      // This ensures we don't use stale AI content when loading an existing website
+      originalAiContentRef.current = null;
+      
       // Load initial content if available
       if (currentWebsite?.html_content) {
         try {
@@ -184,7 +297,51 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
             }, 300);
           }
           if (layout.css) {
+            // Apply CSS to editor's style manager
             editor.setStyle(layout.css);
+            
+            // CRITICAL: Also inject CSS directly into canvas iframe head
+            // This ensures body/html styles, CSS variables, and complex selectors work properly
+            const injectStylesIntoCanvas = () => {
+              try {
+                const canvas = editor.Canvas;
+                const frame = canvas?.getFrameEl?.();
+                
+                if (frame && frame.contentDocument) {
+                  const frameDoc = frame.contentDocument;
+                  const frameHead = frameDoc.head || frameDoc.getElementsByTagName('head')[0];
+                  
+                  if (frameHead) {
+                    // Remove existing style tag if present
+                    const existingStyle = frameDoc.getElementById('json-layout-styles');
+                    if (existingStyle) {
+                      existingStyle.remove();
+                    }
+                    
+                    // Create and inject style tag into iframe head
+                    const styleTag = frameDoc.createElement('style');
+                    styleTag.id = 'json-layout-styles';
+                    styleTag.textContent = layout.css;
+                    frameHead.appendChild(styleTag);
+                  }
+                }
+              } catch (error) {
+                // Cross-origin or other iframe access issues - fallback to setStyle only
+                console.warn('Could not inject styles into canvas iframe:', error);
+              }
+            };
+            
+            // Try immediately, then retry after delays to ensure canvas is ready
+            injectStylesIntoCanvas();
+            setTimeout(injectStylesIntoCanvas, 300);
+            setTimeout(injectStylesIntoCanvas, 1000);
+            
+            // Listen for canvas frame load/reload events
+            const handleFrameLoad = () => {
+              injectStylesIntoCanvas();
+            };
+            editor.on('canvas:frame:load', handleFrameLoad);
+            editor.on('canvas:update', handleFrameLoad);
           }
         } catch (e) {
           // If not JSON, try as plain HTML
@@ -281,43 +438,121 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
     }
   }, [editor, currentWebsite]);
 
+  // Update edited title when currentWebsite changes
+  useEffect(() => {
+    if (currentWebsite?.title) {
+      setEditedTitle(currentWebsite.title);
+    }
+  }, [currentWebsite?.title]);
+
+  // Clear stored original AI content when user makes manual edits
+  // This ensures that after manual edits, we save the current editor state
+  useEffect(() => {
+    if (!editor) return;
+
+    let debounceTimer: NodeJS.Timeout | null = null;
+    const DEBOUNCE_DELAY = 1000; // Wait 1 second after last change
+
+    const handleManualEdit = () => {
+      // Clear existing timer
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+
+      // Debounce: wait for user to finish editing
+      debounceTimer = setTimeout(() => {
+        if (originalAiContentRef.current) {
+          console.log('[BuilderLayout] User made manual edits, clearing stored original AI content');
+          originalAiContentRef.current = null;
+        }
+      }, DEBOUNCE_DELAY);
+    };
+
+    // Listen to editor changes (but not AI-generated changes which happen via setComponents)
+    // We'll track if changes come from user interaction vs programmatic updates
+    editor.on('component:add component:remove component:update component:styleUpdate style:change', handleManualEdit);
+
+    return () => {
+      editor.off('component:add component:remove component:update component:styleUpdate style:change', handleManualEdit);
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+    };
+  }, [editor]);
+
   const handleSave = useCallback(async () => {
     if (!editor) return;
     
     setIsSaving(true);
     try {
-      // CRITICAL: Force GrapesJS to store current state
-      // This ensures component.set() changes are persisted
-      if (editor.store) {
-        editor.store();
+      // CRITICAL: Force multiple update cycles to ensure GrapesJS has fully processed all changes
+      // This is especially important after AI code execution which modifies components via set()
+      for (let i = 0; i < 5; i++) {
+        if (editor.store) {
+          editor.store();
+        }
+        editor.trigger('component:update');
+        editor.trigger('update');
+        editor.trigger('change');
+        editor.trigger('storage:store');
+        
+        // Wait between cycles to allow GrapesJS to process
+        await new Promise(resolve => {
+          requestAnimationFrame(() => {
+            setTimeout(resolve, 50);
+          });
+        });
       }
       
-      // CRITICAL: Trigger update events to ensure GrapesJS has processed all changes
-      // This ensures that component.set() changes are reflected in getHtml() and getCss()
-      editor.trigger('component:update');
-      editor.trigger('update');
-      editor.trigger('storage:store');
+      // Force canvas refresh to ensure visual updates are reflected
+      const canvas = editor.Canvas;
+      if (canvas) {
+        editor.trigger('canvas:update');
+        
+        // Force a re-render by toggling zoom slightly
+        const currentZoom = canvas.getZoom();
+        if (currentZoom) {
+          canvas.setZoom(currentZoom + 0.001);
+          await new Promise(resolve => setTimeout(resolve, 10));
+          canvas.setZoom(currentZoom);
+        }
+      }
       
-      // Wait longer for GrapesJS to process and store the updates
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Wait one more time for everything to settle
+      await new Promise(resolve => {
+        requestAnimationFrame(() => {
+          setTimeout(resolve, 200);
+        });
+      });
       
-      // Get the latest HTML and CSS after updates are processed
-      // Use getJson to get the full component structure, then extract HTML/CSS
-      const jsonData = getJson();
+      // CRITICAL: Use stored original AI-generated HTML/CSS if available
+      // This preserves the exact structure from AI generation before GrapesJS normalization
       let html, css;
       
-      if (jsonData) {
-        try {
-          const parsed = JSON.parse(jsonData);
-          html = parsed.html || getHtml();
-          css = parsed.css || getCss();
-        } catch {
+      if (originalAiContentRef.current) {
+        // Use the original AI-generated content to preserve structure
+        html = originalAiContentRef.current.html;
+        css = originalAiContentRef.current.css;
+        console.log('[Save] Using stored original AI-generated HTML/CSS to preserve structure');
+        console.log('[Save] Original HTML length:', html.length, 'CSS length:', css.length);
+      } else {
+        // Get the latest HTML and CSS after all updates are processed
+        // Use getJson to get the full component structure, then extract HTML/CSS
+        const jsonData = getJson();
+        
+        if (jsonData) {
+          try {
+            const parsed = JSON.parse(jsonData);
+            html = parsed.html || getHtml();
+            css = parsed.css || getCss();
+          } catch {
+            html = getHtml();
+            css = getCss();
+          }
+        } else {
           html = getHtml();
           css = getCss();
         }
-      } else {
-        html = getHtml();
-        css = getCss();
       }
       
       console.log('[Save] HTML length:', html.length, 'CSS length:', css.length);
@@ -391,6 +626,12 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
       
       if (response && response.success) {
         console.log('Website saved successfully');
+        // Clear stored original AI content after successful save
+        // This ensures future saves use the editor's current state
+        if (originalAiContentRef.current) {
+          console.log('[Save] Clearing stored original AI content after successful save');
+          originalAiContentRef.current = null;
+        }
         // Only show alert for manual saves (not auto-saves)
         // Auto-saves are handled by the AI Assistant component
       } else {
@@ -413,9 +654,17 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
     if (!editor) return;
     
     try {
-      // Get separate HTML and CSS for proper display on view page
-      const html = getHtml();
-      const css = getCss();
+      // Use stored original AI-generated HTML/CSS if available to preserve structure
+      // Otherwise get from editor
+      let html, css;
+      if (originalAiContentRef.current) {
+        html = originalAiContentRef.current.html;
+        css = originalAiContentRef.current.css;
+        console.log('[Publish] Using stored original AI-generated HTML/CSS to preserve structure');
+      } else {
+        html = getHtml();
+        css = getCss();
+      }
       
       const response = await apiPut(`${API_ENDPOINTS.WEBSITES}/${websiteId}`, {
         html_content: html, // Plain HTML for view page
@@ -436,6 +685,59 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
     }
   }, [editor, websiteId, currentWebsite, getHtml, getCss]);
 
+  const handleUpdateTitle = useCallback(async (newTitle: string) => {
+    if (!websiteId || !newTitle.trim()) return;
+    
+    try {
+      const response = await apiPut(`${API_ENDPOINTS.WEBSITES}/${websiteId}`, {
+        title: newTitle.trim()
+      });
+      
+      if (response.success) {
+        // Update local state
+        setEditedTitle(newTitle.trim());
+        // Update currentWebsite if it exists
+        if (currentWebsite) {
+          currentWebsite.title = newTitle.trim();
+        }
+        console.log('[BuilderLayout] Title updated successfully');
+      } else {
+        throw new Error(response.message || 'Failed to update title');
+      }
+    } catch (error) {
+      console.error('[BuilderLayout] Error updating title:', error);
+      // Revert to original title on error
+      setEditedTitle(currentWebsite?.title || 'Building Website');
+      alert('Failed to update title. Please try again.');
+    }
+  }, [websiteId, currentWebsite]);
+
+  const handleTitleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
+    } else if (e.key === 'Escape') {
+      setEditedTitle(currentWebsite?.title || 'Building Website');
+      setIsEditingTitle(false);
+    }
+  }, [currentWebsite?.title]);
+
+  const handleTitleBlur = useCallback(() => {
+    if (editedTitle.trim() && editedTitle !== currentWebsite?.title) {
+      handleUpdateTitle(editedTitle);
+    } else {
+      setEditedTitle(currentWebsite?.title || 'Building Website');
+    }
+    setIsEditingTitle(false);
+  }, [editedTitle, currentWebsite?.title, handleUpdateTitle]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isEditingTitle]);
+
   const handleExit = useCallback(() => {
     if (confirm('Are you sure you want to exit? Any unsaved changes will be lost.')) {
       router.push('/user/main');
@@ -446,49 +748,115 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
     setEditor(editorInstance);
   }, []);
 
-  const handleDeviceChange = useCallback((device: string) => {
+  const handleDeviceChange = useCallback((device: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (editor) {
-      editor.setDevice(device === 'desktop' ? 'Desktop' : device === 'tablet' ? 'Tablet' : 'Mobile portrait');
-      setActiveDevice(device);
+      try {
+        editor.setDevice(device === 'desktop' ? 'Desktop' : device === 'tablet' ? 'Tablet' : 'Mobile portrait');
+        setActiveDevice(device);
+      } catch (error) {
+        console.warn('Device change failed:', error);
+      }
     }
   }, [editor]);
 
-  const handleUndo = useCallback(() => {
-    editor?.runCommand('core:undo');
+  const handleUndo = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    try {
+      editor?.runCommand('core:undo');
+    } catch (error) {
+      console.warn('Undo command failed:', error);
+    }
   }, [editor]);
 
-  const handleRedo = useCallback(() => {
-    editor?.runCommand('core:redo');
+  const handleRedo = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    try {
+      editor?.runCommand('core:redo');
+    } catch (error) {
+      console.warn('Redo command failed:', error);
+    }
   }, [editor]);
 
-  const handlePreview = useCallback(() => {
+  const handlePreview = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!editor) return;
     
-    // Force store current state
-    editor.store();
-    editor.trigger('component:update');
-    editor.trigger('update');
-    
-    // Wait for updates to process
-    setTimeout(() => {
-      const html = getHtml();
-      const css = getCss();
-      setPreviewHtml(html);
-      setPreviewCss(css);
-      setShowPreview(true);
-    }, 200);
+    try {
+      // Force store current state
+      editor.store();
+      editor.trigger('component:update');
+      editor.trigger('update');
+      editor.trigger('change');
+      
+      // Force canvas refresh to ensure all changes are rendered
+      const canvas = editor.Canvas;
+      if (canvas) {
+        editor.trigger('canvas:update');
+      }
+      
+      // Wait for updates to process using requestAnimationFrame for better sync
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          // Force refresh by getting HTML/CSS after a small delay
+          const html = getHtml();
+          const css = getCss();
+          setPreviewHtml(html);
+          setPreviewCss(css);
+          setShowPreview(true);
+        }, 100);
+      });
+    } catch (error) {
+      console.warn('Preview failed:', error);
+    }
   }, [editor, getHtml, getCss, setPreviewHtml, setPreviewCss, setShowPreview]);
 
-  const handleCodeView = useCallback(() => {
-    editor?.runCommand('export-template');
+  const handleCodeView = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    try {
+      editor?.runCommand('export-template');
+    } catch (error) {
+      console.warn('Code view command failed:', error);
+    }
   }, [editor]);
 
-  const handleFullscreen = useCallback(() => {
-    editor?.runCommand('fullscreen');
+  const handleFullscreen = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    try {
+      editor?.runCommand('fullscreen');
+    } catch (error) {
+      console.warn('Fullscreen command failed:', error);
+    }
   }, [editor]);
 
-  const handleOutline = useCallback(() => {
-    editor?.runCommand('sw-visibility');
+  const handleOutline = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    try {
+      editor?.runCommand('sw-visibility');
+    } catch (error) {
+      console.warn('Outline command failed:', error);
+    }
   }, [editor]);
 
   const handleZoomIn = useCallback(() => {
@@ -561,18 +929,35 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
             <span className="hidden sm:inline">Exit</span>
           </button>
           <div className="h-6 w-px bg-gray-400 opacity-30"></div>
-          <h2 className={`${textPrimary} font-semibold text-lg flex items-center gap-2`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            {currentWebsite?.title || 'Building Website'}
-          </h2>
+          {isEditingTitle ? (
+            <input
+              ref={titleInputRef}
+              type="text"
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              onBlur={handleTitleBlur}
+              onKeyDown={handleTitleKeyDown}
+              className={`${textPrimary} font-semibold text-lg bg-transparent border-b-2 border-blue-500 focus:outline-none px-2 py-1 min-w-[200px]`}
+            />
+          ) : (
+            <h2 
+              className={`${textPrimary} font-semibold text-lg flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity`}
+              onClick={() => setIsEditingTitle(true)}
+              title="Click to edit title"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              {editedTitle}
+            </h2>
+          )}
         </div>
         
         {/* Center: Device Preview Buttons */}
         <div className="flex items-center space-x-1">
           <button
-            onClick={() => handleDeviceChange('desktop')}
+            type="button"
+            onClick={(e) => handleDeviceChange('desktop', e)}
             className={`px-3 py-2 rounded-md transition-colors ${activeDevice === 'desktop' ? deviceBtnActiveClass : deviceBtnIdleClass}`}
             title="Desktop"
           >
@@ -581,7 +966,8 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
             </svg>
           </button>
           <button
-            onClick={() => handleDeviceChange('tablet')}
+            type="button"
+            onClick={(e) => handleDeviceChange('tablet', e)}
             className={`px-3 py-2 rounded-md transition-colors ${activeDevice === 'tablet' ? deviceBtnActiveClass : deviceBtnIdleClass}`}
             title="Tablet"
           >
@@ -590,7 +976,8 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
             </svg>
           </button>
           <button
-            onClick={() => handleDeviceChange('mobile')}
+            type="button"
+            onClick={(e) => handleDeviceChange('mobile', e)}
             className={`px-3 py-2 rounded-md transition-colors ${activeDevice === 'mobile' ? deviceBtnActiveClass : deviceBtnIdleClass}`}
             title="Mobile"
           >
@@ -602,9 +989,29 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
         
         {/* Right: Toolbar Controls and Actions */}
         <div className="flex items-center space-x-2">
+          {/* Instructions Button */}
+          {onShowInstructions && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onShowInstructions();
+              }}
+              className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg flex items-center gap-2 transition-all duration-300 cursor-pointer"
+              title="Show instructions"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-sm font-medium hidden sm:inline">Instructions</span>
+            </button>
+          )}
+          
           {/* Toolbar Controls */}
           <div className={`flex items-center space-x-1 px-2 border-r ${borderColor}`}>
             <button
+              type="button"
               onClick={handleUndo}
               className={toolbarBtnClass}
               title="Undo (Ctrl+Z)"
@@ -614,6 +1021,7 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
               </svg>
             </button>
             <button
+              type="button"
               onClick={handleRedo}
               className={toolbarBtnClass}
               title="Redo (Ctrl+Y)"
@@ -627,6 +1035,7 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
           {/* View Buttons */}
           <div className={`flex items-center space-x-1 px-2 border-r ${borderColor}`}>
             <button
+              type="button"
               onClick={handlePreview}
               className={toolbarBtnClass}
               title="Preview"
@@ -637,6 +1046,7 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
               </svg>
             </button>
             <button
+              type="button"
               onClick={handleCodeView}
               className={toolbarBtnClass}
               title="View Code"
@@ -646,6 +1056,7 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
               </svg>
             </button>
             <button
+              type="button"
               onClick={handleFullscreen}
               className={toolbarBtnClass}
               title="Fullscreen"
@@ -655,6 +1066,7 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
               </svg>
             </button>
             <button
+              type="button"
               onClick={handleOutline}
               className={toolbarBtnClass}
               title="Toggle Outlines"
@@ -664,10 +1076,33 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
               </svg>
             </button>
           </div>
+
+          {/* Responsive Settings Button */}
+          <div className={`flex items-center space-x-1 px-2 border-r ${borderColor}`}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowGlobalResponsive(true);
+              }}
+              className={toolbarBtnClass}
+              title="Global Responsive Settings"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </button>
+          </div>
           
           {/* Action Buttons */}
           <button
-            onClick={handleSave}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSave();
+            }}
             disabled={isSaving}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium"
           >
@@ -686,7 +1121,12 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
             )}
           </button>
           <button
-            onClick={handlePublish}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handlePublish();
+            }}
             className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors flex items-center gap-2 font-medium"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -703,8 +1143,8 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
         <LeftPanel isDark={isDark} editor={editor} />
 
         {/* Center Panel - Design Canvas */}
-        <div className={`flex-1 flex flex-col ${bgPrimary} relative`}>
-          <div className="flex-1 gjs-editor-parent relative">
+        <div className={`flex-1 flex flex-col ${bgPrimary} relative overflow-hidden`}>
+          <div className="flex-1 gjs-editor-parent relative w-full h-full overflow-hidden">
             <GrapesJSEditor onEditorInit={handleEditorInit} />
           </div>
           
@@ -759,9 +1199,9 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
         {/* Right Panel - Properties Inspector */}
         <div className={`right-panel w-80 ${bgSecondary} border-l ${borderColor} flex flex-col overflow-hidden`}>
           <PropertiesPanel editor={editor} isDark={isDark} websiteId={websiteId} />
-          {/* Hidden containers for GrapesJS to attach to (but UI is hidden) */}
-          <div className="styles-container" style={{ display: 'none' }} />
-          <div className="traits-container" style={{ display: 'none' }} />
+          {/* Hidden containers for GrapesJS to attach to (but UI is completely hidden) */}
+          <div className="styles-container" style={{ display: 'none', visibility: 'hidden', height: 0, width: 0, overflow: 'hidden' }} />
+          <div className="traits-container" style={{ display: 'none', visibility: 'hidden', height: 0, width: 0, overflow: 'hidden' }} />
         </div>
       </div>
 
@@ -772,6 +1212,13 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
         websiteId={websiteId}
         onAutoSave={handleSave}
         onPreview={handlePreview}
+        getHtml={getHtml}
+        getCss={getCss}
+        onStoreOriginalContent={(html: string, css: string) => {
+          // Store original AI-generated HTML/CSS to preserve structure
+          originalAiContentRef.current = { html, css };
+          console.log('[BuilderLayout] Stored original AI-generated content for structure preservation');
+        }}
       />
 
       {/* Preview Modal */}
@@ -793,6 +1240,14 @@ export default function BuilderLayout({ websiteId, currentWebsite }: BuilderLayo
         onSelectImage={handleImageSelect}
         websiteId={websiteId}
         isDark={isDark}
+      />
+
+      {/* Global Responsive Settings Modal */}
+      <GlobalResponsiveSettings
+        editor={editor}
+        isDark={isDark}
+        isOpen={showGlobalResponsive}
+        onClose={() => setShowGlobalResponsive(false)}
       />
     </div>
   );

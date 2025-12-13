@@ -1,5 +1,6 @@
 // lib/subscriptionApi.ts
 import { API_ENDPOINTS, apiGet, apiPost, apiPut } from './apiConfig';
+import { formatPriceInPhp } from './currencyUtils';
 
 // TypeScript interfaces
 export interface Plan {
@@ -151,11 +152,11 @@ export const subscriptionApi = {
 
 // Helper functions
 export const planHelpers = {
-  // Get plan display name with pricing
+  // Get plan display name with pricing (in PHP for display)
   getDisplayName(plan: Plan): string {
     if (plan.type === 'free') return 'Free';
-    if (plan.type === 'monthly') return `Monthly - $${plan.price}/month`;
-    if (plan.type === 'yearly') return `Yearly - $${plan.price}/year`;
+    if (plan.type === 'monthly') return `Monthly - ${formatPriceInPhp(plan.price, 'month')}`;
+    if (plan.type === 'yearly') return `Yearly - ${formatPriceInPhp(plan.price, 'year')}`;
     return plan.name;
   },
 

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Plan } from '../../../lib/subscriptionApi';
+import { formatPriceInPhp, usdToPhp } from '../../../lib/currencyUtils';
 
 interface MockPaymentModalProps {
   isOpen: boolean;
@@ -43,9 +44,9 @@ const MockPaymentModal: React.FC<MockPaymentModalProps> = ({
   const formatPrice = () => {
     if (plan.price === 0) return 'Free';
     if (plan.type === 'yearly') {
-      return `$${plan.price}/year`;
+      return formatPriceInPhp(plan.price, 'year');
     }
-    return `$${plan.price}/month`;
+    return formatPriceInPhp(plan.price, 'month');
   };
 
   return (
@@ -75,7 +76,7 @@ const MockPaymentModal: React.FC<MockPaymentModalProps> = ({
             <div className="text-right">
               <div className="text-xl font-bold text-primary">{formatPrice()}</div>
               {plan.type === 'yearly' && (
-                <div className="text-sm text-green-500">Save $20/year</div>
+                <div className="text-sm text-green-500">Save ₱{usdToPhp((2.15 * 12) - 20.64).toFixed(2)}/year</div>
               )}
             </div>
           </div>

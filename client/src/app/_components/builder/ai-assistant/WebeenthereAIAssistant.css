@@ -34,6 +34,7 @@
   width: 380px;
   max-height: 600px;
   background: white;
+  color: #1e293b; /* Explicit text color for light mode */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   display: flex;
@@ -94,6 +95,11 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  color: #1e293b; /* Dark text for light mode - ensures all text is readable */
+}
+
+.webeenthere-ai-panel.dark .webeenthere-ai-content {
+  color: #e2e8f0; /* Light text for dark mode */
 }
 
 .webeenthere-ai-notification {
@@ -292,10 +298,16 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
+  color: #1e293b; /* Dark text for light mode */
+}
+
+.webeenthere-ai-panel.dark .suggestion-header {
+  color: #e2e8f0; /* Light text for dark mode */
 }
 
 .suggestion-icon {
   font-size: 20px;
+  color: inherit; /* Inherit from parent */
 }
 
 .suggestion-header h4 {
@@ -303,6 +315,11 @@
   font-size: 16px;
   font-weight: 600;
   flex: 1;
+  color: #1e293b; /* Dark text for light mode */
+}
+
+.webeenthere-ai-panel.dark .suggestion-header h4 {
+  color: #e2e8f0; /* Light text for dark mode */
 }
 
 .technical-metrics {
@@ -733,28 +750,16 @@
   margin-top: 4px;
 }
 
-/* Improved Suggestion Styles */
-.suggestion-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
+/* Improved Suggestion Styles - consolidated with earlier rules */
 .suggestion-title {
   display: flex;
   align-items: center;
   gap: 8px;
+  color: #1e293b; /* Dark text for light mode */
 }
 
-.suggestion-icon {
-  font-size: 18px;
-}
-
-.suggestion-header h4 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+.webeenthere-ai-panel.dark .suggestion-title {
+  color: #e2e8f0; /* Light text for dark mode */
 }
 
 /* Animations */

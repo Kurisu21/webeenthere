@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { API_ENDPOINTS, apiGet, apiPut } from '../../../../lib/apiConfig';
+import BuilderInstructionOverlay from '../../../_components/ui/BuilderInstructionOverlay';
 
 // Dynamically import the new builder to avoid SSR issues
 const BuilderLayout = dynamic(
@@ -29,6 +30,7 @@ export default function BuildWebsitePage() {
   const [websiteData, setWebsiteData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showInstructions, setShowInstructions] = useState(false);
 
   // Load website data
   useEffect(() => {
@@ -185,6 +187,11 @@ export default function BuildWebsitePage() {
       <BuilderLayout
         websiteId={websiteId}
         currentWebsite={websiteData}
+        onShowInstructions={() => setShowInstructions(true)}
+      />
+      <BuilderInstructionOverlay 
+        isOpen={showInstructions} 
+        onClose={() => setShowInstructions(false)} 
       />
     </div>
   );

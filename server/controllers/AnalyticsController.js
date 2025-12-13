@@ -181,8 +181,11 @@ class AnalyticsController {
         res.send(pdfBuffer);
       } else if (format === 'csv') {
         const csvData = this.convertReportToCSV(report);
+        const appName = (process.env.APP_NAME || 'WeBeenthere').toLowerCase().replace(/\s+/g, '-');
+        const dateStr = new Date().toISOString().split('T')[0];
+        const filename = `${appName}-analytics-report-${type}-${period}-${dateStr}.csv`;
         res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename="analytics-report-${period}-${type}.csv"`);
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         res.send(csvData);
       } else {
         res.json({ success: true, data: report });
@@ -331,25 +334,154 @@ class AnalyticsController {
   }
 
   /**
-   * Convert report to CSV format
+   * Convert report to CSV format with advanced details
    */
   convertReportToCSV(report) {
     const csvRows = [];
+    const appName = process.env.APP_NAME || 'WeBeenthere';
+    const reportDate = new Date().toISOString();
+    const formattedDate = new Date(reportDate).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
     
-    // Add header
-    csvRows.push('Metric,Value,Period,Generated At');
+    // Helper function to escape CSV values
+    const escapeCSV = (value) => {
+      if (value === null || value === undefined) return '';
+      const str = String(value);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
     
-    // Add user metrics
-    csvRows.push(`Total Users,${report.userMetrics.totalUsers},${report.period},${report.generatedAt}`);
-    csvRows.push(`New Users This Month,${report.userMetrics.newUsersThisMonth},${report.period},${report.generatedAt}`);
-    csvRows.push(`Active Users,${report.userMetrics.activeUsers},${report.period},${report.generatedAt}`);
+    // Report Header Section
+    csvRows.push('='.repeat(80));
+    csvRows.push(`${appName.toUpperCase()} - ANALYTICS REPORT`);
+    csvRows.push('='.repeat(80));
+    csvRows.push('');
+    csvRows.push(`Report Title,${this.getReportTitle(report.type, report.period)}`);
+    csvRows.push(`Brand Name,${appName}`);
+    csvRows.push(`Report Type,${report.type.charAt(0).toUpperCase() + report.type.slice(1)}`);
+    csvRows.push(`Period,${report.period.charAt(0).toUpperCase() + report.period.slice(1)}`);
+    csvRows.push(`Date Created,${formattedDate}`);
+    csvRows.push(`Generated At,${report.generatedAt || reportDate}`);
+    csvRows.push('');
+    csvRows.push('='.repeat(80));
+    csvRows.push('');
     
-    // Add website metrics
-    csvRows.push(`Total Websites,${report.websiteMetrics.totalWebsites},${report.period},${report.generatedAt}`);
-    csvRows.push(`Published Websites,${report.websiteMetrics.publishedWebsites},${report.period},${report.generatedAt}`);
-    csvRows.push(`New Websites This Month,${report.websiteMetrics.newWebsitesThisMonth},${report.period},${report.generatedAt}`);
+    // User Metrics Section
+    csvRows.push('USER METRICS');
+    csvRows.push('-'.repeat(80));
+    if (report.userMetrics) {
+      csvRows.push(`Total Users,${escapeCSV(report.userMetrics.totalUsers || 0)}`);
+      csvRows.push(`New Users This Period,${escapeCSV(report.userMetrics.newUsersThisMonth || 0)}`);
+      csvRows.push(`Active Users,${escapeCSV(report.userMetrics.activeUsers || 0)}`);
+      csvRows.push(`Inactive Users,${escapeCSV(report.userMetrics.inactiveUsers || 0)}`);
+      if (report.userMetrics.userGrowth) {
+        csvRows.push(`User Growth Rate,${escapeCSV(report.userMetrics.userGrowth)}%`);
+      }
+      if (report.userMetrics.retentionRate) {
+        csvRows.push(`User Retention Rate,${escapeCSV(report.userMetrics.retentionRate)}%`);
+      }
+    }
+    csvRows.push('');
+    
+    // Website Metrics Section
+    csvRows.push('WEBSITE METRICS');
+    csvRows.push('-'.repeat(80));
+    if (report.websiteMetrics) {
+      csvRows.push(`Total Websites,${escapeCSV(report.websiteMetrics.totalWebsites || 0)}`);
+      csvRows.push(`Published Websites,${escapeCSV(report.websiteMetrics.publishedWebsites || 0)}`);
+      csvRows.push(`Unpublished Websites,${escapeCSV((report.websiteMetrics.totalWebsites || 0) - (report.websiteMetrics.publishedWebsites || 0))}`);
+      csvRows.push(`New Websites This Period,${escapeCSV(report.websiteMetrics.newWebsitesThisMonth || 0)}`);
+      if (report.websiteMetrics.publicationRate) {
+        csvRows.push(`Publication Rate,${escapeCSV(report.websiteMetrics.publicationRate)}%`);
+      }
+    }
+    csvRows.push('');
+    
+    // Activity Breakdown Section
+    if (report.activityBreakdown && report.activityBreakdown.length > 0) {
+      csvRows.push('ACTIVITY BREAKDOWN');
+      csvRows.push('-'.repeat(80));
+      csvRows.push('Action,Count');
+      report.activityBreakdown.forEach(activity => {
+        csvRows.push(`${escapeCSV(activity.action)},${escapeCSV(activity.count)}`);
+      });
+      csvRows.push('');
+    }
+    
+    // User Activity Section
+    if (report.userActivity && report.userActivity.length > 0) {
+      csvRows.push('TOP USER ACTIVITY');
+      csvRows.push('-'.repeat(80));
+      csvRows.push('Username,Email,Activity Count,Last Activity');
+      report.userActivity.forEach(user => {
+        csvRows.push(`${escapeCSV(user.username)},${escapeCSV(user.email)},${escapeCSV(user.activity_count)},${escapeCSV(user.last_activity || 'N/A')}`);
+      });
+      csvRows.push('');
+    }
+    
+    // Summary Section
+    csvRows.push('='.repeat(80));
+    csvRows.push('REPORT SUMMARY');
+    csvRows.push('-'.repeat(80));
+    csvRows.push(`Total Records,${this.getTotalRecords(report)}`);
+    csvRows.push(`Report Period,${report.period}`);
+    csvRows.push(`Report Type,${report.type}`);
+    csvRows.push(`Generated By,System`);
+    csvRows.push(`Export Format,CSV`);
+    csvRows.push('');
+    csvRows.push('='.repeat(80));
+    csvRows.push(`End of Report - ${appName}`);
+    csvRows.push('='.repeat(80));
     
     return csvRows.join('\n');
+  }
+  
+  /**
+   * Get report title based on type and period
+   */
+  getReportTitle(type, period) {
+    const typeMap = {
+      'comprehensive': 'Comprehensive Analytics Report',
+      'user': 'User Analytics Report',
+      'website': 'Website Analytics Report',
+      'activity': 'Activity Analytics Report'
+    };
+    
+    const periodMap = {
+      'daily': 'Daily',
+      'weekly': 'Weekly',
+      'monthly': 'Monthly',
+      'yearly': 'Yearly'
+    };
+    
+    return `${periodMap[period] || 'Monthly'} ${typeMap[type] || 'Analytics Report'}`;
+  }
+  
+  /**
+   * Calculate total records in report
+   */
+  getTotalRecords(report) {
+    let total = 0;
+    if (report.userMetrics) {
+      total += (report.userMetrics.totalUsers || 0);
+    }
+    if (report.websiteMetrics) {
+      total += (report.websiteMetrics.totalWebsites || 0);
+    }
+    if (report.activityBreakdown) {
+      total += report.activityBreakdown.length;
+    }
+    if (report.userActivity) {
+      total += report.userActivity.length;
+    }
+    return total;
   }
 }
 

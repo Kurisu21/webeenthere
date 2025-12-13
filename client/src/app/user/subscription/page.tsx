@@ -272,16 +272,52 @@ export default function SubscriptionPage() {
                 <div>
                   <h2 className="text-2xl font-bold text-primary mb-6">Available Plans</h2>
                   <div className="grid md:grid-cols-3 gap-6">
-                    {plans.map((plan) => (
-                      <PricingCard
-                        key={plan.id}
-                        plan={plan}
-                        currentPlan={currentSubscription}
-                        onSubscribe={handleSubscribe}
-                        isLoading={isSubscribing}
-                        isPopular={plan.type === 'monthly'}
-                      />
-                    ))}
+                    {plans.map((plan) => {
+                      const matchingPlan = currentSubscription && currentSubscription.plan_id === plan.id ? plan : null;
+                      return (
+                        <PricingCard
+                          key={plan.id}
+                          plan={plan}
+                          currentPlan={matchingPlan}
+                          onSubscribe={handleSubscribe}
+                          isLoading={isSubscribing}
+                          isPopular={plan.type === 'monthly'}
+                        />
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Pricing Explanation */}
+                  <div className="mt-8 bg-surface-elevated rounded-lg border border-app p-6">
+                    <h3 className="text-xl font-bold text-primary mb-4">Why Our Pricing?</h3>
+                    <div className="space-y-4 text-secondary">
+                      <div>
+                        <h4 className="font-semibold text-primary mb-2">Free Plan</h4>
+                        <p className="text-sm">
+                          Perfect for trying the platform and understanding its capabilities. With 20 AI messages and 1 website, 
+                          you can fully experience our AI-powered features before committing to a paid plan. Test template generation, 
+                          AI assistant functionality, and website building tools at no cost.
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-primary mb-2">Monthly Plan (₱119.33/month)</h4>
+                        <p className="text-sm">
+                          Designed for freelancers, small businesses, students, and content creators. At just ₱119.33/month, 
+                          this plan makes professional website building tools accessible to a wide range of users. With 300 AI messages 
+                          per month (approximately 10 messages per day) and 5 websites, you have ample capacity for regular use and 
+                          can manage multiple projects simultaneously. No long-term commitment - perfect for users who want flexibility.
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-primary mb-2">Yearly Plan (₱1,145.52/year, equivalent to ₱95.46/month)</h4>
+                        <p className="text-sm">
+                          Our premium plan for professional freelancers, agencies, and power users. With 4,000 AI messages per month 
+                          (approximately 133 messages per day) and 20 websites, this plan provides extensive capacity for heavy AI usage 
+                          and managing multiple client projects. Save 20% compared to monthly billing - equivalent to getting 2.4 months free. 
+                          Best for users committed to the platform who want maximum value and professional features.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

@@ -69,7 +69,7 @@ class AdminSubscriptionController {
   // POST /api/admin/subscriptions/assign
   async assignPlan(req, res) {
     try {
-      const { userId, planId, startDate, endDate, paymentReference } = req.body;
+      const { userId, planId, paymentReference } = req.body;
 
       if (!userId || !planId) {
         return res.status(400).json({
@@ -102,11 +102,25 @@ class AdminSubscriptionController {
         await this.subscriptionService.userPlanModel.cancelSubscription(existingSubscription.id);
       }
 
+      // Calculate start_date and end_date based on plan type
+      const startDate = new Date().toISOString().split('T')[0];
+      let endDate = null;
+      if (plan.type === 'monthly') {
+        const end = new Date();
+        end.setMonth(end.getMonth() + 1);
+        endDate = end.toISOString().split('T')[0];
+      } else if (plan.type === 'yearly') {
+        const end = new Date();
+        end.setFullYear(end.getFullYear() + 1);
+        endDate = end.toISOString().split('T')[0];
+      }
+      // For free plans, endDate remains null (unlimited)
+
       // Create new subscription
       const subscriptionId = await this.subscriptionService.userPlanModel.create({
         user_id: userId,
         plan_id: planId,
-        start_date: startDate || new Date().toISOString().split('T')[0],
+        start_date: startDate,
         end_date: endDate,
         auto_renew: plan.type !== 'free',
         payment_reference: paymentReference || `ADMIN_ASSIGNED_${Date.now()}`
@@ -218,9 +232,18 @@ class AdminSubscriptionController {
       });
     } catch (error) {
       console.error('Error fetching subscription logs:', error);
+      
+      // Handle timeout errors specifically
+      if (error.message && error.message.includes('timeout')) {
+        return res.status(504).json({
+          success: false,
+          error: 'Request timeout: The query took too long to execute. Please try with more specific filters or contact support.'
+        });
+      }
+      
       res.status(500).json({
         success: false,
-        error: 'Failed to fetch subscription logs'
+        error: error.message || 'Failed to fetch subscription logs'
       });
     }
   }

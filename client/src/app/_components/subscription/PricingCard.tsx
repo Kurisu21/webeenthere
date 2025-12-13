@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Plan, planHelpers } from '../../../lib/subscriptionApi';
+import { formatPriceInPhp } from '../../../lib/currencyUtils';
 
 interface PricingCardProps {
   plan: Plan;
@@ -39,16 +40,17 @@ const PricingCard: React.FC<PricingCardProps> = ({
   const formatPrice = () => {
     if (plan.price === 0) return 'Free';
     if (plan.type === 'yearly') {
-      return `$${plan.price}/year`;
+      return formatPriceInPhp(plan.price, 'year');
     }
-    return `$${plan.price}/month`;
+    return formatPriceInPhp(plan.price, 'month');
   };
 
   const getSavingsText = () => {
     if (plan.type === 'yearly') {
-      const monthlyPrice = 5.40; // Monthly plan price
+      const monthlyPrice = 2.15; // Monthly plan price in USD
       const savings = planHelpers.calculateYearlySavings(monthlyPrice, plan.price);
-      return `Save $${savings.toFixed(2)}/year`;
+      const savingsInPhp = savings * 55.5; // Convert to PHP for display
+      return `Save ₱${savingsInPhp.toFixed(2)}/year`;
     }
     return null;
   };

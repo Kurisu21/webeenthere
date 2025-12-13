@@ -226,7 +226,51 @@ export function useGrapesJS(editor: GrapesEditorLike | null) {
       editor.setComponents(html);
     }
     if (typeof css === 'string') {
+      // Apply CSS to editor's style manager
       editor.setStyle(css);
+      
+      // CRITICAL: Also inject CSS directly into canvas iframe head
+      // This ensures body/html styles, CSS variables, and complex selectors work properly
+      const injectStylesIntoCanvas = () => {
+        try {
+          const canvas = editor.Canvas;
+          const frame = canvas?.getFrameEl?.();
+          
+          if (frame && frame.contentDocument) {
+            const frameDoc = frame.contentDocument;
+            const frameHead = frameDoc.head || frameDoc.getElementsByTagName('head')[0];
+            
+            if (frameHead) {
+              // Remove existing style tag if present
+              const existingStyle = frameDoc.getElementById('applied-styles');
+              if (existingStyle) {
+                existingStyle.remove();
+              }
+              
+              // Create and inject style tag into iframe head
+              const styleTag = frameDoc.createElement('style');
+              styleTag.id = 'applied-styles';
+              styleTag.textContent = css;
+              frameHead.appendChild(styleTag);
+            }
+          }
+        } catch (error) {
+          // Cross-origin or other iframe access issues - fallback to setStyle only
+          console.warn('Could not inject styles into canvas iframe:', error);
+        }
+      };
+      
+      // Try immediately, then retry after delays to ensure canvas is ready
+      injectStylesIntoCanvas();
+      setTimeout(injectStylesIntoCanvas, 300);
+      setTimeout(injectStylesIntoCanvas, 1000);
+      
+      // Listen for canvas frame load/reload events
+      const handleFrameLoad = () => {
+        injectStylesIntoCanvas();
+      };
+      editor.on('canvas:frame:load', handleFrameLoad);
+      editor.on('canvas:update', handleFrameLoad);
     }
   }, [editor]);
 

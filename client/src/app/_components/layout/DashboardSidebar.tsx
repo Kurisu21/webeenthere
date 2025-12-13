@@ -127,6 +127,7 @@ const sections: NavSection[] = [
     items: [
       { id: 'main', label: 'Main', icon: Icons.main, href: '/user/main' },
       { id: 'create', label: '+ Create', icon: Icons.create, href: '/user/create' },
+      { id: 'templates', label: 'Browse Templates', icon: Icons.host, href: '/user/templates' },
       { id: 'pages', label: 'My Pages', icon: Icons.pages, href: '/user/pages' },
       { id: 'images', label: 'Media Library', icon: Icons.images, href: '/user/images' },
     ],
@@ -199,7 +200,7 @@ const DashboardSidebar = memo(() => {
 
       {/* Sidebar */}
       <aside className={`
-        fixed left-0 top-0 z-40 bg-surface text-primary flex flex-col py-4 md:py-8 px-4 md:min-h-screen border-r-0 md:border-r-4 border-app shadow-2xl transition-all duration-300 ease-in-out
+        fixed left-0 top-0 z-40 bg-surface text-primary flex flex-col h-screen py-4 md:py-8 px-4 border-r-0 md:border-r-4 border-app shadow-2xl transition-all duration-300 ease-in-out
         ${isCollapsed 
           ? 'w-16 md:w-16' 
           : 'w-full md:w-64'
@@ -209,45 +210,71 @@ const DashboardSidebar = memo(() => {
           : '-translate-x-full md:translate-x-0'
         }
       `}>
-        {/* Header with User Info and Toggle Button */}
-      <div className="mb-4 md:mb-8">
-        {/* Close Button - Top Right */}
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={() => {
-              // On mobile, close the sidebar; on desktop, toggle collapse
-              if (window.innerWidth < 768) {
-                closeMobileSidebar();
-              } else {
-                toggleSidebar();
-              }
-            }}
-            className="p-2 rounded-lg hover:bg-surface-elevated transition-colors duration-200 flex-shrink-0"
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
+        {/* Edge Toggle Button - Floating on right border */}
+        <button
+          onClick={() => {
+            // On mobile, close the sidebar; on desktop, toggle collapse
+            if (window.innerWidth < 768) {
+              closeMobileSidebar();
+            } else {
+              toggleSidebar();
+            }
+          }}
+          className="
+            hidden md:flex
+            absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2
+            w-10 h-10
+            items-center justify-center
+            bg-surface-elevated border-2 border-app
+            rounded-full
+            shadow-lg
+            hover:shadow-xl
+            hover:scale-110
+            active:scale-95
+            transition-all duration-200
+            z-50
+            group
+          "
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {isCollapsed ? (
+            // Single chevron right (>) when collapsed
             <svg 
-              className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} 
+              className="w-5 h-5 text-primary transition-transform duration-300 group-hover:text-secondary" 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
             </svg>
-          </button>
+          ) : (
+            // Single chevron left (<) when expanded
+            <svg 
+              className="w-5 h-5 text-primary transition-transform duration-300 group-hover:text-secondary" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            </svg>
+          )}
+        </button>
+
+        {/* Header with User Info */}
+        <div className="mb-4 md:mb-8 flex-shrink-0">
+          {!isCollapsed && (
+            <div className="mb-4">
+              {/* Menu Title */}
+              <div className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent text-center transition-all duration-300">
+                Menu
+              </div>
+            </div>
+          )}
         </div>
 
-        {!isCollapsed && (
-          <div className="mb-4">
-            {/* Menu Title */}
-            <div className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent text-center transition-all duration-300">
-              Menu
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* Navigation */}
-      <nav className={`flex md:flex-col flex-1 overflow-x-auto md:overflow-x-visible overflow-y-auto max-h-[calc(100vh-200px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${isCollapsed ? 'gap-1' : 'space-y-1'}`}>
+      <nav className={`flex md:flex-col flex-1 overflow-x-auto md:overflow-x-visible overflow-y-auto min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${isCollapsed ? 'gap-1' : 'space-y-1'}`}>
         {sections.map((section) => {
           const isExpanded = expandedSections.has(section.id);
           const hasActiveItem = section.items.some(item => pathname === item.href);

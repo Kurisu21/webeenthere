@@ -9,7 +9,6 @@ import { apiGet, apiPut, API_BASE_URL } from '../../../lib/apiConfig';
 
 interface AiConfig {
   model: string;
-  maxTokens: number;
   temperature: number;
   updatedAt?: string;
   updatedBy?: string;
@@ -40,9 +39,9 @@ interface Pagination {
   totalPages: number;
 }
 
-// Popular OpenRouter models (Free only)
+// Popular OpenRouter models
 const AVAILABLE_MODELS = [
-  { value: 'x-ai/grok-4.1-fast:free', label: 'Grok 4.1 Fast (Free)' },
+  { value: 'x-ai/grok-4.1-fast', label: 'xAI: Grok 4.1 Fast' },
   { value: 'deepseek/deepseek-chat-v3.1:free', label: 'DeepSeek Chat v3.1 (Free)' },
   { value: 'google/gemini-2.0-flash-exp:free', label: 'Gemini 2.0 Flash (Free)' },
   { value: 'meta-llama/llama-3.1-8b-instruct:free', label: 'Llama 3.1 8B (Free)' },
@@ -51,8 +50,7 @@ const AVAILABLE_MODELS = [
 export default function AiConfigurationPage() {
   const { token } = useAuth();
   const [config, setConfig] = useState<AiConfig>({
-    model: 'x-ai/grok-4.1-fast:free',
-    maxTokens: 4000,
+    model: 'x-ai/grok-4.1-fast',
     temperature: 0.7
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -212,6 +210,25 @@ export default function AiConfigurationPage() {
               <div className="bg-surface-elevated border border-app rounded-lg p-6">
                 <h2 className="text-2xl font-semibold text-primary mb-6">Model Settings</h2>
                 
+                {/* Warning Banner */}
+                <div className="mb-6 p-4 bg-sky-50 dark:bg-sky-950/50 border-l-4 border-sky-400 dark:border-sky-500 rounded-r-lg shadow-sm">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-sky-500 dark:text-sky-400 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div>
+                      <h3 className="text-sm font-semibold text-sky-600 dark:text-sky-400 mb-1">
+                        Model and Temperature Settings Disabled
+                      </h3>
+                      <p className="text-sm text-sky-600 dark:text-sky-400 leading-relaxed">
+                        These settings are locked to prevent instability in AI template generation and AI assistant functionality. 
+                        Changing the AI model or temperature may cause unpredictable behavior, inconsistent outputs, or system errors. 
+                        The current configuration has been optimized for stability and performance.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
                 <div className="space-y-6">
                   {/* Model Selection */}
                   <div>
@@ -220,8 +237,8 @@ export default function AiConfigurationPage() {
                     </label>
                     <select
                       value={config.model}
-                      onChange={(e) => setConfig({ ...config, model: e.target.value })}
-                      className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      disabled
+                      className="w-full px-4 py-3 bg-surface/50 border border-app rounded-lg text-primary/60 placeholder-secondary focus:outline-none cursor-not-allowed opacity-60"
                     >
                       {AVAILABLE_MODELS.map(model => (
                         <option key={model.value} value={model.value}>
@@ -231,24 +248,6 @@ export default function AiConfigurationPage() {
                     </select>
                     <p className="mt-2 text-sm text-secondary">
                       Select the AI model to use for all AI features (template generation, assistant, etc.)
-                    </p>
-                  </div>
-
-                  {/* Max Tokens */}
-                  <div>
-                    <label className="block text-primary font-medium mb-2">
-                      Max Tokens
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="16000"
-                      value={config.maxTokens}
-                      onChange={(e) => setConfig({ ...config, maxTokens: parseInt(e.target.value) || 4000 })}
-                      className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                    <p className="mt-2 text-sm text-secondary">
-                      Maximum number of tokens in the AI response (1-16000)
                     </p>
                   </div>
 
@@ -263,23 +262,12 @@ export default function AiConfigurationPage() {
                       max="2"
                       step="0.1"
                       value={config.temperature}
-                      onChange={(e) => setConfig({ ...config, temperature: parseFloat(e.target.value) || 0.7 })}
-                      className="w-full px-4 py-3 bg-surface border border-app rounded-lg text-primary placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      disabled
+                      className="w-full px-4 py-3 bg-surface/50 border border-app rounded-lg text-primary/60 placeholder-secondary focus:outline-none cursor-not-allowed opacity-60"
                     />
                     <p className="mt-2 text-sm text-secondary">
                       Controls randomness in AI responses (0 = deterministic, 2 = very creative)
                     </p>
-                  </div>
-
-                  {/* Save Button */}
-                  <div className="pt-4">
-                    <button
-                      onClick={handleSave}
-                      disabled={isSaving}
-                      className="w-full px-6 py-3 bg-black hover:bg-black/90 dark:bg-white dark:hover:bg-white/90 text-white dark:text-black rounded-lg transition-all duration-200 font-medium disabled:opacity-50"
-                    >
-                      {isSaving ? 'Saving...' : 'Save Configuration'}
-                    </button>
                   </div>
 
                   {/* Last Updated Info */}
@@ -371,12 +359,12 @@ export default function AiConfigurationPage() {
                                   {prompt.prompt_type}
                                 </span>
                                 {prompt.execution_status && (
-                                  <span className={`px-2 py-1 rounded text-xs ${
+                                  <span className={`px-2 py-1 rounded text-xs font-medium ${
                                     prompt.execution_status === 'success'
                                       ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
                                       : prompt.execution_status === 'failed'
                                       ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
-                                      : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200'
+                                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
                                   }`}>
                                     {prompt.execution_status}
                                   </span>
@@ -494,5 +482,9 @@ export default function AiConfigurationPage() {
     </div>
   );
 }
+
+
+
+
 
 

@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import RoleBadge from './RoleBadge';
-import StatusBadge from './StatusBadge';
 import { User } from '../../../lib/adminApi';
 
 interface UserTableProps {
@@ -94,38 +92,8 @@ export const UserTable: React.FC<UserTableProps> = ({
                   <SortIcon field="id" />
                 </div>
               </th>
-              <th 
-                className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:text-primary transition-colors"
-                onClick={() => handleSort('username')}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>ACTIVITY</span>
-                  <SortIcon field="username" />
-                </div>
-              </th>
-              <th 
-                className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:text-primary transition-colors"
-                onClick={() => handleSort('email')}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>PLATFORM</span>
-                  <SortIcon field="email" />
-                </div>
-              </th>
-              <th 
-                className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:text-primary transition-colors"
-                onClick={() => handleSort('role')}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>PERFORMANCE</span>
-                  <SortIcon field="role" />
-                </div>
-              </th>
               <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 FIRST SEEN
-              </th>
-              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-secondary uppercase tracking-wider">
-                SECURITY
               </th>
               <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 ACTIONS
@@ -148,45 +116,8 @@ export const UserTable: React.FC<UserTableProps> = ({
                     </div>
                   </div>
                 </td>
-                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap" data-label="Activity">
-                  <div className="flex items-center">
-                    <div className="w-full bg-surface rounded-full h-2 mr-3">
-                      <div className="bg-blue-500 h-2 rounded-full" style={{width: `${Math.random() * 100}%`}}></div>
-                    </div>
-                    <span className="text-xs sm:text-sm text-secondary">{Math.floor(Math.random() * 100)}%</span>
-                  </div>
-                </td>
-                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap" data-label="Platform">
-                  <div className="flex items-center">
-                    <div className="w-6 h-6 bg-blue-500/20 rounded flex items-center justify-center mr-2">
-                      <svg className="w-3 h-3 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                      </svg>
-                    </div>
-                    <span className="text-xs sm:text-sm text-secondary">Web Platform</span>
-                  </div>
-                </td>
-                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap" data-label="Performance">
-                  <div className="flex items-center justify-between">
-                    <RoleBadge role={user.role} size="sm" />
-                    <div className="text-xs text-secondary ml-2">
-                      {user.role === 'admin' ? '100%' : '75%'}
-                    </div>
-                  </div>
-                </td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-secondary" data-label="First Seen">
                   {formatDate(user.created_at)}
-                </td>
-                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap" data-label="Security">
-                  {user.is_verified ? (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
-                      ✓ No threats detected
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
-                      ⚠ {Math.floor(Math.random() * 3) + 1} threats detected
-                    </span>
-                  )}
                 </td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium" data-label="Actions">
                   <div className="flex items-center space-x-1 sm:space-x-2">

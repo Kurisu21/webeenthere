@@ -170,6 +170,52 @@ export const getTemplatesByCreator = async (userId: number): Promise<Template[]>
   throw new Error(response.message || 'Failed to fetch templates by creator');
 };
 
+// Import template from HTML file (admin only)
+export interface TemplateImportData {
+  name: string;
+  description: string;
+  category: string;
+  is_featured?: boolean;
+}
+
+export const importTemplateFromHTML = async (
+  file: File,
+  data: TemplateImportData
+): Promise<{ id: number }> => {
+  const formData = new FormData();
+  formData.append('htmlFile', file);
+  formData.append('name', data.name);
+  formData.append('description', data.description);
+  formData.append('category', data.category);
+  if (data.is_featured !== undefined) {
+    formData.append('is_featured', data.is_featured.toString());
+  }
+
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+
+  const response = await fetch(`${API_ENDPOINTS.TEMPLATES}/import`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
+    body: formData
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || errorData.error || 'Failed to import template');
+  }
+
+  const result = await response.json();
+  if (result.success) {
+    return result.data;
+  }
+  throw new Error(result.message || 'Failed to import template');
+};
+
 // Template categories
 export const TEMPLATE_CATEGORIES = [
   { id: 'portfolio', name: 'Portfolio' },

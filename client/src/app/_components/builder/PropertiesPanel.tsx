@@ -25,7 +25,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   const [selectedComponent, setSelectedComponent] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['layout', 'typography', 'style', 'image-placeholder', 'link'])
+    new Set(['layout', 'responsive', 'typography', 'style', 'image-placeholder', 'link'])
   );
   const [showImageLibrary, setShowImageLibrary] = useState(false);
   const [imageLibraryMode, setImageLibraryMode] = useState<'src' | 'background'>('src');
@@ -1332,6 +1332,258 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </div>
         )}
 
+        {/* Responsive Section */}
+        {filterSection('responsive', ['padding', 'margin', 'max-width', 'auto-adjust']) && (
+          <div className="properties-section">
+            <SectionHeader
+              title="Responsive"
+              isExpanded={expandedSections.has('responsive')}
+              onToggle={() => toggleSection('responsive')}
+              isDark={isDark}
+            />
+            {expandedSections.has('responsive') && (
+              <div className="properties-section-content">
+                <div className="property-row">
+                  <label className="property-label">Auto-Adjust Padding</label>
+                  <SegmentedControl
+                    options={[
+                      { value: 'enabled', label: 'On' },
+                      { value: 'disabled', label: 'Off' },
+                    ]}
+                    value={(() => {
+                      const classes = selectedComponent?.getClasses() || [];
+                      const hasAutoPadding = classes.some((cls: string) => 
+                        cls.includes('auto-padding') || 
+                        cls.includes('safe-edge') || 
+                        cls.includes('responsive-section-auto')
+                      );
+                      return hasAutoPadding ? 'enabled' : 'disabled';
+                    })()}
+                    onChange={(value) => {
+                      if (!selectedComponent || !editor) return;
+                      const classes = selectedComponent.getClasses() || [];
+                      
+                      if (value === 'enabled') {
+                        // Remove existing auto-padding classes
+                        classes.forEach((cls: string) => {
+                          if (cls.includes('auto-padding') || cls.includes('safe-edge') || cls.includes('responsive-section-auto')) {
+                            selectedComponent.removeClass(cls);
+                          }
+                        });
+                        // Add auto-padding class
+                        selectedComponent.addClass('auto-padding');
+                        // Also add safe-edge for extra protection
+                        selectedComponent.addClass('safe-edge');
+                      } else {
+                        // Remove auto-padding classes
+                        classes.forEach((cls: string) => {
+                          if (cls.includes('auto-padding') || cls.includes('safe-edge') || cls.includes('responsive-section-auto')) {
+                            selectedComponent.removeClass(cls);
+                          }
+                        });
+                      }
+                      editor.trigger('component:update');
+                      editor.trigger('update');
+                    }}
+                    isDark={isDark}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Automatically adjusts padding on mobile, tablet, and desktop
+                  </p>
+                </div>
+                
+                <div className="property-row">
+                  <label className="property-label">Container Max-Width</label>
+                  <div className="flex gap-2">
+                    <InputWithClear
+                      value={(() => {
+                        const maxWidth = getStyleValue('max-width');
+                        return maxWidth || '';
+                      })()}
+                      onChange={(value) => {
+                        if (value) {
+                          updateStyle('max-width', value);
+                          // Also set width to 100% if max-width is set
+                          if (!getStyleValue('width') || getStyleValue('width') === 'auto') {
+                            updateStyle('width', '100%');
+                          }
+                          // Add margin auto for centering
+                          if (!getStyleValue('margin-left') && !getStyleValue('margin-right')) {
+                            updateStyle('margin-left', 'auto');
+                            updateStyle('margin-right', 'auto');
+                          }
+                        } else {
+                          updateStyle('max-width', '');
+                        }
+                      }}
+                      placeholder="1200px"
+                    />
+                    <select
+                      value={(() => {
+                        const maxWidth = getStyleValue('max-width') || '';
+                        if (maxWidth.includes('%')) return '%';
+                        if (maxWidth.includes('rem')) return 'rem';
+                        if (maxWidth.includes('vw')) return 'vw';
+                        return 'px';
+                      })()}
+                      onChange={(e) => {
+                        const current = getStyleValue('max-width') || '1200';
+                        const num = current.replace(/[^0-9.]/g, '');
+                        updateStyle('max-width', `${num}${e.target.value}`);
+                      }}
+                      className="px-2 py-2 bg-gray-800 border border-gray-700 rounded-md text-white text-sm"
+                    >
+                      <option value="px">px</option>
+                      <option value="%">%</option>
+                      <option value="rem">rem</option>
+                      <option value="vw">vw</option>
+                    </select>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Set max-width to prevent content from being too wide
+                  </p>
+                </div>
+
+                <div className="property-row">
+                  <label className="property-label">Edge Spacing (Mobile)</label>
+                  <div className="flex gap-2">
+                    <InputWithClear
+                      value={(() => {
+                        // Try to get padding-left or padding-right
+                        const padding = getStyleValue('padding-left') || getStyleValue('padding-right') || '1rem';
+                        return padding;
+                      })()}
+                      onChange={(value) => {
+                        if (value) {
+                          updateStyle('padding-left', value);
+                          updateStyle('padding-right', value);
+                        }
+                      }}
+                      placeholder="1rem"
+                    />
+                    <select
+                      value={(() => {
+                        const padding = getStyleValue('padding-left') || '1rem';
+                        if (padding.includes('rem')) return 'rem';
+                        if (padding.includes('%')) return '%';
+                        return 'px';
+                      })()}
+                      onChange={(e) => {
+                        const current = getStyleValue('padding-left') || '1';
+                        const num = current.replace(/[^0-9.]/g, '');
+                        const newValue = `${num}${e.target.value}`;
+                        updateStyle('padding-left', newValue);
+                        updateStyle('padding-right', newValue);
+                      }}
+                      className="px-2 py-2 bg-gray-800 border border-gray-700 rounded-md text-white text-sm"
+                    >
+                      <option value="px">px</option>
+                      <option value="rem">rem</option>
+                      <option value="%">%</option>
+                    </select>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Minimum spacing from viewport edges on mobile
+                  </p>
+                </div>
+
+                <div className="property-row">
+                  <label className="property-label">Apply Responsive Wrapper</label>
+                  <SegmentedControl
+                    options={[
+                      { value: 'enabled', label: 'On' },
+                      { value: 'disabled', label: 'Off' },
+                    ]}
+                    value={(() => {
+                      const classes = selectedComponent?.getClasses() || [];
+                      return classes.some((cls: string) => cls.includes('section-auto-wrapper')) ? 'enabled' : 'disabled';
+                    })()}
+                    onChange={(value) => {
+                      if (!selectedComponent || !editor) return;
+                      const classes = selectedComponent.getClasses() || [];
+                      
+                      if (value === 'enabled') {
+                        // Remove existing wrapper classes
+                        classes.forEach((cls: string) => {
+                          if (cls.includes('section-auto-wrapper')) {
+                            selectedComponent.removeClass(cls);
+                          }
+                        });
+                        selectedComponent.addClass('section-auto-wrapper');
+                      } else {
+                        classes.forEach((cls: string) => {
+                          if (cls.includes('section-auto-wrapper')) {
+                            selectedComponent.removeClass(cls);
+                          }
+                        });
+                      }
+                      editor.trigger('component:update');
+                      editor.trigger('update');
+                    }}
+                    isDark={isDark}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Wraps section with auto-adjusting padding for all screen sizes
+                  </p>
+                </div>
+
+                <div className="property-row">
+                  <label className="property-label">Responsive Padding Presets</label>
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      if (!selectedComponent || !editor || !e.target.value) return;
+                      const preset = e.target.value;
+                      
+                      // Remove existing responsive classes
+                      const classes = selectedComponent.getClasses() || [];
+                      classes.forEach((cls: string) => {
+                        if (cls.includes('responsive-section') || cls.includes('auto-padding') || cls.includes('safe-edge')) {
+                          selectedComponent.removeClass(cls);
+                        }
+                      });
+                      
+                      switch (preset) {
+                        case 'small':
+                          selectedComponent.addClass('auto-padding');
+                          updateStyle('padding-top', '2rem');
+                          updateStyle('padding-bottom', '2rem');
+                          break;
+                        case 'medium':
+                          selectedComponent.addClass('responsive-section-auto');
+                          break;
+                        case 'large':
+                          selectedComponent.addClass('responsive-section-auto');
+                          updateStyle('padding-top', '6rem');
+                          updateStyle('padding-bottom', '6rem');
+                          break;
+                        case 'none':
+                          // Remove all padding
+                          updateStyle('padding', '0');
+                          break;
+                      }
+                      
+                      editor.trigger('component:update');
+                      editor.trigger('update');
+                      e.target.value = ''; // Reset select
+                    }}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Choose a preset...</option>
+                    <option value="small">Small (2rem vertical, auto horizontal)</option>
+                    <option value="medium">Medium (3-5rem vertical, auto horizontal)</option>
+                    <option value="large">Large (6rem+ vertical, auto horizontal)</option>
+                    <option value="none">Remove All Padding</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Quick presets for common responsive spacing needs
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Typography Section */}
         {filterSection('typography', [
           'font-family',
@@ -1341,6 +1593,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           'letter-spacing',
           'text-transform',
           'text-align',
+          'color',
         ]) && (
           <div className="properties-section">
             <SectionHeader
@@ -1455,6 +1708,14 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     isDark={isDark}
                   />
                 </div>
+                <div className="property-row">
+                  <label className="property-label">Text Color</label>
+                  <ColorPickerButton
+                    value={getStyleValue('color') || '#000000'}
+                    onChange={(value) => updateStyle('color', value)}
+                    label="Set Color"
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -1489,17 +1750,63 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <div className="relative">
                     <div className="flex items-center gap-2 w-full">
                       <div
-                        className="w-5 h-5 rounded-full border border-gray-600 flex-shrink-0"
+                        className="w-6 h-6 rounded border border-gray-600 flex-shrink-0"
                         style={{
                           backgroundColor: getStyleValue('color') || '#0C0C0C',
                         }}
                       />
-                      <InputWithClear
-                        value={getStyleValue('color') || '#0C0C0C'}
-                        onChange={(value) => updateStyle('color', value)}
-                        placeholder="#0C0C0C"
-                        className="flex-1"
-                      />
+                      {(() => {
+                        const currentColor = getStyleValue('color') || '#0C0C0C';
+                        const predefinedColors = [
+                          { value: '#000000', label: 'Black' },
+                          { value: '#FFFFFF', label: 'White' },
+                          { value: '#FF0000', label: 'Red' },
+                          { value: '#00FF00', label: 'Green' },
+                          { value: '#0000FF', label: 'Blue' },
+                          { value: '#FFFF00', label: 'Yellow' },
+                          { value: '#FF00FF', label: 'Magenta' },
+                          { value: '#00FFFF', label: 'Cyan' },
+                          { value: '#FF7F00', label: 'Orange' },
+                          { value: '#800080', label: 'Purple' },
+                          { value: '#FFC0CB', label: 'Pink' },
+                          { value: '#A52A2A', label: 'Brown' },
+                          { value: '#808080', label: 'Gray' },
+                          { value: '#0C0C0C', label: 'Dark Gray' },
+                          { value: '#333333', label: 'Charcoal' },
+                          { value: '#666666', label: 'Medium Gray' },
+                          { value: '#999999', label: 'Light Gray' },
+                          { value: '#CCCCCC', label: 'Silver' },
+                        ];
+                        
+                        // Normalize color to uppercase for comparison
+                        const normalizedColor = currentColor.toUpperCase();
+                        const colorMatch = predefinedColors.find(c => c.value.toUpperCase() === normalizedColor);
+                        const selectValue = colorMatch ? colorMatch.value : currentColor;
+                        
+                        return (
+                          <select
+                            key={selectValue} // Force re-render when color changes
+                            value={selectValue}
+                            onChange={(e) => {
+                              if (e.target.value && e.target.value !== 'custom') {
+                                updateStyle('color', e.target.value);
+                              }
+                            }}
+                            className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            {predefinedColors.map((color) => (
+                              <option key={color.value} value={color.value}>
+                                {color.label}
+                              </option>
+                            ))}
+                            {!colorMatch && (
+                              <option value={currentColor}>
+                                Custom ({currentColor})
+                              </option>
+                            )}
+                          </select>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>

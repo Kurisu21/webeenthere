@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { activityApi, ActivityStats as ActivityStatsType, ActivityTrend } from '../../../lib/activityApi';
+import { activityApi, ActivityStats as ActivityStatsType } from '../../../lib/activityApi';
 
 interface ActivityStatsProps {
   className?: string;
@@ -9,15 +9,12 @@ interface ActivityStatsProps {
 
 export default function ActivityStats({ className = '' }: ActivityStatsProps) {
   const [stats, setStats] = useState<ActivityStatsType | null>(null);
-  const [trends, setTrends] = useState<ActivityTrend[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
   useEffect(() => {
     fetchStats();
-    fetchTrends();
-  }, [selectedPeriod]);
+  }, []);
 
   const fetchStats = async () => {
     try {
@@ -31,16 +28,6 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
       setStats(null); // Set to null on error
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const fetchTrends = async () => {
-    try {
-      const trendsData = await activityApi.getActivityTrends(selectedPeriod, 30);
-      setTrends(trendsData || []); // Ensure it's always an array
-    } catch (err) {
-      console.error('Failed to fetch activity trends:', err);
-      setTrends([]); // Set to empty array on error
     }
   };
 
@@ -135,21 +122,6 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-primary">Activity Statistics</h2>
-        <div className="flex space-x-2">
-          {(['daily', 'weekly', 'monthly'] as const).map((period) => (
-            <button
-              key={period}
-              onClick={() => setSelectedPeriod(period)}
-              className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-                selectedPeriod === period
-                  ? 'bg-purple-600 text-primary'
-                  : 'bg-surface-elevated text-secondary hover:bg-surface'
-              }`}
-            >
-              {period.charAt(0).toUpperCase() + period.slice(1)}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Stats Cards */}
@@ -218,41 +190,6 @@ export default function ActivityStats({ className = '' }: ActivityStatsProps) {
               </svg>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Activity Trends Chart */}
-      <div className="mb-8">
-        <h3 className="text-lg font-semibold text-primary mb-4">Activity Trends ({selectedPeriod})</h3>
-        <div className="bg-surface-elevated rounded-lg p-4">
-          {trends.length > 0 ? (
-            <div className="flex items-end justify-between h-32 space-x-1">
-              {trends.slice(-14).map((trend, index) => {
-                const maxCount = Math.max(...trends.map(t => t.count));
-                const height = maxCount > 0 ? (trend.count / maxCount) * 100 : 0;
-                
-                return (
-                  <div key={index} className="flex flex-col items-center flex-1">
-                    <div
-                      className="bg-gradient-to-t from-purple-600 to-blue-500 rounded-t w-full transition-all duration-300 hover:from-purple-500 hover:to-blue-400"
-                      style={{ height: `${Math.max(height, 4)}%` }}
-                      title={`${trend.date}: ${trend.count} activities`}
-                    ></div>
-                    <span className="text-xs text-secondary mt-2 transform -rotate-45 origin-left">
-                      {new Date(trend.date).toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-secondary">No activity data available</p>
-            </div>
-          )}
         </div>
       </div>
 

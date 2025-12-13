@@ -355,37 +355,13 @@ const UserProfile = memo(() => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex justify-between items-start mb-6">
-        <div className="flex items-center gap-3">
+      <div className="flex justify-between items-start mb-6 gap-4">
+        <div className="flex items-center gap-3 flex-shrink-0">
           <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
-          <h1 className="text-2xl font-bold text-primary">Profile</h1>
+          <h1 className="text-2xl font-bold text-primary whitespace-nowrap">Profile</h1>
         </div>
-        {!isEditing ? (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="btn-primary px-4 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105"
-          >
-            Edit Profile
-          </button>
-        ) : (
-          <div className="flex space-x-2">
-            <button
-              onClick={handleCancel}
-              className="px-4 py-2 rounded-lg font-medium transition-colors bg-surface-elevated border border-app text-primary hover:bg-surface"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="btn-primary disabled:opacity-50 px-4 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105"
-            >
-              {isSaving ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Success/Error Messages */}
@@ -411,9 +387,6 @@ const UserProfile = memo(() => {
         </div>
       )}
 
-      {/* Profile Banner */}
-      <div className="bg-gradient-to-r from-blue-400 via-purple-500 to-yellow-400 h-32 rounded-lg mb-6 hover:scale-[1.02] transition-all duration-500"></div>
-
       {/* User Info Section */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
@@ -434,6 +407,30 @@ const UserProfile = memo(() => {
             </svg>
             User
           </span>
+          {!isEditing ? (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="btn-primary px-4 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 whitespace-nowrap flex-shrink-0"
+            >
+              Edit Profile
+            </button>
+          ) : (
+            <div className="flex space-x-2 flex-shrink-0">
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 rounded-lg font-medium transition-colors bg-surface-elevated border border-app text-primary hover:bg-surface whitespace-nowrap flex-shrink-0"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="btn-primary disabled:opacity-50 px-4 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 whitespace-nowrap flex-shrink-0"
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

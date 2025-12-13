@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { WebsitePreviewImage } from './WebsitePreviewImage';
+import { ActionButton } from './ActionButton';
 
 interface WebsiteCardProps {
   website: {
@@ -21,6 +22,7 @@ interface WebsiteCardProps {
     onExport?: (format: 'html' | 'css' | 'zip') => void;
     onDelete?: () => void;
     onShareAsTemplate?: () => void;
+    onTitleUpdate?: (newTitle: string) => Promise<void>;
   };
   viewMode?: 'user' | 'admin';
   showOwner?: boolean;
@@ -34,6 +36,46 @@ export const WebsiteCard: React.FC<WebsiteCardProps> = ({
   showOwner = false,
   ownerName
 }) => {
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(website.title);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  // Update edited title when website prop changes
+  useEffect(() => {
+    setEditedTitle(website.title);
+  }, [website.title]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isEditingTitle]);
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
+    } else if (e.key === 'Escape') {
+      setEditedTitle(website.title);
+      setIsEditingTitle(false);
+    }
+  };
+
+  const handleTitleBlur = async () => {
+    if (editedTitle.trim() && editedTitle !== website.title && actions.onTitleUpdate) {
+      try {
+        await actions.onTitleUpdate(editedTitle.trim());
+      } catch (error) {
+        // Revert on error
+        setEditedTitle(website.title);
+        console.error('Failed to update title:', error);
+      }
+    } else {
+      setEditedTitle(website.title);
+    }
+    setIsEditingTitle(false);
+  };
   const {
     onView,
     onEdit,
@@ -71,9 +113,25 @@ export const WebsiteCard: React.FC<WebsiteCardProps> = ({
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-primary mb-1 line-clamp-2">
-            {website.title}
-          </h3>
+          {isEditingTitle ? (
+            <input
+              ref={titleInputRef}
+              type="text"
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              onBlur={handleTitleBlur}
+              onKeyDown={handleTitleKeyDown}
+              className="text-lg font-semibold text-primary dark:text-white mb-1 w-full bg-transparent border-b-2 border-blue-500 focus:outline-none px-1 py-0.5"
+            />
+          ) : (
+            <h3 
+              className="text-lg font-semibold text-primary mb-1 line-clamp-2 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setIsEditingTitle(true)}
+              title="Click to edit title"
+            >
+              {editedTitle}
+            </h3>
+          )}
           <p className="text-sm text-secondary mb-2">
             localhost:3000/sites/{website.slug}
           </p>
@@ -106,7 +164,7 @@ export const WebsiteCard: React.FC<WebsiteCardProps> = ({
               websiteId={website.id}
               alt={`${website.title} preview`}
               className="w-full h-full"
-              style={{ objectFit: 'cover' }}
+              style={{ objectFit: 'contain', backgroundColor: '#ffffff' }}
               refreshKey={website.updated_at} // Pass updated_at to force refresh when website is updated
             />
           ) : (
@@ -129,54 +187,64 @@ export const WebsiteCard: React.FC<WebsiteCardProps> = ({
       {/* Actions */}
       <div className="flex flex-wrap gap-2">
         {onView && (
-          <button
+          <ActionButton
             onClick={onView}
-            className="flex-1 px-3 py-2 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 rounded-md transition-colors"
-          >
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            View
-          </button>
+            variant="primary"
+            size="sm"
+            label="View"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            }
+            className="flex-1"
+          />
         )}
 
         {onEdit && (
-          <button
+          <ActionButton
             onClick={onEdit}
-            className="flex-1 px-3 py-2 text-xs font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/40 rounded-md transition-colors"
-          >
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            Edit
-          </button>
+            variant="primary"
+            size="sm"
+            label="Edit"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            }
+            className="flex-1"
+          />
         )}
 
         {/* Publish/Unpublish */}
         {website.is_published ? (
           onUnpublish && (
-            <button
+            <ActionButton
               onClick={onUnpublish}
-              className="px-3 py-2 text-xs font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:text-orange-400 dark:hover:bg-orange-900/40 rounded-md transition-colors"
-            >
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-              </svg>
-              Unpublish
-            </button>
+              variant="warning"
+              size="sm"
+              label="Unpublish"
+              icon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                </svg>
+              }
+            />
           )
         ) : (
           onPublish && (
-            <button
+            <ActionButton
               onClick={onPublish}
-              className="px-3 py-2 text-xs font-medium text-green-600 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40 rounded-md transition-colors"
-            >
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Publish
-            </button>
+              variant="success"
+              size="sm"
+              label="Publish"
+              icon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
           )
         )}
 

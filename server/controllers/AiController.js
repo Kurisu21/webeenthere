@@ -23,11 +23,15 @@ class AiController {
       
       const { 
         description, 
-        websiteType = 'general',
-        style = 'modern',
-        colorScheme = 'blue',
-        includeSections = []
+        includeSections = [],
+        simpleMode = false
       } = req.body;
+      
+      // Infer website type, style, and color scheme from description
+      // Default values will be used if not specified
+      const websiteType = 'general';
+      const style = 'modern';
+      const colorScheme = 'blue';
 
       const authUserId = req.user?.id || null;
 
@@ -41,25 +45,8 @@ class AiController {
         });
       }
 
-      // Validate and moderate input
-      const moderationResult = this.contentModeration.validateInput(description, {
-        checkProfanity: true,
-        checkInjection: true,
-        checkLength: true,
-        checkSuspicious: true
-      });
-
-      if (!moderationResult.isValid) {
-        console.log('ERROR: Content moderation failed:', moderationResult.reason);
-        return res.status(400).json({
-          success: false,
-          error: moderationResult.reason,
-          errorCode: moderationResult.errorCode
-        });
-      }
-
-      // Use sanitized input
-      const sanitizedDescription = moderationResult.sanitized;
+      // Input sanitization removed - using raw description
+      const sanitizedDescription = description;
 
       // Check AI chat limits if authenticated
       if (authUserId) {
@@ -85,7 +72,8 @@ class AiController {
         style,
         colorScheme,
         includeSections,
-        userId: authUserId || 'anonymous'
+        userId: authUserId || 'anonymous',
+        simpleMode: simpleMode || false
       });
 
       if (!templateResult.success) {
@@ -95,10 +83,18 @@ class AiController {
         });
       }
 
+      // Log template result for debugging
+      console.log('=== TEMPLATE RESULT FROM AI SERVICE ===');
+      console.log('Template result keys:', Object.keys(templateResult));
+      console.log('Has html:', !!templateResult.html, 'Length:', templateResult.html?.length || 0);
+      console.log('Has css:', !!templateResult.css, 'Length:', templateResult.css?.length || 0);
+      console.log('Has slots:', !!templateResult.slots, 'Count:', templateResult.slots?.length || 0);
+      console.log('Has meta:', !!templateResult.meta);
+      
       // Support both new and old shapes for backward compat
       let savedTemplate;
       if (templateResult.html || templateResult.css) {
-        // New strict shape
+        // New strict shape - ensure html_base and css_base are set for editor compatibility
         savedTemplate = {
           id: `generated_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           name: `${style} ${websiteType} Template`,
@@ -106,13 +102,20 @@ class AiController {
           category: websiteType || 'ai-generated',
           html: templateResult.html || '',
           css: templateResult.css || '',
-          html_base: templateResult.html || '', // Also include for compatibility
-          css_base: templateResult.css || '', // Also include for compatibility
+          html_base: templateResult.html || '', // CRITICAL: Editor uses html_base
+          css_base: templateResult.css || '', // CRITICAL: Editor uses css_base
           slots: templateResult.slots || [],
           meta: templateResult.meta || {},
           tags: ['ai-generated', websiteType, style],
           elements: [] // Empty elements array since we're using HTML/CSS
         };
+        
+        console.log('=== SAVED TEMPLATE STRUCTURE ===');
+        console.log('Template ID:', savedTemplate.id);
+        console.log('html_base length:', savedTemplate.html_base?.length || 0);
+        console.log('css_base length:', savedTemplate.css_base?.length || 0);
+        console.log('html_base preview (first 200 chars):', savedTemplate.html_base?.substring(0, 200) || 'No html_base');
+        console.log('css_base preview (first 200 chars):', savedTemplate.css_base?.substring(0, 200) || 'No css_base');
       } else {
         // Legacy shape via existing helper
         savedTemplate = await this.saveGeneratedTemplate({
@@ -169,7 +172,19 @@ class AiController {
         console.log('Incremented AI chat usage for user:', authUserId);
       }
       
-      console.log('Sending response:', response);
+      // Log final response structure
+      console.log('=== FINAL RESPONSE BEING SENT ===');
+      console.log('Response success:', response.success);
+      console.log('Response has template:', !!response.template);
+      if (response.template) {
+        console.log('Template html_base length:', response.template.html_base?.length || 0);
+        console.log('Template css_base length:', response.template.css_base?.length || 0);
+        console.log('Template html length:', response.template.html?.length || 0);
+        console.log('Template css length:', response.template.css?.length || 0);
+      }
+      console.log('Response has html:', !!response.html, 'Length:', response.html?.length || 0);
+      console.log('Response has css:', !!response.css, 'Length:', response.css?.length || 0);
+      
       res.json(response);
 
     } catch (error) {
@@ -218,23 +233,23 @@ class AiController {
         return res.status(400).json({ success: false, error: 'HTML or CSS is required' });
       }
 
-      // Validate and moderate brandHints if provided
-      if (brandHints && typeof brandHints === 'string') {
-        const moderationResult = this.contentModeration.validateInput(brandHints, {
-          checkProfanity: true,
-          checkInjection: true,
-          checkLength: true,
-          checkSuspicious: true
-        });
+      // Validate and moderate brandHints if provided - DISABLED temporarily
+      // if (brandHints && typeof brandHints === 'string') {
+      //   const moderationResult = this.contentModeration.validateInput(brandHints, {
+      //     checkProfanity: true,
+      //     checkInjection: true,
+      //     checkLength: true,
+      //     checkSuspicious: true
+      //   });
 
-        if (!moderationResult.isValid) {
-          return res.status(400).json({
-            success: false,
-            error: moderationResult.reason,
-            errorCode: moderationResult.errorCode
-          });
-        }
-      }
+      //   if (!moderationResult.isValid) {
+      //     return res.status(400).json({
+      //       success: false,
+      //       error: moderationResult.reason,
+      //       errorCode: moderationResult.errorCode
+      //     });
+      //   }
+      // }
 
       // Optional: enforce AI chat limits similar to generation
       if (req.user?.id) {
@@ -275,7 +290,7 @@ class AiController {
 
   async handleAssistantRequest(req, res) {
     try {
-      const { prompt, userInput, isUserPrompt = false, website_id, conversation_id } = req.body || {};
+      const { prompt, userInput, isUserPrompt = false, website_id, conversation_id, html_content, css_content } = req.body || {};
 
       // Log authentication status for debugging
       const authHeader = req.header('Authorization');
@@ -285,7 +300,11 @@ class AiController {
         hasToken,
         isAuthenticated,
         userId: req.user?.id || 'none',
-        websiteId: website_id || 'none'
+        websiteId: website_id || 'none',
+        hasHtmlContent: !!html_content,
+        hasCssContent: !!css_content,
+        htmlLength: html_content?.length || 0,
+        cssLength: css_content?.length || 0
       });
 
       if (!prompt || typeof prompt !== 'string') {
@@ -295,26 +314,9 @@ class AiController {
         });
       }
 
-      // Validate and moderate user input (check userInput if provided, otherwise check prompt)
+      // Input sanitization removed - using raw input
       const inputToValidate = userInput || prompt;
-      const moderationResult = this.contentModeration.validateInput(inputToValidate, {
-        checkProfanity: true,
-        checkInjection: true,
-        checkLength: true,
-        checkSuspicious: true
-      });
-
-      if (!moderationResult.isValid) {
-        console.log('[AI Assistant] Content moderation failed:', moderationResult.reason);
-        return res.status(400).json({
-          success: false,
-          error: moderationResult.reason,
-          errorCode: moderationResult.errorCode
-        });
-      }
-
-      // Use sanitized input
-      const sanitizedInput = moderationResult.sanitized;
+      const sanitizedInput = inputToValidate;
 
       // Generate conversation_id if not provided (for new conversations)
       const currentConversationId = conversation_id || `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -334,7 +336,7 @@ class AiController {
         }
       }
 
-      // Store user message in chat history BEFORE calling AI (use sanitized input)
+      // Store user message in chat history BEFORE calling AI (using raw input)
       const userMessageText = isUserPrompt ? sanitizedInput : (userInput ? sanitizedInput : 'Auto-suggestion request');
       let userMessageId = null;
       try {
@@ -363,7 +365,7 @@ class AiController {
         });
       }
 
-      // Parse the AI response (should be JSON with explanation and code)
+      // Parse the AI response (should be JSON with explanation, html_content, and css_content)
       let suggestion;
       try {
         const cleaned = aiResponse.content.trim()
@@ -380,11 +382,37 @@ class AiController {
 
         suggestion = JSON.parse(jsonMatch[0]);
 
-        if (!suggestion.explanation || !suggestion.code) {
-          throw new Error('Missing explanation or code in AI response');
+      // Log the full AI response JSON for debugging
+      console.log('========================================');
+      console.log('[AI Assistant] AI Response JSON:');
+      console.log(JSON.stringify(suggestion, null, 2));
+      console.log('========================================');
+      console.log('[AI Assistant] Response has explanation:', !!suggestion.explanation);
+      console.log('[AI Assistant] Response has html_content:', !!suggestion.html_content);
+      console.log('[AI Assistant] Response has css_content:', !!suggestion.css_content);
+      console.log('[AI Assistant] Response has code (legacy):', !!suggestion.code);
+      
+      if (suggestion.html_content) {
+        console.log('[AI Assistant] HTML content length:', suggestion.html_content.length);
+        console.log('[AI Assistant] HTML preview (first 200 chars):', suggestion.html_content.substring(0, 200));
+      }
+      if (suggestion.css_content) {
+        console.log('[AI Assistant] CSS content length:', suggestion.css_content.length);
+        console.log('[AI Assistant] CSS preview (first 200 chars):', suggestion.css_content.substring(0, 200));
+      }
+
+        // New format: html_content and css_content (preferred)
+        // Legacy format: code (for backward compatibility)
+        if (!suggestion.explanation) {
+          throw new Error('Missing explanation in AI response');
+        }
+        
+        if (!suggestion.html_content && !suggestion.code) {
+          throw new Error('Missing html_content or code in AI response');
         }
       } catch (parseError) {
         console.error('[AI Assistant] Failed to parse AI response:', parseError);
+        console.error('[AI Assistant] Raw response (first 500 chars):', aiResponse.content.substring(0, 500));
         return res.status(500).json({
           success: false,
           error: 'Failed to parse AI response. Please try again.',
@@ -431,7 +459,9 @@ class AiController {
         success: true,
         suggestion: {
           explanation: suggestion.explanation,
-          code: suggestion.code
+          html_content: suggestion.html_content || null,
+          css_content: suggestion.css_content || null,
+          code: suggestion.code || null // Legacy support
         },
         tokenCount,
         conversationId: currentConversationId,

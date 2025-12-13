@@ -176,12 +176,19 @@ class PDFReportService {
         .text('Website Performance', 50, doc.y + 10);
       doc.moveDown(0.5);
 
+      // Helper function to safely convert to number and format
+      const safeToFixed = (value, decimals = 1) => {
+        if (value === null || value === undefined) return '0';
+        const num = typeof value === 'number' ? value : parseFloat(value);
+        return isNaN(num) ? '0' : num.toFixed(decimals);
+      };
+
       const performance = await websiteAnalyticsService.getWebsitePerformanceMetrics();
       doc.fontSize(11)
         .font('Helvetica')
-        .text(`Average Visits Per Day: ${performance.avgVisitsPerDay.avg_visits_per_day?.toFixed(1) || 0}`, { indent: 20 })
-        .text(`Bounce Rate: ${performance.bounceRate.bounce_rate?.toFixed(1) || 0}%`, { indent: 20 })
-        .text(`Return Visitor Rate: ${performance.returnVisitorRate.return_rate?.toFixed(1) || 0}%`, { indent: 20 });
+        .text(`Average Visits Per Day: ${safeToFixed(performance.avgVisitsPerDay?.avg_visits_per_day)}`, { indent: 20 })
+        .text(`Bounce Rate: ${safeToFixed(performance.bounceRate?.bounce_rate)}%`, { indent: 20 })
+        .text(`Return Visitor Rate: ${safeToFixed(performance.returnVisitorRate?.return_rate)}%`, { indent: 20 });
       doc.moveDown();
 
       // Top Websites
@@ -313,11 +320,18 @@ class PDFReportService {
         .text('Performance Metrics', 50, doc.y + 10);
       doc.moveDown(0.5);
 
+      // Helper function to safely convert to number and format
+      const safeToFixed = (value, decimals = 1) => {
+        if (value === null || value === undefined) return '0';
+        const num = typeof value === 'number' ? value : parseFloat(value);
+        return isNaN(num) ? '0' : num.toFixed(decimals);
+      };
+
       doc.fontSize(11)
         .font('Helvetica')
-        .text(`Avg Visits/Day: ${performance.avgVisitsPerDay.avg_visits_per_day?.toFixed(1) || 0}`, { indent: 20 })
-        .text(`Bounce Rate: ${performance.bounceRate.bounce_rate?.toFixed(1) || 0}%`, { indent: 20 })
-        .text(`Return Rate: ${performance.returnVisitorRate.return_rate?.toFixed(1) || 0}%`, { indent: 20 });
+        .text(`Avg Visits/Day: ${safeToFixed(performance.avgVisitsPerDay?.avg_visits_per_day)}`, { indent: 20 })
+        .text(`Bounce Rate: ${safeToFixed(performance.bounceRate?.bounce_rate)}%`, { indent: 20 })
+        .text(`Return Rate: ${safeToFixed(performance.returnVisitorRate?.return_rate)}%`, { indent: 20 });
       doc.moveDown();
 
       // Conversion Rates
@@ -329,12 +343,12 @@ class PDFReportService {
       if (conversionRates.publicationRate) {
         doc.fontSize(11)
           .font('Helvetica')
-          .text(`Publication Rate: ${conversionRates.publicationRate.publication_rate?.toFixed(1) || 0}%`, { indent: 20 })
+          .text(`Publication Rate: ${safeToFixed(conversionRates.publicationRate.publication_rate)}%`, { indent: 20 })
           .text(`  (${conversionRates.publicationRate.published || 0} / ${conversionRates.publicationRate.total_created || 0} websites)`, { indent: 30 });
       }
 
       if (conversionRates.engagementRate) {
-        doc.text(`User Engagement: ${conversionRates.engagementRate.engagement_rate?.toFixed(1) || 0}%`, { indent: 20 })
+        doc.text(`User Engagement: ${safeToFixed(conversionRates.engagementRate.engagement_rate)}%`, { indent: 20 })
           .text(`  (${conversionRates.engagementRate.users_with_websites || 0} / ${conversionRates.engagementRate.total_users || 0} users)`, { indent: 30 });
       }
 

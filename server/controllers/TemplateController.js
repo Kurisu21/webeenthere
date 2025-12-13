@@ -320,6 +320,126 @@ class TemplateController {
       });
     }
   }
+
+  // Import template from HTML file (admin only)
+  async importTemplateFromHTML(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'No HTML file uploaded'
+        });
+      }
+
+      const { name, description, category, is_featured } = req.body;
+
+      if (!name || !description || !category) {
+        return res.status(400).json({
+          success: false,
+          message: 'Name, description, and category are required'
+        });
+      }
+
+      // Read the uploaded file
+      const fs = require('fs');
+      const htmlContent = fs.readFileSync(req.file.path, 'utf8');
+
+      // Parse HTML and extract CSS
+      const { htmlBody, css } = this.parseHTMLFile(htmlContent);
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      // Create template
+      const templateId = await this.templateModel.create({
+        name,
+        description,
+        category,
+        html_base: htmlBody,
+        css_base: css,
+        is_featured: is_featured === 'true' || is_featured === true,
+        is_active: true,
+        is_community: false,
+        creator_user_id: null,
+        source_website_id: null
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Template imported successfully',
+        data: { id: templateId }
+      });
+    } catch (error) {
+      console.error('Error importing template from HTML:', error);
+      
+      // Clean up uploaded file if it exists
+      if (req.file && req.file.path) {
+        const fs = require('fs');
+        try {
+          if (fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+          }
+        } catch (cleanupError) {
+          console.error('Error cleaning up uploaded file:', cleanupError);
+        }
+      }
+
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Error importing template from HTML'
+      });
+    }
+  }
+
+  // Parse HTML file and extract body content and CSS
+  parseHTMLFile(htmlContent) {
+    // Remove DOCTYPE if present
+    let cleaned = htmlContent.replace(/<!DOCTYPE[^>]*>/gi, '');
+
+    // Extract CSS from <style> tags
+    const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+    const cssParts = [];
+    let match;
+    while ((match = styleRegex.exec(cleaned)) !== null) {
+      cssParts.push(match[1].trim());
+    }
+
+    // Remove <style> tags from HTML
+    cleaned = cleaned.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+
+    // Extract body content
+    const bodyMatch = cleaned.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    let htmlBody = '';
+    
+    if (bodyMatch && bodyMatch[1]) {
+      htmlBody = bodyMatch[1].trim();
+    } else {
+      // If no <body> tag, try to extract content between <html> tags or use entire content
+      const htmlMatch = cleaned.match(/<html[^>]*>([\s\S]*?)<\/html>/i);
+      if (htmlMatch && htmlMatch[1]) {
+        // Remove <head> section if present
+        htmlBody = htmlMatch[1].replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '').trim();
+      } else {
+        // If no structure tags, assume the entire content is body
+        htmlBody = cleaned.trim();
+      }
+    }
+
+    // Combine all CSS parts
+    const css = cssParts.join('\n\n');
+
+    // Clean up HTML body - remove script tags and other unwanted elements
+    htmlBody = htmlBody
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<link[^>]*>/gi, '')
+      .replace(/<meta[^>]*>/gi, '')
+      .trim();
+
+    return {
+      htmlBody: htmlBody || '',
+      css: css || ''
+    };
+  }
 }
 
 module.exports = TemplateController;

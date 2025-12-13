@@ -138,6 +138,23 @@ export default function UserPages() {
     setShareTemplateModal({ isOpen: true, website });
   };
 
+  const handleTitleUpdate = async (websiteId: number, newTitle: string) => {
+    try {
+      const response = await apiPut(`${API_ENDPOINTS.WEBSITES}/${websiteId}`, {
+        title: newTitle
+      });
+      
+      if (response.success) {
+        await loadWebsites(); // Reload to get updated data
+      } else {
+        throw new Error(response.message || 'Failed to update title');
+      }
+    } catch (error: any) {
+      console.error('Error updating title:', error);
+      throw error;
+    }
+  };
+
   const confirmDeleteWebsite = async () => {
     if (!deleteConfirm.website) return;
     
@@ -251,7 +268,8 @@ export default function UserPages() {
                 onEditUrl: () => handleEditUrl(website),
                 onExport: (format) => handleExportWebsite(website, format),
                 onDelete: () => handleDeleteWebsite(website),
-                onShareAsTemplate: () => handleShareAsTemplate(website)
+                onShareAsTemplate: () => handleShareAsTemplate(website),
+                onTitleUpdate: (newTitle: string) => handleTitleUpdate(website.id, newTitle)
               }}
             />
           ))}

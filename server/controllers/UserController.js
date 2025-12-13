@@ -1129,6 +1129,22 @@ class UserController {
       // Send the blob data
       res.send(profileImage.data);
     } catch (error) {
+      // Check if it's a connection error
+      const isConnectionError = 
+        error.code === 'ECONNRESET' || 
+        error.code === 'PROTOCOL_CONNECTION_LOST' ||
+        error.code === 'ETIMEDOUT' ||
+        error.code === 'ECONNREFUSED' ||
+        error.errno === -4077;
+      
+      if (isConnectionError) {
+        console.error(`[UserController] Database connection error getting profile image for user ${req.params.userId}:`, error.message);
+        return res.status(503).json({ 
+          error: 'Database connection error. Please try again in a moment.',
+          retryable: true 
+        });
+      }
+      
       console.error('Get profile image error:', error);
       res.status(500).json({ error: 'Failed to retrieve profile image' });
     }
@@ -1363,27 +1379,23 @@ class UserController {
         await connection.execute('DELETE FROM support_tickets WHERE user_id = ?', [userId]);
         console.log(`Deleted support_tickets for user ${userId}`);
 
-        // 10. Delete feedback responses
-        await connection.execute('DELETE FROM feedback_responses WHERE user_id = ?', [userId]);
-        console.log(`Deleted feedback_responses for user ${userId}`);
-
-        // 11. Delete feedback
+        // 10. Delete feedback (this will cascade delete feedback_responses via FK)
         await connection.execute('DELETE FROM feedback WHERE user_id = ?', [userId]);
-        console.log(`Deleted feedback for user ${userId}`);
+        console.log(`Deleted feedback for user ${userId} (and related responses via CASCADE)`);
 
-        // 12. Delete activity logs
+        // 11. Delete activity logs
         await connection.execute('DELETE FROM activity_logs WHERE user_id = ?', [userId]);
         console.log(`Deleted activity_logs for user ${userId}`);
 
-        // 13. Delete websites (this will cascade delete website_analytics if FK is set up)
+        // 12. Delete websites (this will cascade delete website_analytics if FK is set up)
         await connection.execute('DELETE FROM websites WHERE user_id = ?', [userId]);
         console.log(`Deleted websites for user ${userId}`);
 
-        // 14. Update templates created by this user (set creator_user_id to NULL)
+        // 13. Update templates created by this user (set creator_user_id to NULL)
         await connection.execute('UPDATE templates SET creator_user_id = NULL WHERE creator_user_id = ?', [userId]);
         console.log(`Updated templates for user ${userId}`);
 
-        // 15. Finally, delete the user
+        // 14. Finally, delete the user
         await connection.execute('DELETE FROM users WHERE id = ?', [userId]);
         console.log(`Deleted user ${userId}`);
 

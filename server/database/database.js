@@ -14,7 +14,10 @@ const poolConfig = {
   connectTimeout: 60000, // 60 seconds
   // Enable automatic reconnection (mysql2 handles this automatically)
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  keepAliveInitialDelay: 0,
+  // Additional settings to handle connection resets better
+  // mysql2 automatically handles reconnection, but we can set max idle time
+  // Note: mysql2 doesn't expose all connection pool options, but the pool handles reconnection automatically
 };
 
 // Create connection pool without database first

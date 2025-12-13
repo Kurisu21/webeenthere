@@ -91,7 +91,7 @@ export const WebsitePreviewImage: React.FC<WebsitePreviewImageProps> = ({
   }
 
   return (
-    <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
+    <div className="w-full h-full relative overflow-hidden flex items-center justify-center bg-white">
       <img
         src={imageUrl}
         alt={alt}
@@ -102,7 +102,8 @@ export const WebsitePreviewImage: React.FC<WebsitePreviewImageProps> = ({
           maxHeight: '100%', 
           width: 'auto', 
           height: 'auto',
-          objectFit: style.objectFit || 'contain'
+          objectFit: style.objectFit || 'contain',
+          backgroundColor: style.backgroundColor || '#ffffff'
         }}
         onError={() => setError(true)}
         loading="lazy"

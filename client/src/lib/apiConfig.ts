@@ -289,6 +289,23 @@ export const apiCall = async (
       
       // Handle 403 specifically (Access denied)
       if (response.status === 403) {
+        // Try to parse the error response to check for AI chat limit
+        try {
+          const errorData = await response.clone().json();
+          if (errorData.errorCode === 'AI_CHAT_LIMIT_REACHED') {
+            // Don't redirect for AI limit errors - let the component handle it
+            const error: any = new Error(errorData.error || 'AI chat limit reached');
+            error.status = 403;
+            error.errorCode = 'AI_CHAT_LIMIT_REACHED';
+            error.currentUsage = errorData.currentUsage;
+            error.upgradeRequired = errorData.upgradeRequired;
+            throw error;
+          }
+        } catch (e) {
+          // If JSON parsing fails, continue with normal 403 handling
+        }
+        
+        // For other 403 errors, redirect
         if (typeof window !== 'undefined') {
           window.location.href = '/user/main';
         }
