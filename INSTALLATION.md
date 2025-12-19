@@ -6,33 +6,35 @@ Step 1: Prerequisites
 
 1. Install Node.js version 18 or higher on your system.
 2. Install MySQL database server (XAMPP or standalone MySQL).
-3. Install Git version control system.
-4. Verify all installations are complete before proceeding.
+3. Verify all installations are complete before proceeding.
 
-Step 2: Clone Repository
+Step 2: Navigate to Project Directory
 
 1. Open terminal or command prompt.
-2. Navigate to desired directory for project installation.
-3. Run command: git clone https://github.com/Kurisu21/webeenthere.git
-4. Navigate to project directory: cd webeenthere
-5. Verify project files are present in directory.
+2. Navigate to the system_output folder where the project source code and database file are located.
+3. Locate the project source code folder (should contain server and client folders).
+4. Navigate to the project source code folder.
+5. Verify project files are present in directory (should contain server and client folders).
 
 Step 3: Database Setup
 
 1. Start MySQL server using XAMPP Control Panel or standalone MySQL service.
 2. Open phpMyAdmin or MySQL command line interface.
 3. Create new database named: webeenthere
-4. Navigate to server directory in terminal: cd server
-5. Initialize database by running: npm run init-db
-6. Wait for database tables to be created successfully.
-7. Verify database initialization completed without errors.
-8. Check default login credentials if needed (Username: john_doe, Password: password123 or Username: admin_user, Password: password123).
+4. Locate the database SQL file in the system_output folder.
+5. Import the database SQL file into the webeenthere database.
+6. Using phpMyAdmin: Select webeenthere database, click Import tab, choose the SQL file from system_output folder, click Go.
+7. Using command line: mysql -u root -p webeenthere < path/to/system_output/database.sql
+8. Wait for database import to complete successfully.
+9. Verify database tables are created successfully.
+10. Check default login credentials if needed (Username: john_doe, Password: password123 or Username: admin_user, Password: password123).
 
 Step 4: Environment Variables Setup
 
-1. Navigate to server directory: cd server
-2. Create a new file named .env in the server directory.
-3. Add the following environment variables to the .env file:
+1. Open terminal or command prompt in the project root directory.
+2. Navigate to server directory: cd server
+3. Create a new file named .env in the server directory.
+4. Add the following environment variables to the .env file:
 
 NODE_ENV=development
 PORT=5000
@@ -43,10 +45,10 @@ DB_NAME=webeenthere
 DB_PORT=3306
 JWT_SECRET=your-secret-key-here-generate-a-random-string
 
-4. Generate a secure JWT secret key (you can use an online generator or run: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))").
-5. Replace your-secret-key-here-generate-a-random-string with your generated secret.
-6. If your MySQL password is not empty, update DB_PASSWORD with your MySQL root password.
-7. Save the .env file.
+5. Generate a secure JWT secret key (you can use an online generator or run: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))").
+6. Replace your-secret-key-here-generate-a-random-string with your generated secret.
+7. If your MySQL password is not empty, update DB_PASSWORD with your MySQL root password.
+8. Save the .env file.
 
 Step 5: API Keys Setup (Optional)
 
@@ -125,7 +127,7 @@ Database Connection Issues
 1. Verify MySQL server is running.
 2. Check database credentials in .env file match your MySQL configuration.
 3. Ensure database webeenthere exists.
-4. Run npm run db-status in server directory to check database status.
+4. Verify database SQL file was imported successfully by checking if tables exist in phpMyAdmin.
 
 Port Already in Use
 
